@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { CalendarIcon } from 'lucide-react'
+import { th } from 'date-fns/locale'
 import { addDays, toISODate } from '@/lib/thai-date'
 import { formatThaiDate } from '@/lib/format-th'
 import { Calendar } from '@/components/ui/calendar'
@@ -68,6 +69,7 @@ export function FollowUpDateChips({ value, onChange }: FollowUpDateChipsProps) {
           <PopoverContent className="w-auto p-0" align="start">
             <Calendar
               mode="single"
+              locale={th}
               selected={value ? new Date(value) : undefined}
               onSelect={handleCalendarSelect}
               disabled={{ before: new Date() }}
