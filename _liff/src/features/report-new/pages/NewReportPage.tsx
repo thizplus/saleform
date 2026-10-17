@@ -207,7 +207,7 @@ export function NewReportPage() {
     }
   }
 
-  const stages = options?.stages || ['เทฐาน', 'ตั้งเสา', 'ขึ้นโครง', 'รอมุง', 'วางแปลน', 'อื่นๆ']
+  const stages = options?.stages || ['เริ่มก่อสร้าง', 'กำลังสร้าง', 'ใกล้เสร็จ', 'รอตัดสินใจ', 'เสนอราคาแล้ว', 'อื่นๆ']
   const decisionMakers = options?.decisionMakers || ['เจ้าของบ้าน', 'ช่าง', 'อื่นๆ']
   const contactTypes = ['เจ้าของ', 'ช่าง', 'ผู้รับเหมา']
 

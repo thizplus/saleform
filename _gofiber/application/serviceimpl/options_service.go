@@ -19,7 +19,7 @@ func NewOptionsService(configRepo repositories.AppConfigRepository) *optionsServ
 var defaultOptions = dto.OptionsResponse{
 	CustomerTypes:  []string{"ใหม่", "เก่า"},
 	DecisionMakers: []string{"เจ้าของ", "ผู้รับเหมา", "วิศวกร", "สถาปนิก", "อื่นๆ"},
-	Stages:         []string{"new", "quoting", "negotiating"},
+	Stages:         []string{"เริ่มก่อสร้าง", "กำลังสร้าง", "ใกล้เสร็จ", "รอตัดสินใจ", "เสนอราคาแล้ว", "อื่นๆ"},
 	LostReasons:    []string{"ราคาสูง", "ส่งช้า", "ใช้คู่แข่ง", "เปลี่ยนใจ", "อื่นๆ"},
 	Competitors:    []string{},
 }

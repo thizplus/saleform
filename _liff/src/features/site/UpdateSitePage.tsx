@@ -12,7 +12,6 @@ import { FollowUpDateChips } from '@/features/report-new/components/FollowUpDate
 import { useOptions, useUploadPhotos } from '@/features/report-new/hooks'
 import { useSiteDetail } from '@/features/sites/hooks'
 import { followUpService } from '@/features/sites/components/followUpService'
-import { useKeyboardOpen } from '@/hooks/use-keyboard-open'
 
 type FollowUpStatus = 'following' | 'won' | 'lost' | 'cancelled'
 
@@ -27,7 +26,6 @@ const STATUS_OPTIONS: { value: FollowUpStatus; label: string; icon: typeof Circl
 export function UpdateSitePage() {
   const { code } = useParams<{ code: string }>()
   const navigate = useNavigate()
-  const keyboardOpen = useKeyboardOpen()
   const location = useLocation()
   const { data: site } = useSiteDetail(code || '')
   const { data: options } = useOptions()
@@ -46,7 +44,7 @@ export function UpdateSitePage() {
   const [competitor, setCompetitor] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  const stages = options?.stages || ['เทฐาน', 'ตั้งเสา', 'ขึ้นโครง', 'รอมุง', 'วางแปลน', 'อื่นๆ']
+  const stages = options?.stages || ['เริ่มก่อสร้าง', 'กำลังสร้าง', 'ใกล้เสร็จ', 'รอตัดสินใจ', 'เสนอราคาแล้ว', 'อื่นๆ']
   const lostReasons = options?.lostReasons || ['ราคา', 'ช่างมีร้านประจำ', 'ส่งช้า', 'ของไม่พร้อม', 'อื่นๆ']
   const competitors = options?.competitors || ['กระทิง', 'เหล็กสยาม', 'อื่นๆ']
 
@@ -195,7 +193,7 @@ export function UpdateSitePage() {
               value={wonValue}
               onChange={(e) => setWonValue(e.target.value)}
               placeholder="เช่น 50000"
-              className="w-full h-11 rounded-lg border border-input bg-background px-3 text-base num"
+              className="w-full h-12 rounded-lg border border-input bg-background px-3 text-base num"
             />
           </section>
         )}
@@ -246,9 +244,8 @@ export function UpdateSitePage() {
         )}
       </div>
 
-      {/* Sticky submit (ซ่อนตอนพิมพ์) */}
-      {!keyboardOpen && (
-      <div className="fixed bottom-0 inset-x-0 bg-background/95 backdrop-blur border-t px-4 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
+      {/* Sticky submit */}
+      <div className="fixed bottom-0 inset-x-0 bg-background border-t px-4 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
         <Button
           onClick={handleSubmit}
           disabled={submitting || !canSubmit}
@@ -258,7 +255,6 @@ export function UpdateSitePage() {
           {submitting ? 'กำลังบันทึก...' : 'บันทึกและส่งเข้ากลุ่ม'}
         </Button>
       </div>
-      )}
     </div>
   )
 }
