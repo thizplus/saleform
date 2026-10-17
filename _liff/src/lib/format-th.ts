@@ -58,3 +58,17 @@ export function formatPhone(phone: string): string {
   }
   return phone
 }
+
+/**
+ * เวลาที่ผ่านมาแบบสั้น: "วันนี้", "เมื่อวาน", "3 วันก่อน", "2 เดือนก่อน"
+ */
+export function formatAgo(dateStr: string | Date): string {
+  const d = dateStr instanceof Date ? dateStr : new Date(dateStr)
+  if (isNaN(d.getTime())) return ''
+  const days = getOverdueDays(d)
+  if (days <= 0) return 'วันนี้'
+  if (days === 1) return 'เมื่อวาน'
+  if (days < 30) return `${days} วันก่อน`
+  if (days < 365) return `${Math.floor(days / 30)} เดือนก่อน`
+  return `${Math.floor(days / 365)} ปีก่อน`
+}

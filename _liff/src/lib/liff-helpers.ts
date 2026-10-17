@@ -53,6 +53,25 @@ export async function sendFlexToChat(flexMessage: unknown): Promise<boolean> {
   }
 }
 
+/** ส่งหลาย messages เข้ากลุ่ม (text, image, location) — สูงสุด 5 ต่อครั้ง */
+export async function sendChatMessages(messages: unknown[]): Promise<boolean> {
+  try {
+    const context = liff.getContext()
+    if (!context || (context.type !== 'group' && context.type !== 'room' && context.type !== 'utou')) {
+      console.warn('Not in a chat context, cannot send messages')
+      return false
+    }
+
+    // LINE LIFF sendMessages รองรับสูงสุด 5 messages ต่อครั้ง
+    const batch = messages.slice(0, 5)
+    await liff.sendMessages(batch as never[])
+    return true
+  } catch (err) {
+    console.error('sendMessages failed:', err)
+    return false
+  }
+}
+
 export function closeLiff(): void {
   if (liff.isInClient()) {
     liff.closeWindow()

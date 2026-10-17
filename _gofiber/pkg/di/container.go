@@ -10,6 +10,7 @@ import (
 	"line-sales-api/domain/services"
 	"line-sales-api/infrastructure/postgres"
 	infraredis "line-sales-api/infrastructure/redis"
+	"line-sales-api/infrastructure/line"
 	"line-sales-api/infrastructure/storage"
 	"line-sales-api/interfaces/api/handlers"
 	"line-sales-api/pkg/config"
@@ -61,10 +62,16 @@ func NewContainer(cfg *config.Config) *Container {
 	txManager := postgres.NewTxManager(c.DB)
 	repos := newRepositories(c.DB)
 
+	// LINE Messenger (ถ้ามี access token)
+	var lineMessenger ports.LineMessenger
+	if cfg.LINE.ChannelAccessToken != "" {
+		lineMessenger = line.NewMessenger(cfg.LINE.ChannelAccessToken)
+	}
+
 	// Services
 	c.WebhookService = serviceimpl.NewWebhookService(cfg.LINE, repos.lineEvent, repos.lineGroup, repos.salesRep)
 	c.AuthService = serviceimpl.NewAuthService(cfg.JWT, cfg.LINE, repos.salesRep, repos.adminUser, repos.site)
-	c.SiteService = serviceimpl.NewSiteService(repos.site, repos.siteReport, repos.contact, repos.mediaFile, repos.siteCodeCounter, repos.salesRep, txManager, cfg.R2.PublicURL)
+	c.SiteService = serviceimpl.NewSiteService(repos.site, repos.siteReport, repos.contact, repos.mediaFile, repos.siteCodeCounter, repos.salesRep, txManager, cfg.R2.PublicURL, lineMessenger)
 
 	if c.Storage != nil {
 		c.UploadService = serviceimpl.NewUploadService(c.Storage, repos.mediaFile)

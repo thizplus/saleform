@@ -1,245 +1,287 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Phone, Navigation, RefreshCw, BarChart3, Search } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Plus, Phone, BarChart3, Search, RefreshCw } from 'lucide-react'
 import { StatusBadge } from '@/components/shared'
 import { useAuthStore } from '@/stores/auth'
-import { formatThaiDate, formatPhone } from '@/lib/format-th'
+import { formatThaiDate, formatRelativeDay, formatPhone, formatAgo } from '@/lib/format-th'
+import { useKeyboardOpen } from '@/hooks/use-keyboard-open'
 import { useSiteList } from '../hooks'
 import type { SiteListParams, SiteBrief } from '../types'
 
-const TAB_OPTIONS = [
-  { value: 'due_today', label: 'ต้องตาม' },
-  { value: 'overdue', label: 'เลยกำหนด' },
-  { value: 'all', label: 'ทั้งหมด' },
-] as const
+type TabValue = 'due_today' | 'overdue' | 'following' | 'all'
 
-/** L4 — งานของฉัน (หน้าแรก) */
+/**
+ * L4 — งานของฉัน (หน้าแรก) แบบกะทัดรัด
+ * ส่วนที่ติดบนจอมีแค่ 2 แถว (~100px): ชื่อ + แท็บพร้อมตัวเลข
+ * พื้นที่ที่เหลือให้รายการงานทั้งหมด
+ */
 export function HomePage() {
   const navigate = useNavigate()
   const profile = useAuthStore((s) => s.profile)
-
-  const [activeTab, setActiveTab] = useState('due_today')
-  const [search, setSearch] = useState('')
-  const [params, setParams] = useState<SiteListParams>({ tab: 'due_today', page: 1, limit: 50 })
-
-  const { data, isLoading, refetch } = useSiteList(params, true)
-
-  function handleTabChange(tab: string) {
-    setActiveTab(tab)
-    setParams((prev) => ({ ...prev, tab, page: 1 }))
-  }
-
-  function handleSearch(q: string) {
-    setSearch(q)
-    setParams((prev) => ({ ...prev, q: q || undefined, page: 1 }))
-  }
-
   const counts = profile?.counts
+  const keyboardOpen = useKeyboardOpen()
+
+  const [tab, setTab] = useState<TabValue>('due_today')
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [q, setQ] = useState('')
+  const [debouncedQ, setDebouncedQ] = useState('')
+  const searchRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQ(q.trim()), 300)
+    return () => clearTimeout(t)
+  }, [q])
+
+  // ค้นหา = ค้นทุกงาน ไม่จำกัดแท็บ
+  const params: SiteListParams = debouncedQ
+    ? { tab: 'all', q: debouncedQ, page: 1, limit: 50 }
+    : { tab, page: 1, limit: 50 }
+  const { data, isLoading, isError, refetch, isFetching } = useSiteList(params, true)
+  const sites = data?.sites ?? []
+
+  const tabs: { value: TabValue; label: string; count?: number; tone?: 'warn' }[] = [
+    { value: 'due_today', label: 'วันนี้', count: counts?.dueToday },
+    { value: 'overdue', label: 'เลยกำหนด', count: counts?.overdue, tone: 'warn' },
+    { value: 'following', label: 'ติดตาม', count: counts?.following },
+    { value: 'all', label: 'ทั้งหมด', count: counts?.total },
+  ]
+
+  function openSearch() {
+    setSearchOpen(true)
+    requestAnimationFrame(() => searchRef.current?.focus())
+  }
+  function closeSearch() {
+    setSearchOpen(false)
+    setQ('')
+  }
+
+  // แท็บ "ติดตาม" จัดกลุ่มตามวันนัด เพื่อวางแผนสัปดาห์
+  const grouped = tab === 'following' && !debouncedQ
 
   return (
-    <div className="min-h-dvh bg-background flex flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-10 bg-background border-b px-4 pt-3 pb-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            {profile?.pictureUrl && (
-              <img src={profile.pictureUrl} alt="" className="size-8 rounded-full" />
-            )}
-            <div>
-              <p className="text-sm font-bold">{profile?.nickname || profile?.displayName}</p>
-              <p className="text-xs text-muted-foreground">
-                {profile?.areas?.join(', ') || 'ไม่ระบุพื้นที่'}
-              </p>
-            </div>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate('/my-stats')}
-            aria-label="ผลงานของฉัน"
-          >
-            <BarChart3 className="size-5" />
-          </Button>
-        </div>
-
-        {/* Hero: ต้องตามวันนี้ */}
-        <div className="mt-3">
-          <p className="text-sm text-muted-foreground">วันนี้ต้องตาม</p>
-          <p className="text-[56px] leading-none font-black num">
-            {counts?.dueToday ?? 0}
-            <span className="text-base font-normal text-muted-foreground ml-2">งาน</span>
-          </p>
-          <div className="flex gap-3 mt-1 text-sm">
-            {(counts?.overdue ?? 0) > 0 && (
-              <span className="text-warning-ink font-bold">
-                เลยกำหนด <span className="num">{counts?.overdue}</span> งาน
-              </span>
-            )}
-            <span className="text-muted-foreground">
-              ติดตามอยู่ <span className="num">{counts?.following ?? 0}</span>
-            </span>
-          </div>
-        </div>
-
-        {/* TODO: WeekStrip 7 วัน (L-02) */}
-      </header>
-
-      {/* Tabs + Search */}
-      <div className="border-b px-4 pt-2">
-        <div className="flex gap-1">
-          {TAB_OPTIONS.map((tab) => (
-            <button
-              key={tab.value}
-              className={`px-3 py-2 text-sm rounded-t-lg transition-colors ${
-                activeTab === tab.value
-                  ? 'bg-primary text-primary-foreground font-bold'
-                  : 'text-muted-foreground hover:bg-muted'
-              }`}
-              onClick={() => handleTabChange(tab.value)}
-            >
-              {tab.label}
-              {tab.value === 'overdue' && (counts?.overdue ?? 0) > 0 && (
-                <span className="ml-1 num">{counts?.overdue}</span>
-              )}
+    <div className="min-h-dvh bg-background">
+      {/* ===== ส่วนบนที่ติดจอ (2 แถว) ===== */}
+      <header className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b">
+        {searchOpen ? (
+          <div className="flex items-center gap-2 px-3 h-14">
+            <Search className="size-4 text-muted-foreground shrink-0" />
+            <input
+              ref={searchRef}
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="ชื่อลูกค้า ช่าง เบอร์ หรือรหัสงาน"
+              className="flex-1 h-10 bg-transparent text-base outline-none placeholder:text-muted-foreground"
+              enterKeyHint="search"
+            />
+            <button onClick={closeSearch} className="h-10 px-2 text-sm font-bold" aria-label="ปิดการค้นหา">
+              ยกเลิก
             </button>
-          ))}
-        </div>
-        <div className="relative py-2">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-          <Input
-            placeholder="ค้นหาชื่อ เบอร์ รหัสงาน"
-            value={search}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="pl-8 h-10 text-base"
-          />
-        </div>
-      </div>
-
-      {/* Site list */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2 pb-24">
-        {isLoading ? (
-          // Skeleton 3 การ์ด
-          <>
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="border rounded-xl p-3 space-y-2 animate-pulse">
-                <div className="h-4 bg-muted rounded w-1/3" />
-                <div className="h-5 bg-muted rounded w-2/3" />
-                <div className="h-3 bg-muted rounded w-1/2" />
-                <div className="flex gap-2 mt-2">
-                  <div className="h-9 bg-muted rounded flex-1" />
-                  <div className="h-9 bg-muted rounded flex-1" />
-                  <div className="h-9 bg-muted rounded flex-1" />
-                </div>
-              </div>
-            ))}
-          </>
-        ) : !data?.sites?.length ? (
-          <div className="text-center py-12 space-y-3">
-            <p className="text-muted-foreground">ไม่มีงานต้องตามวันนี้</p>
-            <Button variant="outline" onClick={() => navigate('/new')}>
-              รายงานงานใหม่
-            </Button>
           </div>
         ) : (
-          data.sites.map((site) => (
-            <SiteCard
-              key={site.siteCode}
-              site={site}
-              onTap={() => navigate(`/sites/${site.siteCode}`)}
-              onUpdate={() => navigate(`/sites/${site.siteCode}/update`)}
-            />
-          ))
+          <div className="flex items-center gap-2.5 px-4 h-14">
+            {profile?.pictureUrl ? (
+              <img src={profile.pictureUrl} alt="" className="size-8 rounded-full shrink-0" />
+            ) : (
+              <div className="size-8 rounded-full bg-muted shrink-0" />
+            )}
+            <div className="min-w-0 flex-1 leading-tight">
+              <p className="text-sm font-bold truncate">{profile?.nickname || profile?.displayName}</p>
+              <p className="text-xs text-muted-foreground truncate">
+                {profile?.areas?.length ? profile.areas.join(' · ') : 'ยังไม่ระบุพื้นที่'}
+              </p>
+            </div>
+            <IconBtn label="ค้นหา" onClick={openSearch}><Search className="size-5" /></IconBtn>
+            <IconBtn label="ผลงานของฉัน" onClick={() => navigate('/my-stats')}><BarChart3 className="size-5" /></IconBtn>
+          </div>
         )}
 
-        {/* Pull to refresh hint */}
-        {!isLoading && data?.sites?.length && (
+        {/* แท็บพร้อมตัวเลข (แทน hero + week strip เดิม) */}
+        {!debouncedQ && (
+          <nav className="flex gap-1.5 px-3 pb-2 overflow-x-auto no-scrollbar" aria-label="กรองงาน">
+            {tabs.map((t) => {
+              const active = tab === t.value
+              const warn = t.tone === 'warn' && (t.count ?? 0) > 0
+              return (
+                <button
+                  key={t.value}
+                  onClick={() => setTab(t.value)}
+                  aria-pressed={active}
+                  className={`shrink-0 h-9 px-3 rounded-full text-sm flex items-center gap-1.5 border transition-colors ${
+                    active
+                      ? 'bg-primary text-primary-foreground border-primary font-bold'
+                      : 'bg-background border-border text-foreground'
+                  }`}
+                >
+                  {t.label}
+                  {t.count !== undefined && (
+                    <span
+                      className={`num text-xs font-bold min-w-5 h-5 px-1 rounded-full grid place-items-center ${
+                        active
+                          ? 'bg-primary-foreground/20'
+                          : warn
+                            ? 'bg-warning-soft text-warning-ink'
+                            : 'bg-muted text-muted-foreground'
+                      }`}
+                    >
+                      {t.count}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </nav>
+        )}
+        {debouncedQ && (
+          <p className="px-4 pb-2 text-xs text-muted-foreground">
+            ผลการค้นหา "{debouncedQ}" · <span className="num">{data?.total ?? 0}</span> งาน
+          </p>
+        )}
+      </header>
+
+      {/* ===== รายการงาน ===== */}
+      <main className="pb-24">
+        {isLoading ? (
+          <ListSkeleton />
+        ) : isError ? (
+          <div className="px-4 py-10 text-center space-y-3">
+            <p className="text-sm">โหลดรายการไม่สำเร็จ ตรวจสอบอินเทอร์เน็ตแล้วลองอีกครั้ง</p>
+            <button onClick={() => refetch()} className="h-10 px-4 rounded-lg border text-sm font-bold">ลองอีกครั้ง</button>
+          </div>
+        ) : sites.length === 0 ? (
+          <EmptyState tab={tab} searching={!!debouncedQ} onNew={() => navigate('/new')} />
+        ) : (
+          <ul className="divide-y">
+            {sites.map((site, i) => {
+              const header = grouped ? groupLabel(site, sites[i - 1]) : null
+              return (
+                <li key={site.siteCode}>
+                  {header && (
+                    <div className="bg-muted px-4 py-1.5 text-xs font-bold text-muted-foreground">
+                      {header}
+                    </div>
+                  )}
+                  <SiteRow site={site} onOpen={() => navigate(`/sites/${site.siteCode}`)} />
+                </li>
+              )
+            })}
+          </ul>
+        )}
+
+        {!isLoading && sites.length > 0 && (
           <button
             onClick={() => refetch()}
-            className="w-full py-3 text-sm text-muted-foreground flex items-center justify-center gap-1"
+            className="w-full py-4 text-xs text-muted-foreground flex items-center justify-center gap-1"
           >
-            <RefreshCw className="size-3.5" />
-            โหลดใหม่
+            <RefreshCw className={`size-3.5 ${isFetching ? 'animate-spin' : ''}`} />
+            {isFetching ? 'กำลังโหลด…' : `แสดง ${sites.length} จาก ${data?.total ?? sites.length} งาน · แตะเพื่อโหลดใหม่`}
           </button>
         )}
-      </div>
+      </main>
 
-      {/* Floating action button */}
-      <div className="fixed bottom-0 inset-x-0 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-        <Button
+      {/* ===== ปุ่มรายงานงานใหม่ (ซ่อนตอนพิมพ์) ===== */}
+      {!keyboardOpen && !searchOpen && (
+        <button
           onClick={() => navigate('/new')}
-          size="xl"
-          className="w-full gap-2"
+          className="fixed right-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-20 h-12 pl-4 pr-5 rounded-full bg-primary text-primary-foreground font-bold text-base flex items-center gap-1.5 shadow-lg shadow-black/20 active:scale-[0.98] transition-transform"
         >
           <Plus className="size-5" />
           รายงานงานใหม่
-        </Button>
-      </div>
+        </button>
+      )}
     </div>
   )
 }
 
-/** การ์ดงาน (SiteCard) */
-function SiteCard({
-  site,
-  onTap,
-  onUpdate,
-}: {
-  site: SiteBrief
-  onTap: () => void
-  onUpdate: () => void
-}) {
+/** แถวงาน 1 รายการ — สูงประมาณ 76px เห็นได้ 7–8 งานต่อจอ */
+function SiteRow({ site, onOpen }: { site: SiteBrief; onOpen: () => void }) {
+  const title = site.customerName || (site.contractorName ? `ช่าง${site.contractorName}` : 'ไม่ระบุชื่อ')
+  const sub = [
+    site.customerName && site.contractorName ? `ช่าง${site.contractorName}` : null,
+    site.tambon ? `ต.${site.tambon}` : null,
+    site.amphoe ? `อ.${site.amphoe}` : null,
+  ].filter(Boolean).join(' · ')
+
   return (
-    <div
-      className="border rounded-xl p-3 space-y-2 active:bg-muted/50 transition-colors"
-      onClick={onTap}
-    >
-      {/* Row 1: รหัส + สถานะ */}
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-bold num">#{site.siteCode}</span>
-        <StatusBadge status={site.status} nextFollowUpDate={site.nextFollowUpDate} />
-      </div>
-
-      {/* Row 2: ชื่อ */}
-      <p className="text-lg font-bold leading-tight">{site.customerName}</p>
-
-      {/* Row 3: ตำบล อำเภอ */}
-      <p className="text-sm text-muted-foreground">
-        {site.reportCount > 0 && (
-          <>ครั้งที่ <span className="num">{site.reportCount}</span> · </>
-        )}
-        {site.nextFollowUpDate && (
-          <>ล่าสุด {formatThaiDate(site.nextFollowUpDate)}</>
-        )}
-      </p>
-
-      {/* Row 4: ปุ่มลัด */}
-      <div className="flex gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
-        {site.phone && (
-          <a
-            href={`tel:${site.phone}`}
-            className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-lg border text-sm font-bold hover:bg-muted transition-colors"
-          >
-            <Phone className="size-4" />
-            <span className="num">{formatPhone(site.phone)}</span>
-          </a>
-        )}
-        {/* TODO: ปุ่มนำทางใช้ lat/lng */}
-        <button
-          className="flex items-center justify-center gap-1.5 h-10 px-3 rounded-lg border text-sm font-bold hover:bg-muted transition-colors"
-          onClick={() => {/* TODO: open maps */}}
+    <div className="flex items-stretch">
+      <button onClick={onOpen} className="flex-1 min-w-0 text-left px-4 py-3 active:bg-muted/60">
+        <div className="flex items-center gap-2">
+          <p className="text-[15px] font-bold truncate flex-1">{title}</p>
+          <StatusBadge status={site.status} nextFollowUpDate={site.nextFollowUpDate} className="shrink-0" />
+        </div>
+        {sub && <p className="text-[13px] text-muted-foreground truncate mt-0.5">{sub}</p>}
+        <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5">
+          <span className="num font-bold text-foreground/70">#{site.siteCode}</span>
+          <span>·</span>
+          <span>ตาม <span className="num">{site.reportCount}</span> ครั้ง</span>
+          {site.lastReportAt && (
+            <>
+              <span>·</span>
+              <span>ล่าสุด{formatAgo(site.lastReportAt)}</span>
+            </>
+          )}
+        </p>
+      </button>
+      {site.phone && (
+        <a
+          href={`tel:${site.phone}`}
+          aria-label={`โทร ${formatPhone(site.phone)}`}
+          className="w-14 shrink-0 grid place-items-center border-l text-foreground active:bg-muted/60"
         >
-          <Navigation className="size-4" />
+          <Phone className="size-5" />
+        </a>
+      )}
+    </div>
+  )
+}
+
+/** หัวกลุ่มวันนัด (แท็บติดตาม) */
+function groupLabel(site: SiteBrief, prev?: SiteBrief): string | null {
+  const key = site.nextFollowUpDate?.slice(0, 10) ?? 'none'
+  const prevKey = prev ? prev.nextFollowUpDate?.slice(0, 10) ?? 'none' : null
+  if (key === prevKey) return null
+  if (key === 'none') return 'ไม่มีวันนัด'
+  const rel = formatRelativeDay(key)
+  return `${rel} · ${formatThaiDate(key)}`
+}
+
+function IconBtn({ label, onClick, children }: { label: string; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button onClick={onClick} aria-label={label} className="size-10 grid place-items-center rounded-full active:bg-muted shrink-0">
+      {children}
+    </button>
+  )
+}
+
+function ListSkeleton() {
+  return (
+    <ul className="divide-y">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <li key={i} className="px-4 py-3 space-y-2 animate-pulse">
+          <div className="flex justify-between"><div className="h-4 bg-muted rounded w-1/2" /><div className="h-4 bg-muted rounded w-16" /></div>
+          <div className="h-3 bg-muted rounded w-2/3" />
+          <div className="h-3 bg-muted rounded w-1/3" />
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+function EmptyState({ tab, searching, onNew }: { tab: TabValue; searching: boolean; onNew: () => void }) {
+  const text = searching
+    ? 'ไม่พบงานที่ค้นหา ลองพิมพ์เบอร์หรือชื่อช่าง'
+    : tab === 'due_today'
+      ? 'วันนี้ไม่มีงานต้องตาม'
+      : tab === 'overdue'
+        ? 'ไม่มีงานเลยกำหนด'
+        : 'ยังไม่มีงาน'
+  return (
+    <div className="px-6 py-14 text-center space-y-3">
+      <p className="text-sm text-muted-foreground">{text}</p>
+      {!searching && (
+        <button onClick={onNew} className="h-10 px-4 rounded-full border text-sm font-bold inline-flex items-center gap-1.5">
+          <Plus className="size-4" /> รายงานงานใหม่
         </button>
-        <Button
-          variant="default"
-          className="flex-1"
-          onClick={onUpdate}
-        >
-          อัปเดต
-        </Button>
-      </div>
+      )}
     </div>
   )
 }

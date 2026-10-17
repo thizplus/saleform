@@ -90,7 +90,13 @@ func (r *siteRepository) List(ctx context.Context, filter repositories.SiteFilte
 	offset := (filter.Page - 1) * filter.Limit
 
 	var sites []models.Site
-	err := db.Order("created_at DESC").Offset(offset).Limit(filter.Limit).Find(&sites).Error
+	// แท็บติดตาม: เรียงตามวันนัด (ใกล้สุดก่อน) เพื่อจัดกลุ่มตามวันในหน้า LIFF
+	order := "created_at DESC"
+	switch filter.Tab {
+	case "due_today", "overdue", "following":
+		order = "next_follow_up_date ASC NULLS LAST, created_at DESC"
+	}
+	err := db.Order(order).Offset(offset).Limit(filter.Limit).Find(&sites).Error
 	return sites, total, err
 }
 

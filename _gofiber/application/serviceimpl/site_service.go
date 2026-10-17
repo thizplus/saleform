@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"strings"
 	"time"
 
 	"line-sales-api/domain/dto"
@@ -24,6 +25,7 @@ type siteServiceImpl struct {
 	siteCodeRepo    repositories.SiteCodeCounterRepository
 	salesRepRepo    repositories.SalesRepRepository
 	txManager       ports.TxManager
+	lineMessenger   ports.LineMessenger
 	r2PublicURL     string
 }
 
@@ -36,16 +38,18 @@ func NewSiteService(
 	salesRepRepo repositories.SalesRepRepository,
 	txManager ports.TxManager,
 	r2PublicURL string,
+	lineMessenger ports.LineMessenger,
 ) *siteServiceImpl {
 	return &siteServiceImpl{
-		siteRepo:     siteRepo,
-		reportRepo:   reportRepo,
-		contactRepo:  contactRepo,
-		mediaRepo:    mediaRepo,
-		siteCodeRepo: siteCodeRepo,
-		salesRepRepo: salesRepRepo,
-		txManager:    txManager,
-		r2PublicURL:  r2PublicURL,
+		siteRepo:      siteRepo,
+		reportRepo:    reportRepo,
+		contactRepo:   contactRepo,
+		mediaRepo:     mediaRepo,
+		siteCodeRepo:  siteCodeRepo,
+		salesRepRepo:  salesRepRepo,
+		txManager:     txManager,
+		r2PublicURL:   r2PublicURL,
+		lineMessenger: lineMessenger,
 	}
 }
 
@@ -102,6 +106,8 @@ func (s *siteServiceImpl) Create(ctx context.Context, repID uuid.UUID, req *dto.
 		Latitude:          req.Latitude,
 		Longitude:         req.Longitude,
 		Address:           req.Address,
+		Tambon:            strings.TrimSpace(req.Tambon),
+		Amphoe:            strings.TrimSpace(req.Amphoe),
 		Stage:             firstNonEmpty(req.Stage, "new"),
 		Status:            "following",
 		ExpectedOrderDate: expectedDate,
@@ -170,13 +176,29 @@ func (s *siteServiceImpl) Create(ctx context.Context, repID uuid.UUID, req *dto.
 
 	logger.InfoContext(ctx, "Site created", "site_code", siteCode, "rep_id", repID)
 
-	// Build flex message
+	// Build messages (ข้อความ + รูป + ตำแหน่ง)
 	rep, _ := s.salesRepRepo.GetByID(ctx, repID)
 	repName := ""
 	if rep != nil {
 		repName = rep.DisplayName
 	}
-	flex := BuildNewSiteFlexMessage(site, report, repName)
+
+	// รวม photo URLs
+	photoURLs := s.getPhotoURLs(ctx, reportID)
+	lineMessages := BuildNewSiteMessages(site, report, repName, photoURLs)
+
+	// ส่งเข้ากลุ่ม LINE (ถ้ามี GroupID + lineMessenger)
+	if site.GroupID != "" && s.lineMessenger != nil {
+		msgInterfaces := make([]any, len(lineMessages))
+		for i, m := range lineMessages {
+			msgInterfaces[i] = m
+		}
+		if err := s.lineMessenger.PushMessage(ctx, site.GroupID, msgInterfaces...); err != nil {
+			logger.WarnContext(ctx, "Failed to push message to group", "group_id", site.GroupID, "error", err)
+		} else {
+			logger.InfoContext(ctx, "Message pushed to group", "group_id", site.GroupID, "site_code", siteCode)
+		}
+	}
 
 	return &dto.CreateSiteResponse{
 		Site: dto.SiteBrief{
@@ -198,7 +220,7 @@ func (s *siteServiceImpl) Create(ctx context.Context, repID uuid.UUID, req *dto.
 			RepName:    repName,
 			ReportDate: report.ReportDate,
 		},
-		FlexMessage: flex,
+		ChatMessages: lineMessages,
 	}, nil
 }
 
@@ -228,6 +250,7 @@ func (s *siteServiceImpl) CheckDuplicate(ctx context.Context, phone string, lat,
 			}
 		}
 	}
+	// Note: IsMine จะถูก set ใน handler (ที่รู้ repID ของคน request)
 
 	// Check by location (150m radius)
 	if lat != nil && lng != nil {
@@ -338,6 +361,7 @@ func (s *siteServiceImpl) GetByCode(ctx context.Context, code string, viewerRepI
 		Longitude:         site.Longitude,
 		Address:           site.Address,
 		Amphoe:            site.Amphoe,
+		Tambon:            site.Tambon,
 		Stage:             site.Stage,
 		Status:            site.Status,
 		LostReason:        site.LostReason,
@@ -407,6 +431,12 @@ func (s *siteServiceImpl) List(ctx context.Context, repID *uuid.UUID, filter *dt
 			IsMine:           isMine,
 			OwnerName:        ownerName,
 			ReportCount:      site.ReportCount,
+			ContractorName:   site.ContractorName,
+			Tambon:           site.Tambon,
+			Amphoe:           site.Amphoe,
+			Lat:              site.Latitude,
+			Lng:              site.Longitude,
+			LastReportAt:     site.LastReportAt,
 		})
 	}
 
@@ -507,7 +537,20 @@ func (s *siteServiceImpl) AddFollowUp(ctx context.Context, repID uuid.UUID, code
 		repName = rep.DisplayName
 	}
 
-	flex := BuildFollowUpFlexMessage(site, report, repName)
+	// Build messages (ข้อความ + รูป)
+	photoURLs := s.getPhotoURLs(ctx, reportID)
+	lineMessages := BuildFollowUpMessages(site, report, repName, photoURLs)
+
+	// ส่งเข้ากลุ่ม LINE (ถ้ามี GroupID + lineMessenger)
+	if site.GroupID != "" && s.lineMessenger != nil {
+		msgInterfaces := make([]any, len(lineMessages))
+		for i, m := range lineMessages {
+			msgInterfaces[i] = m
+		}
+		if err := s.lineMessenger.PushMessage(ctx, site.GroupID, msgInterfaces...); err != nil {
+			logger.WarnContext(ctx, "Failed to push follow-up to group", "group_id", site.GroupID, "error", err)
+		}
+	}
 
 	var followUpStr *string
 	if site.NextFollowUpDate != nil {
@@ -536,7 +579,7 @@ func (s *siteServiceImpl) AddFollowUp(ctx context.Context, repID uuid.UUID, code
 			RepName:    repName,
 			ReportDate: report.ReportDate,
 		},
-		FlexMessage: flex,
+		ChatMessages: lineMessages,
 	}, nil
 }
 
@@ -581,6 +624,22 @@ func (s *siteServiceImpl) Update(ctx context.Context, code string, req *dto.Upda
 	}
 
 	return s.siteRepo.Update(ctx, site)
+}
+
+// getPhotoURLs ดึง public URLs ของรูปใน report
+func (s *siteServiceImpl) getPhotoURLs(ctx context.Context, reportID uuid.UUID) []string {
+	photos, err := s.mediaRepo.GetByReportID(ctx, reportID)
+	if err != nil || len(photos) == 0 {
+		return nil
+	}
+	urls := make([]string, 0, len(photos))
+	for _, p := range photos {
+		url := s.photoURL(p.StorageKey)
+		if url != "" {
+			urls = append(urls, url)
+		}
+	}
+	return urls
 }
 
 // DuplicateError returned when duplicate found and forceNew is false

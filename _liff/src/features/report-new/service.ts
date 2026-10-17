@@ -5,7 +5,7 @@ import type { CreateSiteForm, OptionsData, DuplicateMatch } from './types'
 interface CreateSiteResponse {
   site: { siteCode: string; customerName: string }
   report: { id: string }
-  flexMessage: unknown
+  chatMessages: unknown[] // LINE messages (text+image+location)
 }
 
 interface DuplicateCheckResponse {
@@ -45,7 +45,12 @@ export const reportNewService = {
   },
 
   async createSite(data: CreateSiteForm): Promise<CreateSiteResponse> {
-    const res = await apiClient.post<{ data: CreateSiteResponse }>(LIFF_ROUTES.SITES, data)
+    const { idempotencyKey, ...body } = data
+    const headers: Record<string, string> = {}
+    if (idempotencyKey) {
+      headers['Idempotency-Key'] = idempotencyKey
+    }
+    const res = await apiClient.post<{ data: CreateSiteResponse }>(LIFF_ROUTES.SITES, body, { headers })
     return res.data.data
   },
 }

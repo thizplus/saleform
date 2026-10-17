@@ -241,5 +241,8 @@ func (s *authServiceImpl) countSites(ctx context.Context, repID uuid.UUID) dto.R
 	_, followingTotal, _ := s.siteRepo.List(ctx, repositories.SiteFilter{Tab: "following", RepID: &repID, Limit: 1})
 	counts.Following = int(followingTotal)
 
+	_, allTotal, _ := s.siteRepo.List(ctx, repositories.SiteFilter{Tab: "all", RepID: &repID, Limit: 1})
+	counts.Total = int(allTotal)
+
 	return counts
 }

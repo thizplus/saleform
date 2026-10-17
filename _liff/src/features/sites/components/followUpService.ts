@@ -15,7 +15,7 @@ interface CreateFollowUpParams {
 interface FollowUpResponse {
   site: { siteCode: string }
   report: { id: string }
-  flexMessage: unknown
+  chatMessages: unknown[]
 }
 
 export const followUpService = {

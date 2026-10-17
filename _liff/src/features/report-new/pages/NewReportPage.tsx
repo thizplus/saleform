@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, MapPin, Check } from 'lucide-react'
 import { toast } from 'sonner'
@@ -6,13 +6,16 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { sendFlexToChat } from '@/lib/liff-helpers'
+import { sendChatMessages } from '@/lib/liff-helpers'
 import { addDays } from '@/lib/thai-date'
 import { PhotoPicker } from '../components/PhotoPicker'
 import { GPSButton } from '../components/GPSButton'
 import { FollowUpDateChips } from '../components/FollowUpDateChips'
 import { DuplicateDialog } from '../components/DuplicateDialog'
-import { useOptions, useUploadPhotos, useCreateSite, useCheckDuplicate } from '../hooks'
+import { UploadProgressSheet, type UploadStep } from '../components/UploadProgressSheet'
+import { useOptions, useCreateSite, useCheckDuplicate } from '../hooks'
+import { reportNewService } from '../service'
+import { useKeyboardOpen } from '@/hooks/use-keyboard-open'
 import type { DuplicateMatch } from '../types'
 
 const DRAFT_KEY = 'liff-new-report-draft'
@@ -49,8 +52,8 @@ const defaultForm: FormData = {
 /** L5 — รายงานงานใหม่ */
 export function NewReportPage() {
   const navigate = useNavigate()
+  const keyboardOpen = useKeyboardOpen()
   const { data: options } = useOptions()
-  const uploadMutation = useUploadPhotos()
   const createMutation = useCreateSite()
   const dupCheck = useCheckDuplicate()
 
@@ -71,6 +74,10 @@ export function NewReportPage() {
   const [duplicateMatches, setDuplicateMatches] = useState<DuplicateMatch[]>([])
   const [phoneWarning, setPhoneWarning] = useState<DuplicateMatch | null>(null)
   const [draftSaved, setDraftSaved] = useState(false)
+  const [uploadSteps, setUploadSteps] = useState<UploadStep[]>([])
+  const [showProgress, setShowProgress] = useState(false)
+  // Idempotency-Key: สร้างใหม่ทุกครั้งที่เปิดฟอร์ม, ใช้ซ้ำถ้า retry
+  const idempotencyKeyRef = useRef(crypto.randomUUID())
 
   // ตรวจซ้ำเบอร์เมื่อครบ 10 หลัก
   const digits = form.phone.replace(/\D/g, '')
@@ -129,14 +136,51 @@ export function NewReportPage() {
         }
       }
 
-      // 2. อัปโหลดรูป
+      // 2. อัปโหลดรูปทีละรูป (พร้อมแสดง progress)
       let photoIds: string[] = []
       if (form.photos.length > 0) {
-        const uploadResult = await uploadMutation.mutateAsync(form.photos.map((p) => p.file))
-        photoIds = uploadResult.files.map((f) => f.id)
+        const steps: UploadStep[] = form.photos.map((_, i) => ({
+          label: `อัปโหลดรูปที่ ${i + 1}`,
+          status: 'pending' as const,
+        }))
+        steps.push({ label: 'บันทึกข้อมูล', status: 'pending' })
+        steps.push({ label: 'ส่งเข้ากลุ่ม', status: 'pending' })
+        setUploadSteps(steps)
+        setShowProgress(true)
+
+        // อัปโหลดทีละรูป
+        for (let i = 0; i < form.photos.length; i++) {
+          setUploadSteps((prev) =>
+            prev.map((s, idx) => idx === i ? { ...s, status: 'uploading' } : s)
+          )
+          try {
+            const result = await reportNewService.uploadPhotos([form.photos[i].file])
+            photoIds.push(...result.files.map((f) => f.id))
+            setUploadSteps((prev) =>
+              prev.map((s, idx) => idx === i ? { ...s, status: 'done' } : s)
+            )
+          } catch {
+            setUploadSteps((prev) =>
+              prev.map((s, idx) => idx === i ? { ...s, status: 'error' } : s)
+            )
+            throw new Error(`อัปโหลดรูปที่ ${i + 1} ไม่สำเร็จ`)
+          }
+        }
+
+        // อัพเดตขั้นตอนบันทึก
+        setUploadSteps((prev) =>
+          prev.map((s, idx) => idx === form.photos.length ? { ...s, status: 'uploading' } : s)
+        )
+      } else {
+        // ไม่มีรูป — แสดง progress แค่บันทึก+ส่ง
+        setUploadSteps([
+          { label: 'บันทึกข้อมูล', status: 'uploading' },
+          { label: 'ส่งเข้ากลุ่ม', status: 'pending' },
+        ])
+        setShowProgress(true)
       }
 
-      // 3. สร้างงานใหม่
+      // 3. สร้างงานใหม่ (พร้อม Idempotency-Key)
       const result = await createMutation.mutateAsync({
         phone: digits,
         customerName: form.customerName,
@@ -147,23 +191,44 @@ export function NewReportPage() {
         detail: form.detail,
         lat: form.lat,
         lng: form.lng,
-        address: `${form.tambon} ${form.amphoe}`.trim(),
+        address: `${form.tambon ? 'ต.' + form.tambon : ''} ${form.amphoe ? 'อ.' + form.amphoe : ''}`.trim(),
+        tambon: form.tambon,
+        amphoe: form.amphoe,
         expectedOrderDate: form.expectedOrder,
         nextFollowUpDate: form.nextFollowUpDate,
         photoIds,
         forceNew,
+        idempotencyKey: idempotencyKeyRef.current,
       })
 
-      // 4. ส่ง Flex Card
-      if (result.flexMessage) {
-        const sent = await sendFlexToChat(result.flexMessage)
-        if (sent) toast.success('ส่งการ์ดเข้ากลุ่มแล้ว')
+      // อัพเดต progress: บันทึกเสร็จ
+      setUploadSteps((prev) =>
+        prev.map((s) =>
+          s.label === 'บันทึกข้อมูล' ? { ...s, status: 'done' } :
+          s.label === 'ส่งเข้ากลุ่ม' ? { ...s, status: 'uploading' } : s
+        )
+      )
+
+      // 4. ส่งข้อความเข้ากลุ่ม
+      let sent = false
+      if (result.chatMessages?.length) {
+        sent = await sendChatMessages(result.chatMessages)
+        if (sent) toast.success('ส่งเข้ากลุ่มแล้ว')
       }
+
+      // อัพเดต progress: ส่งเสร็จ
+      setUploadSteps((prev) =>
+        prev.map((s) => s.label === 'ส่งเข้ากลุ่ม' ? { ...s, status: 'done' } : s)
+      )
 
       // 5. ลบ draft แล้วไปหน้าสำเร็จ
       localStorage.removeItem(DRAFT_KEY)
-      navigate(`/success?code=${result.site.siteCode}&name=${encodeURIComponent(result.site.customerName)}`)
+      setTimeout(() => {
+        setShowProgress(false)
+        navigate(`/success?code=${result.site.siteCode}&name=${encodeURIComponent(result.site.customerName)}&sent=${sent}`)
+      }, 500)
     } catch (err) {
+      setShowProgress(false)
       toast.error(err instanceof Error ? err.message : 'เกิดข้อผิดพลาด กรุณาลองใหม่')
     } finally {
       setSubmitting(false)
@@ -190,7 +255,7 @@ export function NewReportPage() {
         )}
       </header>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6 pb-36">
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-5 pb-32">
         {/* ===== ส่วนที่ 1: หน้างาน ===== */}
         <section className="space-y-3">
           <h2 className="text-base font-bold">หน้างาน</h2>
@@ -229,7 +294,7 @@ export function NewReportPage() {
                 value={form.tambon}
                 onChange={(e) => update('tambon', e.target.value)}
                 placeholder="ในเมือง"
-                className="h-12 text-base"
+                className="h-11 text-base"
               />
             </div>
             <div className="space-y-1">
@@ -239,7 +304,7 @@ export function NewReportPage() {
                 value={form.amphoe}
                 onChange={(e) => update('amphoe', e.target.value)}
                 placeholder="เมือง"
-                className="h-12 text-base"
+                className="h-11 text-base"
               />
             </div>
           </div>
@@ -267,7 +332,7 @@ export function NewReportPage() {
               value={form.phone}
               onChange={(e) => update('phone', e.target.value)}
               placeholder="08X-XXX-XXXX"
-              className="h-12 text-base num"
+              className="h-11 text-base num"
             />
             {phoneWarning && (
               <div className="rounded-lg bg-warning-soft px-3 py-2 text-sm text-warning-ink flex items-start gap-2">
@@ -280,14 +345,15 @@ export function NewReportPage() {
             )}
           </div>
 
+          <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1.5">
             <Label htmlFor="customerName" className="text-sm">ชื่อลูกค้า</Label>
             <Input
               id="customerName"
               value={form.customerName}
               onChange={(e) => update('customerName', e.target.value)}
-              placeholder="ชื่อลูกค้า / ชื่อโครงการ"
-              className="h-12 text-base"
+              placeholder="ชื่อลูกค้า"
+              className="h-11 text-base"
             />
           </div>
 
@@ -298,8 +364,10 @@ export function NewReportPage() {
               value={form.contractorName}
               onChange={(e) => update('contractorName', e.target.value)}
               placeholder="ชื่อช่าง"
-              className="h-12 text-base"
+              className="h-11 text-base"
             />
+          </div>
+
           </div>
 
           <div className="space-y-1.5">
@@ -381,7 +449,8 @@ export function NewReportPage() {
       </div>
 
       {/* ===== Sticky Action Bar ===== */}
-      <div className="fixed bottom-0 inset-x-0 bg-background border-t px-4 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
+      {!keyboardOpen && (
+      <div className="fixed bottom-0 inset-x-0 bg-background/95 backdrop-blur border-t px-4 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
         {missing.length > 0 && (
           <p className="text-xs text-muted-foreground mb-2">
             ขาด: {missing.join(', ')}
@@ -396,18 +465,23 @@ export function NewReportPage() {
           {submitting ? 'กำลังบันทึก...' : 'บันทึกและส่งเข้ากลุ่ม'}
         </Button>
       </div>
-
-      {/* Duplicate Dialog */}
-      {showDuplicate && (
-        <DuplicateDialog
-          matches={duplicateMatches}
-          onForceNew={() => {
-            setShowDuplicate(false)
-            handleSubmit(true)
-          }}
-          onCancel={() => setShowDuplicate(false)}
-        />
       )}
+
+      {/* Duplicate Drawer (L-04) */}
+      <DuplicateDialog
+        open={showDuplicate}
+        matches={duplicateMatches}
+        pendingNote={form.detail}
+        pendingPhotos={form.photos}
+        onForceNew={() => {
+          setShowDuplicate(false)
+          handleSubmit(true)
+        }}
+        onClose={() => setShowDuplicate(false)}
+      />
+
+      {/* Upload Progress Sheet (L-05) */}
+      <UploadProgressSheet open={showProgress} steps={uploadSteps} />
     </div>
   )
 }
@@ -418,7 +492,7 @@ function Chip({ label, selected, onClick }: { label: string; selected: boolean; 
     <button
       type="button"
       onClick={onClick}
-      className={`shrink-0 h-10 px-4 rounded-full text-sm font-bold border transition-colors ${
+      className={`shrink-0 h-9 px-3.5 rounded-full text-sm font-bold border transition-colors ${
         selected
           ? 'bg-primary text-primary-foreground border-primary'
           : 'bg-background text-foreground border-input hover:bg-muted'

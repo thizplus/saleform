@@ -9,10 +9,13 @@ export interface CreateSiteForm {
   lat: number | null
   lng: number | null
   address: string
+  tambon?: string
+  amphoe?: string
   expectedOrderDate: string
   nextFollowUpDate: string
   photoIds: string[]
   forceNew: boolean
+  idempotencyKey?: string
 }
 
 export interface OptionsData {
@@ -31,6 +34,7 @@ export interface DuplicateMatch {
   distanceM?: number
   ownerName: string
   status: string
+  isMine: boolean
 }
 
 export interface UploadedPhoto {

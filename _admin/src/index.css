@@ -11,7 +11,7 @@
 @font-face { font-family: "LINE Seed Sans TH"; src: url("/fonts/LINESeedSansTH_He.woff2") format("woff2"); font-weight: 900; font-display: swap; }
 
 @theme inline {
-    --font-sans: "Inter", "LINE Seed Sans TH", system-ui, sans-serif;
+    --font-sans: "LINE Seed Sans TH", "Inter Variable", system-ui, sans-serif;
     --font-heading: var(--font-sans);
 
     --color-background: var(--background);
@@ -136,6 +136,6 @@
 
 /* ตัวเลข / รหัสงาน / เบอร์ / วันที่ */
 .num {
-    font-family: "Inter", sans-serif;
+    font-family: "Inter Variable", "LINE Seed Sans TH", sans-serif;
     font-variant-numeric: tabular-nums;
 }

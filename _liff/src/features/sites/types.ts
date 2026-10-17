@@ -9,6 +9,12 @@ export interface SiteBrief {
   isMine: boolean
   ownerName: string
   reportCount: number
+  lat: number | null
+  lng: number | null
+  contractorName?: string
+  tambon?: string
+  amphoe?: string
+  lastReportAt?: string | null
 }
 
 export interface SiteDetail {
@@ -22,6 +28,7 @@ export interface SiteDetail {
   lng: number | null
   address: string
   amphoe: string
+  tambon?: string
   stage: string
   status: string
   lostReason: string
@@ -57,6 +64,21 @@ export interface PhotoBrief {
 export interface SiteListParams {
   tab?: string
   q?: string
+  day?: string
   page?: number
   limit?: number
+}
+
+export interface MyStatsData {
+  running: number
+  newJobs: number
+  completed: number
+  closeRate: number
+  teamCloseRate: number | null
+  outcomes: {
+    won: number
+    following: number
+    lost: number
+  }
+  onTimeRate: number | null
 }

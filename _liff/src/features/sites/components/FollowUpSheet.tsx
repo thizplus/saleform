@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { sendFlexToChat } from '@/lib/liff-helpers'
+// sendChatMessages imported dynamically below
 import { addDays } from '@/lib/thai-date'
 import { PhotoPicker } from '@/features/report-new/components/PhotoPicker'
 import { FollowUpDateChips } from '@/features/report-new/components/FollowUpDateChips'
@@ -93,11 +93,12 @@ export function FollowUpSheet({
         photoIds,
       })
 
-      // Send Flex Card to group
-      if (result.flexMessage) {
-        const sent = await sendFlexToChat(result.flexMessage)
+      // ส่งข้อความเข้ากลุ่ม
+      if (result.chatMessages?.length) {
+        const { sendChatMessages } = await import('@/lib/liff-helpers')
+        const sent = await sendChatMessages(result.chatMessages)
         if (sent) {
-          toast.success('ส่งการ์ดเข้ากลุ่มแล้ว')
+          toast.success('ส่งเข้ากลุ่มแล้ว')
         }
       }
 

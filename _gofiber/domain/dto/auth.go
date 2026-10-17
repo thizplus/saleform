@@ -28,6 +28,7 @@ type RepCounts struct {
 	DueToday  int `json:"dueToday"`
 	Overdue   int `json:"overdue"`
 	Following int `json:"following"`
+	Total     int `json:"total"`
 }
 
 // Admin Auth

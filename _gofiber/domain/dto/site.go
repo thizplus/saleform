@@ -14,6 +14,8 @@ type CreateSiteRequest struct {
 	Latitude         *float64 `json:"lat"`
 	Longitude        *float64 `json:"lng"`
 	Address          string   `json:"address"`
+	Tambon           string   `json:"tambon"`
+	Amphoe           string   `json:"amphoe"`
 	ExpectedOrderDate *string `json:"expectedOrderDate"` // YYYY-MM-DD
 	NextFollowUpDate  *string `json:"nextFollowUpDate"`  // YYYY-MM-DD
 	PhotoIDs         []string `json:"photoIds"`
@@ -21,9 +23,9 @@ type CreateSiteRequest struct {
 }
 
 type CreateSiteResponse struct {
-	Site        SiteBrief   `json:"site"`
-	Report      ReportBrief `json:"report"`
-	FlexMessage any         `json:"flexMessage"` // Flex JSON for liff.sendMessages()
+	Site         SiteBrief        `json:"site"`
+	Report       ReportBrief      `json:"report"`
+	ChatMessages []map[string]any `json:"chatMessages"` // LINE messages (text+image+location) ส่งผ่าน liff.sendMessages()
 }
 
 // Follow-up
@@ -39,9 +41,9 @@ type CreateFollowUpRequest struct {
 }
 
 type CreateFollowUpResponse struct {
-	Site        SiteBrief   `json:"site"`
-	Report      ReportBrief `json:"report"`
-	FlexMessage any         `json:"flexMessage"`
+	Site         SiteBrief        `json:"site"`
+	Report       ReportBrief      `json:"report"`
+	ChatMessages []map[string]any `json:"chatMessages"`
 }
 
 // Site list
@@ -74,6 +76,12 @@ type SiteBrief struct {
 	IsMine           bool    `json:"isMine"`
 	OwnerName        string  `json:"ownerName"`
 	ReportCount      int     `json:"reportCount"`
+	ContractorName   string     `json:"contractorName"`
+	Tambon           string     `json:"tambon"`
+	Amphoe           string     `json:"amphoe"`
+	Lat              *float64   `json:"lat"`
+	Lng              *float64   `json:"lng"`
+	LastReportAt     *time.Time `json:"lastReportAt"`
 }
 
 // Site detail
@@ -88,6 +96,7 @@ type SiteDetailResponse struct {
 	Longitude        *float64  `json:"lng"`
 	Address          string    `json:"address"`
 	Amphoe           string    `json:"amphoe"`
+	Tambon           string    `json:"tambon"`
 	Stage            string    `json:"stage"`
 	Status           string    `json:"status"`
 	LostReason       string    `json:"lostReason"`
@@ -127,13 +136,14 @@ type DuplicateCheckResponse struct {
 }
 
 type DuplicateMatch struct {
-	SiteCode    string  `json:"siteCode"`
+	SiteCode     string `json:"siteCode"`
 	CustomerName string `json:"customerName"`
-	Phone       string  `json:"phone"`
-	Reason      string  `json:"reason"` // phone, nearby
-	DistanceM   *int    `json:"distanceM,omitempty"`
-	OwnerName   string  `json:"ownerName"`
-	Status      string  `json:"status"`
+	Phone        string `json:"phone"`
+	Reason       string `json:"reason"` // phone, nearby
+	DistanceM    *int   `json:"distanceM,omitempty"`
+	OwnerName    string `json:"ownerName"`
+	Status       string `json:"status"`
+	IsMine       bool   `json:"isMine"`
 }
 
 // Update site (admin)

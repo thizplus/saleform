@@ -14,6 +14,7 @@ export interface RepProfile {
     dueToday: number
     overdue: number
     following: number
+    total: number
   }
 }
 
