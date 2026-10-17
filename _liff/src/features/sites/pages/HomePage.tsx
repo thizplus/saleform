@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Phone, Navigation, RefreshCw, BarChart3, Search } from 'lucide-react'
+import { Plus, Phone, RefreshCw, BarChart3, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { StatusBadge } from '@/components/shared'
 import { useAuthStore } from '@/stores/auth'
-import { formatThaiDate } from '@/lib/format-th'
+import { formatThaiDate, formatPhone } from '@/lib/format-th'
 import { useSiteList } from '../hooks'
 import type { SiteListParams, SiteBrief } from '../types'
 
@@ -51,6 +51,9 @@ export function HomePage() {
           )}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold truncate">{profile?.nickname || profile?.displayName}</p>
+            {profile?.area && (
+              <p className="text-xs text-muted-foreground truncate">{profile.area}</p>
+            )}
           </div>
           <button onClick={() => navigate('/my-stats')} className="size-9 grid place-items-center rounded-full active:bg-muted" aria-label="ผลงาน">
             <BarChart3 className="size-5" />
@@ -104,22 +107,16 @@ export function HomePage() {
       </header>
 
       {/* Site list */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2 pb-24">
+      <div className="flex-1 overflow-y-auto pb-24">
         {isLoading ? (
-          <>
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="border rounded-xl p-3 space-y-2 animate-pulse">
-                <div className="h-4 bg-muted rounded w-1/3" />
-                <div className="h-5 bg-muted rounded w-2/3" />
-                <div className="h-3 bg-muted rounded w-1/2" />
-                <div className="flex gap-2 mt-2">
-                  <div className="h-9 bg-muted rounded flex-1" />
-                  <div className="h-9 bg-muted rounded flex-1" />
-                  <div className="h-9 bg-muted rounded flex-1" />
-                </div>
-              </div>
+          <ul className="divide-y">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <li key={i} className="px-4 py-3 space-y-2 animate-pulse">
+                <div className="flex justify-between"><div className="h-4 bg-muted rounded w-1/2" /><div className="h-4 bg-muted rounded w-16" /></div>
+                <div className="h-3 bg-muted rounded w-2/3" />
+              </li>
             ))}
-          </>
+          </ul>
         ) : !data?.sites?.length ? (
           <div className="text-center py-12 space-y-3">
             <p className="text-muted-foreground">
@@ -132,14 +129,15 @@ export function HomePage() {
             </Button>
           </div>
         ) : (
-          data.sites.map((site) => (
-            <SiteCard
-              key={site.siteCode}
-              site={site}
-              onTap={() => navigate(`/sites/${site.siteCode}`)}
-              onUpdate={() => navigate(`/sites/${site.siteCode}/update`)}
-            />
-          ))
+          <ul className="divide-y">
+            {data.sites.map((site) => (
+              <SiteRow
+                key={site.siteCode}
+                site={site}
+                onTap={() => navigate(`/sites/${site.siteCode}`)}
+              />
+            ))}
+          </ul>
         )}
 
         {!isLoading && data?.sites?.length && (
@@ -168,72 +166,44 @@ export function HomePage() {
   )
 }
 
-/** การ์ดงาน (SiteCard) */
-function SiteCard({
-  site,
-  onTap,
-  onUpdate,
-}: {
-  site: SiteBrief
-  onTap: () => void
-  onUpdate: () => void
-}) {
-  const mapsUrl = site.lat && site.lng
-    ? `https://www.google.com/maps/dir/?api=1&destination=${site.lat},${site.lng}`
-    : null
+/** แถวงาน compact — กดแถวเปิด detail, กดไอคอนโทรได้ */
+function SiteRow({ site, onTap }: { site: SiteBrief; onTap: () => void }) {
+  const sub = [
+    site.amphoe && `อ.${site.amphoe}`,
+    site.phone && formatPhone(site.phone),
+  ].filter(Boolean).join(' · ')
 
   return (
-    <div
-      className="border rounded-xl p-3 space-y-2 active:bg-muted/50 transition-colors"
-      onClick={onTap}
-    >
-      {/* Row 1: รหัส + สถานะ */}
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-bold num">#{site.siteCode}</span>
-        <StatusBadge status={site.status} nextFollowUpDate={site.nextFollowUpDate} />
-      </div>
-
-      {/* Row 2: ชื่อ */}
-      <p className="text-base font-bold leading-tight">{site.customerName}</p>
-
-      {/* Row 3: ข้อมูลเพิ่ม */}
-      <p className="text-sm text-muted-foreground">
-        {site.reportCount > 0 && (
-          <>ครั้งที่ <span className="num">{site.reportCount}</span> · </>
-        )}
-        {site.nextFollowUpDate && (
-          <>นัด {formatThaiDate(site.nextFollowUpDate)}</>
-        )}
-      </p>
-
-      {/* Row 4: ปุ่มลัด */}
-      <div className="flex gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
-        {site.phone && (
-          <a
-            href={`tel:${site.phone}`}
-            className="flex items-center justify-center h-9 px-3 rounded-lg border text-sm font-bold hover:bg-muted transition-colors"
-          >
-            <Phone className="size-4" />
-          </a>
-        )}
-        {mapsUrl ? (
-          <a
-            href={mapsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center h-9 px-3 rounded-lg border text-sm font-bold hover:bg-muted transition-colors"
-          >
-            <Navigation className="size-4" />
-          </a>
-        ) : (
-          <button disabled className="flex items-center justify-center h-9 px-3 rounded-lg border text-sm font-bold opacity-30">
-            <Navigation className="size-4" />
-          </button>
-        )}
-        <Button variant="default" size="sm" className="flex-1" onClick={onUpdate}>
-          อัปเดต
-        </Button>
-      </div>
-    </div>
+    <li className="flex items-stretch">
+      <button onClick={onTap} className="flex-1 min-w-0 text-left px-4 py-2.5 active:bg-muted/60">
+        {/* บรรทัด 1: ชื่อ + สถานะ */}
+        <div className="flex items-center gap-2">
+          <p className="text-[15px] font-bold truncate flex-1">{site.customerName || 'ไม่ระบุชื่อ'}</p>
+          <StatusBadge status={site.status} nextFollowUpDate={site.nextFollowUpDate} className="shrink-0" />
+        </div>
+        {/* บรรทัด 2: อำเภอ · เบอร์ */}
+        {sub && <p className="text-[13px] text-muted-foreground truncate mt-0.5">{sub}</p>}
+        {/* บรรทัด 3: รหัส · ครั้งที่ · นัด */}
+        <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5">
+          <span className="num font-bold text-foreground/70">#{site.siteCode}</span>
+          {site.reportCount > 0 && (
+            <><span>·</span><span>ตาม <span className="num">{site.reportCount}</span> ครั้ง</span></>
+          )}
+          {site.nextFollowUpDate && (
+            <><span>·</span><span>นัด {formatThaiDate(site.nextFollowUpDate)}</span></>
+          )}
+        </p>
+      </button>
+      {/* ปุ่มโทรขวาสุด */}
+      {site.phone && (
+        <a
+          href={`tel:${site.phone}`}
+          className="w-12 shrink-0 grid place-items-center border-l active:bg-muted/60"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Phone className="size-5 text-foreground" />
+        </a>
+      )}
+    </li>
   )
 }

@@ -38,7 +38,7 @@ export function MyStatsPage() {
           <div>
             <p className="font-bold">{profile?.nickname || profile?.displayName}</p>
             <p className="text-sm text-muted-foreground">
-              {profile?.areas?.join(', ') || 'ไม่ระบุพื้นที่'}
+              {profile?.area || 'ไม่ระบุพื้นที่'}
             </p>
           </div>
         </div>

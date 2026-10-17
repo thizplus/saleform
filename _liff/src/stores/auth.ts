@@ -6,7 +6,8 @@ export interface RepProfile {
   displayName: string
   pictureUrl: string
   nickname: string
-  areas: string[]
+  area: string
+  areas?: string[]
   phone: string
   status: 'pending' | 'active' | 'inactive'
   registered: boolean

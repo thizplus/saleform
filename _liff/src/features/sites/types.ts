@@ -28,7 +28,6 @@ export interface SiteDetail {
   lng: number | null
   address: string
   amphoe: string
-  tambon?: string
   stage: string
   status: string
   lostReason: string

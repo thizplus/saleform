@@ -45,7 +45,7 @@ export function PendingPage({ onApproved }: PendingPageProps) {
         {profile && (
           <div className="text-sm text-muted-foreground space-y-1">
             <p>ชื่อเล่น: {profile.nickname}</p>
-            {profile.areas.length > 0 && <p>พื้นที่: {profile.areas.join(', ')}</p>}
+            {profile.area && <p>พื้นที่: {profile.area}</p>}
           </div>
         )}
 
