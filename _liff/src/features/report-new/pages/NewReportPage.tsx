@@ -15,7 +15,6 @@ import { DuplicateDialog } from '../components/DuplicateDialog'
 import { UploadProgressSheet, type UploadStep } from '../components/UploadProgressSheet'
 import { useOptions, useCreateSite, useCheckDuplicate } from '../hooks'
 import { reportNewService } from '../service'
-import { useKeyboardOpen } from '@/hooks/use-keyboard-open'
 import type { DuplicateMatch } from '../types'
 
 const DRAFT_KEY = 'liff-new-report-draft'
@@ -52,18 +51,16 @@ const defaultForm: FormData = {
 /** L5 — รายงานงานใหม่ */
 export function NewReportPage() {
   const navigate = useNavigate()
-  const keyboardOpen = useKeyboardOpen()
   const { data: options } = useOptions()
   const createMutation = useCreateSite()
   const dupCheck = useCheckDuplicate()
 
   const [form, setForm] = useState<FormData>(() => {
-    // โหลดร่างจาก localStorage
     try {
       const saved = localStorage.getItem(DRAFT_KEY)
       if (saved) {
         const parsed = JSON.parse(saved)
-        return { ...defaultForm, ...parsed, photos: [] } // photos ไม่เก็บใน draft
+        return { ...defaultForm, ...parsed, photos: [] }
       }
     } catch { /* ignore */ }
     return defaultForm
@@ -76,7 +73,6 @@ export function NewReportPage() {
   const [draftSaved, setDraftSaved] = useState(false)
   const [uploadSteps, setUploadSteps] = useState<UploadStep[]>([])
   const [showProgress, setShowProgress] = useState(false)
-  // Idempotency-Key: สร้างใหม่ทุกครั้งที่เปิดฟอร์ม, ใช้ซ้ำถ้า retry
   const idempotencyKeyRef = useRef(crypto.randomUUID())
 
   // ตรวจซ้ำเบอร์เมื่อครบ 10 หลัก
@@ -111,13 +107,12 @@ export function NewReportPage() {
     setForm((prev) => ({ ...prev, [key]: value }))
   }, [])
 
-  // คำนวณสิ่งที่ยังขาด
+  // สิ่งที่ยังขาด
   const missing: string[] = []
   if (!form.lat) missing.push('ตำแหน่ง')
   if (form.photos.length === 0) missing.push('รูป')
   if (!form.phone && !form.customerName) missing.push('เบอร์หรือชื่อ')
   if (!form.nextFollowUpDate) missing.push('วันนัดตาม')
-
   const canSubmit = missing.length === 0
 
   async function handleSubmit(forceNew = false) {
@@ -125,7 +120,6 @@ export function NewReportPage() {
     setSubmitting(true)
 
     try {
-      // 1. ตรวจซ้ำ (ถ้ายังไม่ force)
       if (!forceNew && digits.length === 10) {
         const dupResult = await dupCheck.mutateAsync({ phone: digits, lat: form.lat, lng: form.lng })
         if (dupResult.hasDuplicate) {
@@ -136,7 +130,6 @@ export function NewReportPage() {
         }
       }
 
-      // 2. อัปโหลดรูปทีละรูป (พร้อมแสดง progress)
       let photoIds: string[] = []
       if (form.photos.length > 0) {
         const steps: UploadStep[] = form.photos.map((_, i) => ({
@@ -148,31 +141,19 @@ export function NewReportPage() {
         setUploadSteps(steps)
         setShowProgress(true)
 
-        // อัปโหลดทีละรูป
         for (let i = 0; i < form.photos.length; i++) {
-          setUploadSteps((prev) =>
-            prev.map((s, idx) => idx === i ? { ...s, status: 'uploading' } : s)
-          )
+          setUploadSteps((prev) => prev.map((s, idx) => idx === i ? { ...s, status: 'uploading' } : s))
           try {
             const result = await reportNewService.uploadPhotos([form.photos[i].file])
             photoIds.push(...result.files.map((f) => f.id))
-            setUploadSteps((prev) =>
-              prev.map((s, idx) => idx === i ? { ...s, status: 'done' } : s)
-            )
+            setUploadSteps((prev) => prev.map((s, idx) => idx === i ? { ...s, status: 'done' } : s))
           } catch {
-            setUploadSteps((prev) =>
-              prev.map((s, idx) => idx === i ? { ...s, status: 'error' } : s)
-            )
+            setUploadSteps((prev) => prev.map((s, idx) => idx === i ? { ...s, status: 'error' } : s))
             throw new Error(`อัปโหลดรูปที่ ${i + 1} ไม่สำเร็จ`)
           }
         }
-
-        // อัพเดตขั้นตอนบันทึก
-        setUploadSteps((prev) =>
-          prev.map((s, idx) => idx === form.photos.length ? { ...s, status: 'uploading' } : s)
-        )
+        setUploadSteps((prev) => prev.map((s, idx) => idx === form.photos.length ? { ...s, status: 'uploading' } : s))
       } else {
-        // ไม่มีรูป — แสดง progress แค่บันทึก+ส่ง
         setUploadSteps([
           { label: 'บันทึกข้อมูล', status: 'uploading' },
           { label: 'ส่งเข้ากลุ่ม', status: 'pending' },
@@ -180,7 +161,6 @@ export function NewReportPage() {
         setShowProgress(true)
       }
 
-      // 3. สร้างงานใหม่ (พร้อม Idempotency-Key)
       const result = await createMutation.mutateAsync({
         phone: digits,
         customerName: form.customerName,
@@ -191,7 +171,7 @@ export function NewReportPage() {
         detail: form.detail,
         lat: form.lat,
         lng: form.lng,
-        address: `${form.tambon ? 'ต.' + form.tambon : ''} ${form.amphoe ? 'อ.' + form.amphoe : ''}`.trim(),
+        address: [form.tambon && `ต.${form.tambon}`, form.amphoe && `อ.${form.amphoe}`].filter(Boolean).join(' '),
         tambon: form.tambon,
         amphoe: form.amphoe,
         expectedOrderDate: form.expectedOrder,
@@ -201,27 +181,19 @@ export function NewReportPage() {
         idempotencyKey: idempotencyKeyRef.current,
       })
 
-      // อัพเดต progress: บันทึกเสร็จ
-      setUploadSteps((prev) =>
-        prev.map((s) =>
-          s.label === 'บันทึกข้อมูล' ? { ...s, status: 'done' } :
-          s.label === 'ส่งเข้ากลุ่ม' ? { ...s, status: 'uploading' } : s
-        )
-      )
+      setUploadSteps((prev) => prev.map((s) =>
+        s.label === 'บันทึกข้อมูล' ? { ...s, status: 'done' } :
+        s.label === 'ส่งเข้ากลุ่ม' ? { ...s, status: 'uploading' } : s
+      ))
 
-      // 4. ส่งข้อความเข้ากลุ่ม
       let sent = false
       if (result.chatMessages?.length) {
         sent = await sendChatMessages(result.chatMessages)
         if (sent) toast.success('ส่งเข้ากลุ่มแล้ว')
       }
 
-      // อัพเดต progress: ส่งเสร็จ
-      setUploadSteps((prev) =>
-        prev.map((s) => s.label === 'ส่งเข้ากลุ่ม' ? { ...s, status: 'done' } : s)
-      )
+      setUploadSteps((prev) => prev.map((s) => s.label === 'ส่งเข้ากลุ่ม' ? { ...s, status: 'done' } : s))
 
-      // 5. ลบ draft แล้วไปหน้าสำเร็จ
       localStorage.removeItem(DRAFT_KEY)
       setTimeout(() => {
         setShowProgress(false)
@@ -235,7 +207,6 @@ export function NewReportPage() {
     }
   }
 
-  // ขั้นตอนหน้างาน (จาก config หรือค่าตัวอย่าง)
   const stages = options?.stages || ['เทฐาน', 'ตั้งเสา', 'ขึ้นโครง', 'รอมุง', 'วางแปลน', 'อื่นๆ']
   const decisionMakers = options?.decisionMakers || ['เจ้าของบ้าน', 'ช่าง', 'อื่นๆ']
   const contactTypes = ['เจ้าของ', 'ช่าง', 'ผู้รับเหมา']
@@ -243,23 +214,22 @@ export function NewReportPage() {
   return (
     <div className="min-h-dvh bg-background flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-background border-b px-4 py-3 flex items-center gap-3">
+      <header className="sticky top-0 z-10 bg-background border-b px-4 h-12 flex items-center gap-3">
         <button onClick={() => navigate(-1)} className="p-1" aria-label="กลับ">
           <ArrowLeft className="size-5" />
         </button>
         <h1 className="text-base font-bold flex-1">รายงานงานใหม่</h1>
         {draftSaved && (
           <span className="text-xs text-muted-foreground flex items-center gap-1">
-            <Check className="size-3" /> ร่างบันทึกแล้ว
+            <Check className="size-3" /> บันทึกร่าง
           </span>
         )}
       </header>
 
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-5 pb-32">
-        {/* ===== ส่วนที่ 1: หน้างาน ===== */}
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4 pb-28">
+        {/* ===== ตำแหน่ง + รูป ===== */}
         <section className="space-y-3">
-          <h2 className="text-base font-bold">หน้างาน</h2>
-
+          <Label className="text-sm font-bold">ตำแหน่งหน้างาน *</Label>
           <GPSButton
             lat={form.lat}
             lng={form.lng}
@@ -269,62 +239,32 @@ export function NewReportPage() {
               update('accuracy', acc ?? null)
             }}
           />
-
           {form.lat && (
-            <div className="flex items-start gap-2 text-sm text-muted-foreground">
-              <MapPin className="size-4 mt-0.5 shrink-0" />
-              <div>
-                <p>
-                  {form.tambon && `ต.${form.tambon} `}
-                  {form.amphoe && `อ.${form.amphoe}`}
-                  {!form.tambon && !form.amphoe && `${form.lat.toFixed(5)}, ${form.lng?.toFixed(5)}`}
-                </p>
-                {form.accuracy && (
-                  <p className="text-xs">ความแม่นยำ ±{Math.round(form.accuracy)} ม.</p>
-                )}
-              </div>
+            <div className="flex items-start gap-2 text-xs text-muted-foreground">
+              <MapPin className="size-3.5 mt-0.5 shrink-0" />
+              <span>
+                {form.lat.toFixed(5)}, {form.lng?.toFixed(5)}
+                {form.accuracy && ` (±${Math.round(form.accuracy)}ม.)`}
+              </span>
             </div>
           )}
-
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <Label htmlFor="tambon" className="text-sm">ตำบล</Label>
-              <Input
-                id="tambon"
-                value={form.tambon}
-                onChange={(e) => update('tambon', e.target.value)}
-                placeholder="ในเมือง"
-                className="h-11 text-base"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="amphoe" className="text-sm">อำเภอ</Label>
-              <Input
-                id="amphoe"
-                value={form.amphoe}
-                onChange={(e) => update('amphoe', e.target.value)}
-                placeholder="เมือง"
-                className="h-11 text-base"
-              />
-            </div>
-          </div>
         </section>
 
-        {/* ===== ส่วนที่ 2: รูปหน้างาน ===== */}
-        <section className="space-y-3">
-          <h2 className="text-base font-bold">รูปหน้างาน (1–3)</h2>
+        <section className="space-y-2">
+          <Label className="text-sm font-bold">รูปหน้างาน * <span className="font-normal text-muted-foreground">({form.photos.length}/3)</span></Label>
           <PhotoPicker
             photos={form.photos}
             onChange={(photos) => update('photos', photos)}
+            max={3}
           />
         </section>
 
-        {/* ===== ส่วนที่ 3: ผู้ติดต่อ ===== */}
+        {/* ===== ผู้ติดต่อ ===== */}
         <section className="space-y-3">
-          <h2 className="text-base font-bold">ผู้ติดต่อ</h2>
+          <Label className="text-sm font-bold">ผู้ติดต่อ</Label>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="phone" className="text-sm">เบอร์โทร *</Label>
+          <div className="space-y-1">
+            <Label htmlFor="phone" className="text-xs text-muted-foreground">เบอร์โทร *</Label>
             <Input
               id="phone"
               type="tel"
@@ -332,167 +272,118 @@ export function NewReportPage() {
               value={form.phone}
               onChange={(e) => update('phone', e.target.value)}
               placeholder="08X-XXX-XXXX"
-              className="h-11 text-base num"
+              className="h-10 text-base num"
             />
             {phoneWarning && (
-              <div className="rounded-lg bg-warning-soft px-3 py-2 text-sm text-warning-ink flex items-start gap-2">
-                <span className="shrink-0 mt-0.5">⚠</span>
-                <div>
-                  <p>เบอร์นี้มีงาน <span className="font-bold num">#{phoneWarning.siteCode}</span></p>
-                  <p>ของ{phoneWarning.ownerName}</p>
-                </div>
+              <div className="rounded-lg bg-warning-soft px-3 py-1.5 text-xs text-warning-ink flex items-start gap-2">
+                <span className="shrink-0">⚠</span>
+                <span>เบอร์นี้มีงาน <span className="font-bold num">#{phoneWarning.siteCode}</span> ของ{phoneWarning.ownerName}</span>
               </div>
             )}
           </div>
 
           <div className="grid grid-cols-2 gap-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="customerName" className="text-sm">ชื่อลูกค้า</Label>
-            <Input
-              id="customerName"
-              value={form.customerName}
-              onChange={(e) => update('customerName', e.target.value)}
-              placeholder="ชื่อลูกค้า"
-              className="h-11 text-base"
-            />
+            <div className="space-y-1">
+              <Label htmlFor="customerName" className="text-xs text-muted-foreground">ชื่อลูกค้า</Label>
+              <Input id="customerName" value={form.customerName} onChange={(e) => update('customerName', e.target.value)} placeholder="ชื่อลูกค้า" className="h-10 text-base" />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="contractorName" className="text-xs text-muted-foreground">ชื่อช่าง</Label>
+              <Input id="contractorName" value={form.contractorName} onChange={(e) => update('contractorName', e.target.value)} placeholder="ชื่อช่าง" className="h-10 text-base" />
+            </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="contractorName" className="text-sm">ชื่อช่าง</Label>
-            <Input
-              id="contractorName"
-              value={form.contractorName}
-              onChange={(e) => update('contractorName', e.target.value)}
-              placeholder="ชื่อช่าง"
-              className="h-11 text-base"
-            />
-          </div>
-
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-sm">ผู้ติดต่อคือ</Label>
-            <ChipGroup
-              options={contactTypes}
-              value={form.contactType}
-              onChange={(v) => update('contactType', v)}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-sm">ผู้มีอำนาจตัดสินใจ</Label>
-            <ChipGroup
-              options={decisionMakers}
-              value={form.decisionMaker}
-              onChange={(v) => update('decisionMaker', v)}
-            />
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label htmlFor="amphoe" className="text-xs text-muted-foreground">อำเภอ</Label>
+              <Input id="amphoe" value={form.amphoe} onChange={(e) => update('amphoe', e.target.value)} placeholder="อำเภอ" className="h-10 text-base" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">ผู้ติดต่อคือ</Label>
+              <ChipRow options={contactTypes} value={form.contactType} onChange={(v) => update('contactType', v)} />
+            </div>
           </div>
         </section>
 
-        {/* ===== ส่วนที่ 4: รายละเอียดหน้างาน ===== */}
+        {/* ===== รายละเอียด ===== */}
         <section className="space-y-3">
-          <h2 className="text-base font-bold">รายละเอียดหน้างาน</h2>
+          <Label className="text-sm font-bold">รายละเอียด</Label>
 
-          <div className="space-y-1.5">
-            <Label className="text-sm">ขั้นตอนตอนนี้</Label>
-            <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">ขั้นตอน</Label>
+            <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-4 px-4">
               {stages.map((s) => (
-                <Chip
-                  key={s}
-                  label={s}
-                  selected={form.stage === s}
-                  onClick={() => update('stage', form.stage === s ? '' : s)}
-                />
+                <Chip key={s} label={s} selected={form.stage === s} onClick={() => update('stage', form.stage === s ? '' : s)} />
               ))}
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="detail" className="text-sm">รายละเอียด</Label>
+          <div className="space-y-1">
+            <Label htmlFor="detail" className="text-xs text-muted-foreground">หมายเหตุ</Label>
             <Textarea
               id="detail"
               value={form.detail}
               onChange={(e) => update('detail', e.target.value)}
-              placeholder="เช่น ช่างให้เข้ามาวัดหน้างาน..."
-              rows={4}
+              placeholder="สิ่งที่พบ / คุยกับลูกค้า..."
+              rows={3}
               className="text-base"
             />
           </div>
+
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">ผู้ตัดสินใจ</Label>
+            <ChipRow options={decisionMakers} value={form.decisionMaker} onChange={(v) => update('decisionMaker', v)} />
+          </div>
         </section>
 
-        {/* ===== ส่วนที่ 5: นัดหมาย ===== */}
+        {/* ===== นัดหมาย ===== */}
         <section className="space-y-3">
-          <h2 className="text-base font-bold">นัดหมาย</h2>
+          <Label className="text-sm font-bold">นัดติดตาม *</Label>
+          <FollowUpDateChips
+            value={form.nextFollowUpDate}
+            onChange={(d) => update('nextFollowUpDate', d)}
+          />
 
-          <div className="space-y-1.5">
-            <Label className="text-sm">ตามต่อ *</Label>
-            <FollowUpDateChips
-              value={form.nextFollowUpDate}
-              onChange={(d) => update('nextFollowUpDate', d)}
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">คาดว่าจะสั่งของ</Label>
+            <ChipRow
+              options={['ไม่ทราบ', 'ภายใน 2 สัปดาห์', 'ภายในเดือน']}
+              value={form.expectedOrder}
+              onChange={(v) => update('expectedOrder', v)}
             />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-sm">คาดว่าจะสั่งของ</Label>
-            <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4">
-              {['ไม่ทราบ', 'ภายใน 2 สัปดาห์', 'ภายในเดือน'].map((opt) => (
-                <Chip
-                  key={opt}
-                  label={opt}
-                  selected={form.expectedOrder === opt}
-                  onClick={() => update('expectedOrder', form.expectedOrder === opt ? '' : opt)}
-                />
-              ))}
-            </div>
           </div>
         </section>
       </div>
 
-      {/* ===== Sticky Action Bar ===== */}
-      {!keyboardOpen && (
+      {/* Sticky Action Bar */}
       <div className="fixed bottom-0 inset-x-0 bg-background/95 backdrop-blur border-t px-4 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
         {missing.length > 0 && (
-          <p className="text-xs text-muted-foreground mb-2">
-            ขาด: {missing.join(', ')}
-          </p>
+          <p className="text-xs text-muted-foreground mb-1.5">ขาด: {missing.join(', ')}</p>
         )}
-        <Button
-          onClick={() => handleSubmit(false)}
-          disabled={submitting || !canSubmit}
-          size="xl"
-          className="w-full"
-        >
+        <Button onClick={() => handleSubmit(false)} disabled={submitting || !canSubmit} size="xl" className="w-full">
           {submitting ? 'กำลังบันทึก...' : 'บันทึกและส่งเข้ากลุ่ม'}
         </Button>
       </div>
-      )}
 
-      {/* Duplicate Drawer (L-04) */}
       <DuplicateDialog
         open={showDuplicate}
         matches={duplicateMatches}
         pendingNote={form.detail}
         pendingPhotos={form.photos}
-        onForceNew={() => {
-          setShowDuplicate(false)
-          handleSubmit(true)
-        }}
+        onForceNew={() => { setShowDuplicate(false); handleSubmit(true) }}
         onClose={() => setShowDuplicate(false)}
       />
-
-      {/* Upload Progress Sheet (L-05) */}
       <UploadProgressSheet open={showProgress} steps={uploadSteps} />
     </div>
   )
 }
 
-/** Chip button สำหรับเลือกค่าเดียว */
 function Chip({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`shrink-0 h-9 px-3.5 rounded-full text-sm font-bold border transition-colors ${
+      className={`shrink-0 h-8 px-3 rounded-full text-sm font-bold border transition-colors ${
         selected
           ? 'bg-primary text-primary-foreground border-primary'
           : 'bg-background text-foreground border-input hover:bg-muted'
@@ -503,17 +394,11 @@ function Chip({ label, selected, onClick }: { label: string; selected: boolean; 
   )
 }
 
-/** กลุ่ม Chip เลือกได้ 1 */
-function ChipGroup({ options, value, onChange }: { options: string[]; value: string; onChange: (v: string) => void }) {
+function ChipRow({ options, value, onChange }: { options: string[]; value: string; onChange: (v: string) => void }) {
   return (
-    <div className="flex gap-2 flex-wrap">
+    <div className="flex gap-1.5 flex-wrap">
       {options.map((opt) => (
-        <Chip
-          key={opt}
-          label={opt}
-          selected={value === opt}
-          onClick={() => onChange(value === opt ? '' : opt)}
-        />
+        <Chip key={opt} label={opt} selected={value === opt} onClick={() => onChange(value === opt ? '' : opt)} />
       ))}
     </div>
   )
