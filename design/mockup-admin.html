@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UP Sales Admin — Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:"LINE Seed Sans TH";src:url("https://cdn.jsdelivr.net/npm/@fontpkg/line-seed-sans-th@1.0.1/LINESeedSansTH_Rg.ttf");font-weight:400}
+@font-face{font-family:"LINE Seed Sans TH";src:url("https://cdn.jsdelivr.net/npm/@fontpkg/line-seed-sans-th@1.0.1/LINESeedSansTH_Bd.ttf");font-weight:700}
+@font-face{font-family:"LINE Seed Sans TH";src:url("https://cdn.jsdelivr.net/npm/@fontpkg/line-seed-sans-th@1.0.1/LINESeedSansTH_He.ttf");font-weight:900}
+:root{
+  --bg:#fff;--fg:#0a0a0a;--muted:#f5f5f5;--mfg:#737373;--border:#e5e5e5;--side:#fafafa;
+  --success:#16a34a;--success-soft:#dcfce7;--success-ink:#15803d;
+  --warning:#d97706;--warning-soft:#fef3c7;--warning-ink:#b45309;
+  --danger:#dc2626;--danger-soft:#fee2e2;--danger-ink:#b91c1c;--follow:#737373;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Inter","LINE Seed Sans TH",system-ui,sans-serif;color:var(--fg);background:var(--bg);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.num,td.n,th.n{font-family:"Inter",sans-serif;font-variant-numeric:tabular-nums}
+a{color:inherit}
+.app{display:grid;grid-template-columns:232px 1fr;min-height:100vh}
+aside{background:var(--side);border-right:1px solid var(--border);padding:14px 10px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 8px 18px}
+.logo{width:30px;height:30px;border-radius:8px;background:var(--fg);display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px;font-family:Inter;flex:none}
+.brand b{font-size:15px}
+.brand small{display:block;color:var(--mfg);font-size:12px;font-weight:400}
+.navg{font-size:12px;color:var(--mfg);padding:14px 10px 6px}
+nav a{display:flex;align-items:center;gap:10px;height:36px;padding:0 10px;border-radius:8px;color:#262626;text-decoration:none;cursor:pointer}
+nav a:hover{background:#efefef}
+nav a.on{background:#ebebeb;font-weight:700;color:var(--fg)}
+nav a .cnt{margin-left:auto;font-family:Inter;font-size:12px;font-weight:700;min-width:22px;height:20px;border-radius:10px;display:grid;place-items:center;padding:0 6px}
+.cnt.w{background:var(--warning-soft);color:var(--warning-ink)}
+.cnt.k{background:var(--fg);color:#fff}
+.me{margin-top:auto;border-top:1px solid var(--border);padding:12px 8px 2px;display:flex;gap:10px;align-items:center}
+.me .out{margin-left:auto;font-size:12px;color:var(--mfg);text-decoration:underline;cursor:pointer}
+.icon{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.top{height:56px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;padding:0 24px;position:sticky;top:0;background:#fff;z-index:5}
+.crumb{color:var(--mfg)}
+.crumb b{color:var(--fg)}
+.top .sp{flex:1}
+.btn{height:36px;border-radius:8px;border:1px solid var(--border);background:#fff;padding:0 12px;display:inline-flex;align-items:center;gap:6px;font:inherit;font-weight:700;cursor:pointer;white-space:nowrap;color:var(--fg)}
+.btn:hover{background:#fafafa}
+.btn.pri{background:var(--fg);color:#fff;border-color:var(--fg)}
+.btn.sm{height:30px;font-size:13px;padding:0 10px}
+.btn.ok{background:var(--success);border-color:var(--success);color:#fff}
+.btn.full{width:100%;justify-content:center}
+.btn:focus-visible,.tabs span:focus-visible,nav a:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+.content{padding:24px;max-width:1320px}
+.page{display:none}
+.page.on{display:block}
+h1{font-size:24px;font-weight:700;line-height:1.35}
+.sub{color:var(--mfg);margin-top:2px}
+h2{font-size:16px;font-weight:700}
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.stats{display:grid;grid-template-columns:repeat(6,1fr);border:1px solid var(--border);border-radius:12px;margin-bottom:20px}
+.stats.s4{grid-template-columns:repeat(4,1fr)}
+.stats > div{padding:16px 18px;border-right:1px solid var(--border)}
+.stats > div:last-child{border-right:none}
+.stats .l{color:var(--mfg);font-size:13px}
+.stats .v{font-family:Inter;font-weight:800;font-size:30px;line-height:1.15;font-variant-numeric:tabular-nums;margin-top:4px}
+.stats .d{font-size:12px;color:var(--mfg);margin-top:2px}
+.up{color:var(--success-ink)!important}.down{color:var(--danger-ink)!important}
+.grid2{display:grid;grid-template-columns:1.7fr 1fr;gap:20px;margin-bottom:20px}
+.grid2.eq{grid-template-columns:1fr 1fr}
+.panel{border:1px solid var(--border);border-radius:12px;padding:18px}
+.panel .ph{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+table{width:100%;border-collapse:collapse}
+th{font-weight:400;color:var(--mfg);text-align:left;font-size:13px;padding:8px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
+th.n,td.n{text-align:right}
+td{padding:10px;border-bottom:1px solid var(--border);vertical-align:middle}
+tbody tr:hover{background:#fafafa}
+tr.link{cursor:pointer}
+tfoot td{font-weight:700;border-bottom:none;border-top:2px solid var(--fg)}
+.pl{padding-left:18px!important}.pr{padding-right:18px!important}
+.rep{display:flex;align-items:center;gap:10px}
+.av{width:30px;height:30px;border-radius:50%;background:#a3a3a3;color:#fff;display:grid;place-items:center;font-weight:700;font-size:12px;flex:none}
+.av.lg{width:52px;height:52px;font-size:20px}
+.rep small{display:block;color:var(--mfg);font-size:12px}
+.ob{display:flex;height:12px;border-radius:6px;overflow:hidden;gap:2px;min-width:170px}
+.ob i{display:block}
+.ob .w{background:var(--success)}.ob .f{background:var(--follow)}.ob .lo{background:var(--danger)}
+.obl{font-family:Inter;font-size:12px;color:var(--mfg);margin-top:4px;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:16px;font-size:13px;color:#404040;flex-wrap:wrap}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px;background:var(--c)}
+.legend span.dash::before{height:0;border-top:2px dashed #a3a3a3;border-radius:0;vertical-align:3px;background:none}
+.badge{display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
+.b-today{background:var(--fg);color:#fff}.b-over{background:var(--warning-soft);color:var(--warning-ink)}
+.b-fut{border:1px solid var(--border);color:#404040;font-weight:400}.b-won{background:var(--success-soft);color:var(--success-ink)}
+.b-lost{background:var(--danger-soft);color:var(--danger-ink)}.b-off{background:var(--muted);color:var(--mfg)}
+.code{font-family:Inter;font-weight:700;font-variant-numeric:tabular-nums}
+.tabs{display:inline-flex;background:var(--muted);border-radius:8px;padding:3px;gap:2px}
+.tabs span{height:30px;padding:0 14px;border-radius:6px;display:flex;align-items:center;color:#404040;cursor:pointer;white-space:nowrap}
+.tabs span.on{background:#fff;color:var(--fg);font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.pane{display:none}.pane.on{display:block}
+.filters{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.field{height:36px;border:1px solid var(--border);border-radius:8px;display:inline-flex;align-items:center;gap:6px;padding:0 12px;color:#404040;background:#fff}
+.field.dash{border-style:dashed}
+.field.search{width:260px;color:#a3a3a3}
+.field.ph{color:#a3a3a3}
+.feed li{list-style:none;display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.feed li:last-child{border-bottom:none}
+.feed time{font-family:Inter;color:var(--mfg);width:44px;flex:none;font-variant-numeric:tabular-nums}
+.due li{list-style:none;display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+.due li:last-child{border-bottom:none}
+.due .c{margin-left:auto;font-family:Inter;font-weight:700}
+.chart{width:100%;height:220px;display:block}
+.hbar{display:grid;grid-template-columns:150px 1fr 40px;align-items:center;gap:10px;margin:9px 0}
+.hbar .t{height:14px;background:var(--muted);border-radius:0 4px 4px 0}
+.hbar .t i{display:block;height:100%;border-radius:0 4px 4px 0;background:var(--fg)}
+.split{display:grid;grid-template-columns:1.6fr 1fr;gap:20px}
+.tl{position:relative;padding-left:24px}
+.tl::before{content:"";position:absolute;left:5px;top:8px;bottom:8px;width:2px;background:var(--border)}
+.tl-i{position:relative;padding-bottom:20px}
+.tl-i::before{content:"";position:absolute;left:-24px;top:5px;width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid var(--fg)}
+.tl-i.adm::before{border-color:var(--mfg);border-style:dashed}
+.tl-i .m{color:var(--mfg);font-size:13px}
+.tl-i p{margin-top:4px;line-height:1.65;max-width:70ch}
+.thumbs{display:flex;gap:8px;margin-top:8px}
+.thumbs i{width:88px;height:66px;border-radius:8px;background:linear-gradient(160deg,#b9c2c9,#6f7c85)}
+.kv{display:grid;grid-template-columns:110px 1fr;row-gap:10px}
+.kv dt{color:var(--mfg)}
+.map{height:170px;border-radius:10px;background:repeating-linear-gradient(0deg,#f2f2f0 0 22px,#ebebe8 22px 23px),repeating-linear-gradient(90deg,transparent 0 30px,#e3e3df 30px 31px);position:relative;overflow:hidden}
+.map.big{height:340px}
+.map::before{content:"";position:absolute;left:-10%;right:-10%;top:55%;height:10px;background:#fff;transform:rotate(-12deg)}
+.dot{position:absolute;width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.15)}
+.cards2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:24px}
+.pend{border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;gap:14px;align-items:center}
+.pend .grow{flex:1}
+.opt{display:grid;grid-template-columns:220px 1fr;gap:24px}
+.optnav a{display:flex;justify-content:space-between;height:36px;align-items:center;padding:0 10px;border-radius:8px;color:#262626;text-decoration:none}
+.optnav a.on{background:var(--muted);font-weight:700}
+.optrow{display:flex;align-items:center;gap:12px;height:48px;border-bottom:1px solid var(--border)}
+.grip{color:#c4c4c4;font-family:Inter;letter-spacing:-2px;cursor:grab}
+.hm{display:grid;grid-template-columns:repeat(12,1fr);gap:4px}
+.hm .col{display:grid;grid-template-rows:repeat(7,14px);gap:4px}
+.hm i{border-radius:3px;background:#f0f0f0}
+.hm i.a{background:#d4d4d4}.hm i.b{background:#a3a3a3}.hm i.c{background:#525252}.hm i.d{background:#0a0a0a}
+.vbars{display:flex;align-items:flex-end;gap:18px;height:160px;padding-top:10px;border-bottom:1px solid #d4d4d4}
+.vbars .b{flex:1;display:flex;flex-direction:column;gap:2px;justify-content:flex-end;height:100%}
+.vbars .b i{display:block;border-radius:2px}
+.vlab{display:flex;gap:18px;font-size:12px;color:var(--mfg);margin-top:6px}
+.vlab span{flex:1;text-align:center}
+/* login */
+.login{min-height:100vh;display:none;place-items:center;background:var(--side)}
+.login.on{display:grid}
+.lcard{width:380px;background:#fff;border:1px solid var(--border);border-radius:14px;padding:28px}
+.lcard label{display:block;font-weight:700;margin:14px 0 6px}
+.lcard .field{width:100%}
+/* modal */
+.modal-bg{position:fixed;inset:0;background:rgba(10,10,10,.45);display:none;place-items:center;z-index:50}
+.modal-bg.on{display:grid}
+.modal{width:460px;background:#fff;border-radius:14px;padding:24px}
+.modal label.l{display:block;font-weight:700;margin:16px 0 6px}
+.check{display:flex;align-items:center;gap:8px;margin-top:8px}
+.check i{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--fg);display:grid;place-items:center;font-style:normal;font-size:11px;background:var(--fg);color:#fff}
+.check i.off{background:#fff}
+.hint{background:var(--muted);border-radius:10px;padding:10px 12px;color:#404040;font-size:13px;margin-top:16px}
+@media (max-width:900px){.app{grid-template-columns:1fr}aside{display:none}.stats{grid-template-columns:repeat(2,1fr)}.grid2,.split,.opt,.cards2{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 16v-4M12 16V8M17 16v-7"/></symbol>
+  <symbol id="i-map" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></symbol>
+  <symbol id="i-alarm" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M5 3 2 6M22 6l-3-3"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+  <symbol id="i-dl" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="14" height="14" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+</svg>
+
+<!-- LOGIN (A0) -->
+<div class="login" id="login">
+  <div class="lcard">
+    <div class="row" style="display:flex;gap:10px;align-items:center"><div class="logo">UP</div><div><b style="font-size:16px">UP Sales</b><div style="color:var(--mfg);font-size:13px">ระบบติดตามงานเซลล์</div></div></div>
+    <h1 style="font-size:20px;margin-top:22px">เข้าสู่ระบบ</h1>
+    <label>อีเมล</label><span class="field">aon@upsteel.co.th</span>
+    <label>รหัสผ่าน</label><span class="field">••••••••</span>
+    <div style="color:var(--danger-ink);font-size:13px;margin-top:10px">อีเมลหรือรหัสผ่านไม่ถูกต้อง</div>
+    <button class="btn pri full" style="margin-top:16px;height:40px" data-go="dash">เข้าสู่ระบบ</button>
+  </div>
+</div>
+
+<div class="app" id="app">
+<aside>
+  <div class="brand"><div class="logo">UP</div><div><b>UP Sales</b><small>ระบบติดตามงานเซลล์</small></div></div>
+  <nav>
+    <a data-p="dash" class="on" tabindex="0"><svg class="icon"><use href="#i-home"/></svg>ภาพรวม</a>
+    <a data-p="report" tabindex="0"><svg class="icon"><use href="#i-chart"/></svg>รายงาน</a>
+    <a data-p="sites" tabindex="0"><svg class="icon"><use href="#i-map"/></svg>หน้างาน</a>
+    <a data-p="follow" tabindex="0"><svg class="icon"><use href="#i-alarm"/></svg>ต้องติดตาม<span class="cnt w">9</span></a>
+    <div class="navg">จัดการ</div>
+    <a data-p="reps" tabindex="0"><svg class="icon"><use href="#i-users"/></svg>เซลล์<span class="cnt k">2</span></a>
+    <a data-p="options" tabindex="0"><svg class="icon"><use href="#i-list"/></svg>ตั้งค่าตัวเลือก</a>
+    <a data-p="users" tabindex="0"><svg class="icon"><use href="#i-shield"/></svg>ผู้ใช้ระบบ</a>
+  </nav>
+  <div class="me"><div class="av" style="background:#404040">อ</div><div><b>น้าอร</b><div style="font-size:12px;color:var(--mfg)">แอดมิน</div></div><span class="out" data-go="login">ออก</span></div>
+</aside>
+
+<div>
+<header class="top">
+  <button class="btn sm" id="backBtn" style="display:none" data-go="sites"><svg class="icon"><use href="#i-back"/></svg>หน้างาน</button>
+  <div class="crumb" id="crumb"><b>ภาพรวม</b></div>
+  <div class="sp"></div>
+  <div class="tabs" data-group="period"><span>7 วัน</span><span class="on">เดือนนี้</span><span>ปีนี้</span></div>
+  <span class="field"><svg class="icon"><use href="#i-cal"/></svg><span class="num">1–17 ต.ค. 69</span></span>
+  <button class="btn" data-modal="export"><svg class="icon"><use href="#i-dl"/></svg>Export Excel</button>
+</header>
+
+<div class="content">
+
+<!-- A1 DASHBOARD -->
+<section class="page on" id="dash" data-t="ภาพรวม">
+  <div class="head"><div><h1>ภาพรวมทีม</h1><div class="sub">1–17 ต.ค. 69 · เทียบกับ 1–17 ก.ย.</div></div></div>
+  <div class="stats">
+    <div><div class="l">วิ่งงาน</div><div class="v">184</div><div class="d up">+12% จากเดือนก่อน</div></div>
+    <div><div class="l">งานใหม่</div><div class="v">61</div><div class="d up">+5</div></div>
+    <div><div class="l">จบได้</div><div class="v" style="color:var(--success-ink)">12</div><div class="d">ปิดได้ 38% ของงานที่จบ</div></div>
+    <div><div class="l">จบที่อื่น</div><div class="v" style="color:var(--danger-ink)">20</div><div class="d down">+4</div></div>
+    <div><div class="l">ติดตามอยู่</div><div class="v">86</div><div class="d">หน้างานที่ยังไม่จบ</div></div>
+    <div><div class="l">เลยกำหนดตาม</div><div class="v" style="color:var(--warning-ink)">9</div><div class="d"><a data-go="follow" style="cursor:pointer;text-decoration:underline">ดูรายการ</a></div></div>
+  </div>
+  <div class="grid2">
+    <div class="panel">
+      <div class="ph"><h2>การวิ่งงานรายวัน</h2><div class="legend"><span style="--c:#0a0a0a">วิ่งงาน</span><span style="--c:#d4d4d4">งานใหม่</span></div></div>
+      <svg class="chart" viewBox="0 0 700 220" preserveAspectRatio="none" role="img" aria-label="วิ่งงานรายวัน 1–17 ต.ค.">
+        <g stroke="#f0f0f0"><line x1="30" y1="20" x2="700" y2="20"/><line x1="30" y1="80" x2="700" y2="80"/><line x1="30" y1="140" x2="700" y2="140"/></g>
+        <line x1="30" y1="200" x2="700" y2="200" stroke="#d4d4d4"/>
+        <g font-family="Inter" font-size="11" fill="#737373"><text x="0" y="24">20</text><text x="0" y="84">14</text><text x="0" y="144">7</text><text x="8" y="204">0</text></g>
+        <g fill="#d4d4d4"><rect x="44" y="170" width="18" height="30" rx="3"/><rect x="83" y="160" width="18" height="40" rx="3"/><rect x="122" y="175" width="18" height="25" rx="3"/><rect x="161" y="150" width="18" height="50" rx="3"/><rect x="200" y="180" width="18" height="20" rx="3"/><rect x="239" y="190" width="18" height="10" rx="3"/><rect x="278" y="165" width="18" height="35" rx="3"/><rect x="317" y="155" width="18" height="45" rx="3"/><rect x="356" y="170" width="18" height="30" rx="3"/><rect x="395" y="160" width="18" height="40" rx="3"/><rect x="434" y="178" width="18" height="22" rx="3"/><rect x="473" y="190" width="18" height="10" rx="3"/><rect x="512" y="150" width="18" height="50" rx="3"/><rect x="551" y="165" width="18" height="35" rx="3"/><rect x="590" y="158" width="18" height="42" rx="3"/><rect x="629" y="168" width="18" height="32" rx="3"/><rect x="668" y="160" width="18" height="40" rx="3"/></g>
+        <polyline fill="none" stroke="#0a0a0a" stroke-width="2" stroke-linejoin="round" points="53,110 92,90 131,120 170,70 209,130 248,170 287,100 326,80 365,105 404,85 443,125 482,175 521,60 560,95 599,75 638,100 677,88"/>
+        <circle cx="677" cy="88" r="4" fill="#0a0a0a" stroke="#fff" stroke-width="2"/>
+        <text x="652" y="76" font-family="Inter" font-size="12" font-weight="700" fill="#0a0a0a">13</text>
+      </svg>
+      <div style="display:flex;justify-content:space-between;font-family:Inter;font-size:11px;color:var(--mfg);padding-left:30px"><span>1 ต.ค.</span><span>9 ต.ค.</span><span>17 ต.ค.</span></div>
+    </div>
+    <div class="panel">
+      <div class="ph"><h2>ต้องตามวันนี้ <span class="num" style="color:var(--mfg);font-weight:400">14</span></h2><a data-go="follow" style="font-size:13px;text-decoration:underline;cursor:pointer">ดูทั้งหมด</a></div>
+      <ul class="due">
+        <li><div class="av" style="background:#525252">บ</div>บอม<span class="badge b-over" style="margin-left:8px">เลย 2</span><span class="c">4</span></li>
+        <li><div class="av">พ</div>พัช<span class="c">3</span></li>
+        <li><div class="av" style="background:#737373">ต</div>เติ้ล<span class="badge b-over" style="margin-left:8px">เลย 5</span><span class="c">3</span></li>
+        <li><div class="av" style="background:#404040">ก</div>กอล์ฟ<span class="c">2</span></li>
+        <li><div class="av" style="background:#8a8a8a">น</div>นุ่น<span class="c">2</span></li>
+      </ul>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="panel">
+      <div class="ph"><h2>ผลงานเซลล์</h2><div class="legend"><span style="--c:var(--success)">จบได้</span><span style="--c:var(--follow)">ตามต่อ</span><span style="--c:var(--danger)">จบที่อื่น</span></div></div>
+      <table>
+        <thead><tr><th>เซลล์</th><th class="n">วิ่งงาน</th><th>ผลลัพธ์หน้างาน</th><th class="n">ปิดได้</th></tr></thead>
+        <tbody>
+          <tr class="link" data-go="report" data-tabto="report:rep"><td><div class="rep"><div class="av" style="background:#525252">บ</div>บอม</div></td><td class="n">52</td><td><div class="ob"><i class="w" style="flex:5"></i><i class="f" style="flex:23"></i><i class="lo" style="flex:6"></i></div></td><td class="n">45%</td></tr>
+          <tr class="link" data-go="report" data-tabto="report:rep"><td><div class="rep"><div class="av">พ</div>พัช</div></td><td class="n">47</td><td><div class="ob"><i class="w" style="flex:4"></i><i class="f" style="flex:19"></i><i class="lo" style="flex:9"></i></div></td><td class="n">31%</td></tr>
+          <tr class="link" data-go="report" data-tabto="report:rep"><td><div class="rep"><div class="av" style="background:#737373">ต</div>เติ้ล</div></td><td class="n">39</td><td><div class="ob"><i class="w" style="flex:2"></i><i class="f" style="flex:21"></i><i class="lo" style="flex:3"></i></div></td><td class="n">40%</td></tr>
+          <tr class="link" data-go="report" data-tabto="report:rep"><td><div class="rep"><div class="av" style="background:#404040">ก</div>กอล์ฟ</div></td><td class="n">28</td><td><div class="ob"><i class="w" style="flex:1"></i><i class="f" style="flex:14"></i><i class="lo" style="flex:2"></i></div></td><td class="n">33%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="panel">
+      <div class="ph"><h2>กิจกรรมล่าสุด</h2></div>
+      <ul class="feed">
+        <li><time>10:44</time><div><b>พัช</b> รายงานงานใหม่ <span class="code">#691017-03</span> ช่างณรง ต.สุรนารี</div></li>
+        <li><time>10:08</time><div><b>บอม</b> <span class="badge b-won">จบได้</span> <span class="code">#690825-01</span> ช่างแคน</div></li>
+        <li><time>09:52</time><div><b>พัช</b> <span class="badge b-lost">จบที่อื่น</span> <span class="code">#690901-05</span> กระทิง</div></li>
+        <li><time>09:23</time><div><b>เติ้ล</b> ติดตาม <span class="code">#691002-04</span> ครั้งที่ 3</div></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- A2/A3 REPORT -->
+<section class="page" id="report" data-t="รายงาน">
+  <div class="head"><div><h1>รายงานประสิทธิภาพเซลล์</h1><div class="sub">1–17 ต.ค. 69 · ทุกพื้นที่</div></div>
+    <div class="tabs" data-group="report"><span data-tab="team" class="on">ทีม</span><span data-tab="rep">รายบุคคล</span><span data-tab="area">พื้นที่</span><span data-tab="lost">สาเหตุจบที่อื่น</span></div></div>
+
+  <!-- team -->
+  <div class="pane on" data-pane="report:team">
+    <div class="filters"><span class="field">มุมมอง: รายเดือน ▾</span><span class="field dash"><svg class="icon"><use href="#i-plus"/></svg>เซลล์</span><span class="field dash"><svg class="icon"><use href="#i-plus"/></svg>อำเภอ</span><span style="flex:1"></span><div class="legend"><span style="--c:var(--success)">จบได้</span><span style="--c:var(--follow)">ตามต่อ</span><span style="--c:var(--danger)">จบที่อื่น</span></div></div>
+    <div class="panel" style="padding:0;overflow:auto">
+      <table>
+        <thead><tr><th class="pl">เซลล์</th><th class="n">วิ่งงาน</th><th class="n">งานใหม่</th><th class="n">ติดตาม</th><th>ผลลัพธ์หน้างาน</th><th class="n">ปิดได้</th><th class="n">ตามตรงเวลา</th><th class="n">เลยกำหนด</th><th class="n pr">เฉลี่ยวันปิด</th></tr></thead>
+        <tbody>
+          <tr class="link" data-tabto="report:rep"><td class="pl"><div class="rep"><div class="av" style="background:#525252">บ</div><div>บอม<small>อ.เมือง · อ.โนนสูง</small></div></div></td><td class="n">52</td><td class="n">18</td><td class="n">34</td><td><div class="ob"><i class="w" style="flex:5"></i><i class="f" style="flex:23"></i><i class="lo" style="flex:6"></i></div><div class="obl">5 · 23 · 6</div></td><td class="n"><b>45%</b></td><td class="n">85%</td><td class="n" style="color:var(--warning-ink);font-weight:700">2</td><td class="n pr">21 วัน</td></tr>
+          <tr class="link" data-tabto="report:rep"><td class="pl"><div class="rep"><div class="av">พ</div><div>พัช<small>อ.เมือง · อ.สูงเนิน</small></div></div></td><td class="n">47</td><td class="n">15</td><td class="n">32</td><td><div class="ob"><i class="w" style="flex:4"></i><i class="f" style="flex:19"></i><i class="lo" style="flex:9"></i></div><div class="obl">4 · 19 · 9</div></td><td class="n"><b>31%</b></td><td class="n">92%</td><td class="n">0</td><td class="n pr">18 วัน</td></tr>
+          <tr class="link" data-tabto="report:rep"><td class="pl"><div class="rep"><div class="av" style="background:#737373">ต</div><div>เติ้ล<small>อ.ปักธงชัย</small></div></div></td><td class="n">39</td><td class="n">14</td><td class="n">25</td><td><div class="ob"><i class="w" style="flex:2"></i><i class="f" style="flex:21"></i><i class="lo" style="flex:3"></i></div><div class="obl">2 · 21 · 3</div></td><td class="n"><b>40%</b></td><td class="n">71%</td><td class="n" style="color:var(--warning-ink);font-weight:700">5</td><td class="n pr">26 วัน</td></tr>
+          <tr class="link" data-tabto="report:rep"><td class="pl"><div class="rep"><div class="av" style="background:#404040">ก</div><div>กอล์ฟ<small>อ.โชคชัย</small></div></div></td><td class="n">28</td><td class="n">9</td><td class="n">19</td><td><div class="ob"><i class="w" style="flex:1"></i><i class="f" style="flex:14"></i><i class="lo" style="flex:2"></i></div><div class="obl">1 · 14 · 2</div></td><td class="n"><b>33%</b></td><td class="n">88%</td><td class="n" style="color:var(--warning-ink);font-weight:700">2</td><td class="n pr">30 วัน</td></tr>
+          <tr class="link" data-tabto="report:rep"><td class="pl"><div class="rep"><div class="av" style="background:#8a8a8a">น</div><div>นุ่น<small>อ.ขามทะเลสอ</small></div></div></td><td class="n">18</td><td class="n">5</td><td class="n">13</td><td><div class="ob"><i class="f" style="flex:9"></i></div><div class="obl">0 · 9 · 0</div></td><td class="n">–</td><td class="n">77%</td><td class="n">0</td><td class="n pr">–</td></tr>
+        </tbody>
+        <tfoot><tr><td class="pl">รวมทีม</td><td class="n">184</td><td class="n">61</td><td class="n">123</td><td><div class="ob"><i class="w" style="flex:12"></i><i class="f" style="flex:86"></i><i class="lo" style="flex:20"></i></div><div class="obl">12 · 86 · 20</div></td><td class="n">38%</td><td class="n">84%</td><td class="n">9</td><td class="n pr">23 วัน</td></tr></tfoot>
+      </table>
+    </div>
+    <p class="sub" style="margin-top:10px">ปิดได้ = จบได้ ÷ (จบได้ + จบที่อื่น) · ตามตรงเวลา = อัปเดตภายในวันนัด · คลิกแถวเพื่อดูรายบุคคล</p>
+  </div>
+
+  <!-- individual -->
+  <div class="pane" data-pane="report:rep">
+    <div class="filters"><span class="field">เซลล์: บอม ▾</span></div>
+    <div class="panel" style="margin-bottom:20px;display:flex;gap:16px;align-items:center">
+      <div class="av lg" style="background:#525252">บ</div>
+      <div style="flex:1"><h2 style="font-size:20px">บอม</h2><div class="sub">อ.เมือง · อ.โนนสูง · ใช้งานตั้งแต่ ก.ค. 69</div></div>
+      <button class="btn" data-go="sites">ดูหน้างานของบอม</button>
+    </div>
+    <div class="stats s4">
+      <div><div class="l">วิ่งงาน</div><div class="v">52</div><div class="d">ทีมเฉลี่ย 37</div></div>
+      <div><div class="l">อัตราปิดได้</div><div class="v">45%</div><div class="d">ทีม 38% · 5 จาก 11 งานที่จบ</div></div>
+      <div><div class="l">ตามตรงเวลา</div><div class="v">85%</div><div class="d">ทีม 84%</div></div>
+      <div><div class="l">เลยกำหนด</div><div class="v" style="color:var(--warning-ink)">2</div><div class="d">เฉลี่ยวันปิด 21 วัน</div></div>
+    </div>
+    <div class="grid2 eq">
+      <div class="panel">
+        <div class="ph"><h2>ผลลัพธ์รายเดือน</h2><div class="legend"><span style="--c:var(--success)">จบได้</span><span style="--c:var(--danger)">จบที่อื่น</span></div></div>
+        <div class="vbars">
+          <div class="b"><i style="height:10%;background:var(--danger)"></i><i style="height:15%;background:var(--success)"></i></div>
+          <div class="b"><i style="height:20%;background:var(--danger)"></i><i style="height:10%;background:var(--success)"></i></div>
+          <div class="b"><i style="height:15%;background:var(--danger)"></i><i style="height:25%;background:var(--success)"></i></div>
+          <div class="b"><i style="height:30%;background:var(--danger)"></i><i style="height:25%;background:var(--success)"></i></div>
+        </div>
+        <div class="vlab"><span>ก.ค.</span><span>ส.ค.</span><span>ก.ย.</span><span>ต.ค.</span></div>
+      </div>
+      <div class="panel">
+        <div class="ph"><h2>สาเหตุที่บอมจบที่อื่น</h2><span class="sub num">6 งาน</span></div>
+        <div class="hbar"><span>ราคาสูงกว่า</span><div class="t"><i style="width:66%"></i></div><b class="num">4</b></div>
+        <div class="hbar"><span>ช่างมีร้านประจำ</span><div class="t"><i style="width:33%"></i></div><b class="num">2</b></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph"><h2>ปฏิทินการวิ่งงาน 12 สัปดาห์</h2><span class="sub">ช่องเข้ม = รายงานหลายครั้ง · ช่องจาง = ไม่ได้รายงาน</span></div>
+      <div class="hm" id="hm"></div>
+    </div>
+  </div>
+
+  <!-- area -->
+  <div class="pane" data-pane="report:area">
+    <div class="split">
+      <div class="panel" style="padding:0">
+        <table>
+          <thead><tr><th class="pl">อำเภอ</th><th class="n">วิ่งงาน</th><th>ผลลัพธ์หน้างาน</th><th class="n pr">ปิดได้</th></tr></thead>
+          <tbody>
+            <tr><td class="pl">เมืองนครราชสีมา</td><td class="n">71</td><td><div class="ob"><i class="w" style="flex:5"></i><i class="f" style="flex:30"></i><i class="lo" style="flex:9"></i></div><div class="obl">5 · 30 · 9</div></td><td class="n pr">36%</td></tr>
+            <tr><td class="pl">สูงเนิน</td><td class="n">34</td><td><div class="ob"><i class="w" style="flex:4"></i><i class="f" style="flex:17"></i><i class="lo" style="flex:3"></i></div><div class="obl">4 · 17 · 3</div></td><td class="n pr">57%</td></tr>
+            <tr><td class="pl">ปักธงชัย</td><td class="n">39</td><td><div class="ob"><i class="w" style="flex:2"></i><i class="f" style="flex:21"></i><i class="lo" style="flex:3"></i></div><div class="obl">2 · 21 · 3</div></td><td class="n pr">40%</td></tr>
+            <tr><td class="pl">โนนสูง</td><td class="n">22</td><td><div class="ob"><i class="w" style="flex:1"></i><i class="f" style="flex:10"></i><i class="lo" style="flex:4"></i></div><div class="obl">1 · 10 · 4</div></td><td class="n pr">20%</td></tr>
+            <tr><td class="pl">โชคชัย</td><td class="n">18</td><td><div class="ob"><i class="f" style="flex:8"></i><i class="lo" style="flex:1"></i></div><div class="obl">0 · 8 · 1</div></td><td class="n pr">0%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="panel"><div class="ph"><h2>แผนที่หน้างาน</h2></div>
+        <div class="map big">
+          <span class="dot" style="left:30%;top:30%;background:var(--success)"></span><span class="dot" style="left:42%;top:44%;background:var(--follow)"></span><span class="dot" style="left:48%;top:38%;background:var(--follow)"></span><span class="dot" style="left:55%;top:50%;background:var(--danger)"></span><span class="dot" style="left:62%;top:28%;background:var(--follow)"></span><span class="dot" style="left:70%;top:66%;background:var(--success)"></span><span class="dot" style="left:22%;top:70%;background:var(--danger)"></span><span class="dot" style="left:38%;top:62%;background:var(--follow)"></span>
+        </div>
+        <div class="legend" style="margin-top:10px"><span style="--c:var(--success)">จบได้</span><span style="--c:var(--follow)">ตามต่อ</span><span style="--c:var(--danger)">จบที่อื่น</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- lost -->
+  <div class="pane" data-pane="report:lost">
+    <div class="grid2 eq">
+      <div class="panel">
+        <div class="ph"><h2>สาเหตุจบที่อื่น</h2><span class="sub num">20 งาน</span></div>
+        <div class="hbar"><span>ราคาสูงกว่า</span><div class="t"><i style="width:45%"></i></div><b class="num">9</b></div>
+        <div class="hbar"><span>ช่างมีร้านประจำ</span><div class="t"><i style="width:30%"></i></div><b class="num">6</b></div>
+        <div class="hbar"><span>ส่งของช้า</span><div class="t"><i style="width:15%"></i></div><b class="num">3</b></div>
+        <div class="hbar"><span>อื่นๆ</span><div class="t"><i style="width:10%"></i></div><b class="num">2</b></div>
+      </div>
+      <div class="panel">
+        <div class="ph"><h2>จบที่ร้านไหน</h2></div>
+        <div class="hbar"><span>กระทิง</span><div class="t"><i style="width:55%"></i></div><b class="num">11</b></div>
+        <div class="hbar"><span>ร้านในอำเภอ</span><div class="t"><i style="width:20%"></i></div><b class="num">4</b></div>
+        <div class="hbar"><span>ไม่ทราบ</span><div class="t"><i style="width:25%;background:#a3a3a3"></i></div><b class="num">5</b></div>
+      </div>
+    </div>
+    <div class="panel" style="padding:0">
+      <div class="ph" style="padding:16px 18px 0"><h2>หน้างานที่จบที่อื่น · ราคาสูงกว่า</h2></div>
+      <table><thead><tr><th class="pl">รหัส</th><th>ลูกค้า</th><th>อำเภอ</th><th>จบที่</th><th>รายละเอียด</th><th class="pr">เซลล์</th></tr></thead><tbody>
+        <tr class="link" data-go="detail"><td class="pl code">690901-05</td><td>ช่างณรง</td><td>เมือง</td><td>กระทิง</td><td>ได้ราคาถูกกว่าประมาณ 8%</td><td class="pr">พัช</td></tr>
+        <tr class="link" data-go="detail"><td class="pl code">690915-02</td><td>คุณสมพร</td><td>โนนสูง</td><td>กระทิง</td><td>ต่างกันเรื่องค่าขนส่ง</td><td class="pr">บอม</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+</section>
+
+<!-- A4 SITES -->
+<section class="page" id="sites" data-t="หน้างาน">
+  <div class="head"><div><h1>หน้างาน</h1><div class="sub num">412 หน้างาน · คอลัมน์ตรงกับชีท Excel เดิม</div></div><button class="btn pri" data-modal="export"><svg class="icon"><use href="#i-dl"/></svg>Export Excel</button></div>
+  <div class="filters"><span class="field search"><svg class="icon"><use href="#i-search"/></svg>ค้นหาชื่อ เบอร์ รหัสงาน</span><span class="field dash"><svg class="icon"><use href="#i-plus"/></svg>สถานะ</span><span class="field dash"><svg class="icon"><use href="#i-plus"/></svg>เซลล์</span><span class="field dash"><svg class="icon"><use href="#i-plus"/></svg>อำเภอ</span><label class="field"><input type="checkbox"> เลยกำหนดเท่านั้น</label><span style="flex:1"></span><span class="field">คอลัมน์ ▾</span></div>
+  <div class="panel" style="padding:0;overflow:auto">
+    <table>
+      <thead><tr><th class="pl">NO.</th><th>วันที่</th><th>ลูกค้า / ช่าง</th><th>เบอร์</th><th>ลูกค้า</th><th>ตำบล / อำเภอ</th><th>ผู้ตัดสินใจ</th><th>สถานะ</th><th>ตามล่าสุด</th><th>ตามครั้งถัดไป</th><th class="n">ครั้ง</th><th class="pr">เซลล์</th></tr></thead>
+      <tbody>
+        <tr class="link" data-go="detail"><td class="pl code">690825-02</td><td class="num">25/08/69</td><td><b>คุณพี</b> · ช่างกวาง</td><td class="num">084-773-3405</td><td>ใหม่</td><td>หนองตะไก้ · สูงเนิน</td><td>เจ้าของบ้าน</td><td><span class="badge b-over">เลย 2 วัน</span></td><td class="num">25/08/69</td><td class="num">15/10/69</td><td class="n">4</td><td class="pr">บอม</td></tr>
+        <tr class="link" data-go="detail"><td class="pl code">691017-03</td><td class="num">17/10/69</td><td>ช่างณรง</td><td class="num">082-347-7620</td><td>ใหม่</td><td>สุรนารี · เมือง</td><td>ช่าง</td><td><span class="badge b-fut">ตามต่อ 27/10</span></td><td class="num">17/10/69</td><td class="num">27/10/69</td><td class="n">1</td><td class="pr">พัช</td></tr>
+        <tr class="link" data-go="detail"><td class="pl code">690825-01</td><td class="num">25/08/69</td><td>ช่างแคน</td><td class="num">089-716-5403</td><td>เก่า</td><td>หนองตะไก้ · สูงเนิน</td><td>ช่าง</td><td><span class="badge b-won">✓ จบได้</span></td><td class="num">17/10/69</td><td class="num">–</td><td class="n">5</td><td class="pr">บอม</td></tr>
+        <tr class="link" data-go="detail"><td class="pl code">690901-05</td><td class="num">01/09/69</td><td>ช่างณรง</td><td class="num">082-347-7620</td><td>ใหม่</td><td>ในเมือง · เมือง</td><td>เจ้าของบ้าน</td><td><span class="badge b-lost">✕ จบที่อื่น</span></td><td class="num">17/10/69</td><td class="num">–</td><td class="n">3</td><td class="pr">พัช</td></tr>
+        <tr class="link" data-go="detail"><td class="pl code">691007-01</td><td class="num">07/10/69</td><td>ช่างเซียน</td><td class="num">080-855-4296</td><td>ใหม่</td><td>ตลาด · เมือง</td><td>ช่าง</td><td><span class="badge b-today">ตามวันนี้</span></td><td class="num">07/10/69</td><td class="num">17/10/69</td><td class="n">2</td><td class="pr">บอม</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;color:var(--mfg)"><span class="num">1–50 จาก 412</span><span><button class="btn sm">ก่อนหน้า</button> <button class="btn sm">ถัดไป</button></span></div>
+</section>
+
+<!-- A5 DETAIL -->
+<section class="page" id="detail" data-t="หน้างาน / 690825-02" data-back="1">
+  <div class="head"><div><div style="display:flex;gap:10px;align-items:center"><span class="code" style="font-size:20px">#690825-02</span><span class="badge b-over">เลยกำหนด 2 วัน</span></div><h1 style="margin-top:4px">คุณพี (หล่อมาก) · ช่างกวาง</h1><div class="sub num">084-773-3405 · ต.หนองตะไก้ อ.สูงเนิน · เจ้าของงาน บอม</div></div><button class="btn">รวมกับงานอื่น</button></div>
+  <div class="split">
+    <div class="panel">
+      <div class="ph"><h2>ประวัติการติดตาม (<span class="num">4</span>)</h2></div>
+      <div class="tl">
+        <div class="tl-i adm"><div class="m">17 ต.ค. 69 · แอดมิน น้าอร</div><p>เปลี่ยนผู้ตัดสินใจเป็น "เจ้าของบ้าน"</p></div>
+        <div class="tl-i"><div class="m">25 ส.ค. 69 · บอม · ตามต่อ → 15 ต.ค.</div><p>เจ้าของบ้านแจ้งว่ารอกลับจากต่างจังหวัดก่อนถึงจะสั่งแผ่น</p></div>
+        <div class="tl-i"><div class="m">22 ส.ค. 69 · บอม · ขั้นตอน: ขึ้นโครง</div><p>ทำโครงแล้วค่ะ เหลือวางแปลนกับติดเชิงชาย เจ้าของบ้านไม่อยู่หน้างาน</p><div class="thumbs"><i></i><i></i><i></i></div></div>
+        <div class="tl-i"><div class="m">30 ก.ค. 69 · บอม · งานใหม่</div><p>งานตั้งศาลาขุดหลุมไว้ รอลงเสาเอกเสาโท สเปคหลังคายังไม่ได้</p><div class="thumbs"><i></i></div></div>
+      </div>
+    </div>
+    <div>
+      <div class="panel" style="margin-bottom:16px"><div class="map"><span class="dot" style="left:48%;top:38%;background:var(--warning)"></span></div><button class="btn full" style="margin-top:10px">เปิด Google Maps</button></div>
+      <div class="panel" style="margin-bottom:16px"><div class="ph"><h2>ข้อมูลหน้างาน</h2><button class="btn sm">แก้ไข</button></div>
+        <dl class="kv"><dt>ผู้ติดต่อ</dt><dd>เจ้าของ</dd><dt>ผู้ตัดสินใจ</dt><dd>เจ้าของบ้าน</dd><dt>ขั้นตอน</dt><dd>รอวางแปลน</dd><dt>คาดสั่ง</dt><dd>ต.ค. 69</dd><dt>ตามต่อ</dt><dd class="num">15 ต.ค. 69</dd><dt>เจ้าของงาน</dt><dd>บอม <a style="text-decoration:underline;font-size:13px">เปลี่ยน</a></dd></dl></div>
+      <div class="panel"><h2 style="margin-bottom:10px">เปลี่ยนสถานะ</h2><span class="field" style="width:100%">ตามต่อ ▾</span><span class="field ph" style="width:100%;margin-top:8px">เหตุผล (บันทึกในประวัติ)</span><button class="btn pri full" style="margin-top:10px">บันทึกสถานะ</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- A6 FOLLOW -->
+<section class="page" id="follow" data-t="ต้องติดตาม">
+  <div class="head"><div><h1>ต้องติดตาม</h1><div class="sub">ศ. 17 ต.ค. 69</div></div><button class="btn"><svg class="icon"><use href="#i-copy"/></svg>คัดลอกสรุปไปวางในกลุ่ม</button></div>
+  <div class="filters"><div class="tabs" data-group="follow"><span data-tab="today">วันนี้ 14</span><span data-tab="over" class="on">เลยกำหนด 9</span></div></div>
+  <div class="pane on" data-pane="follow:over">
+    <div class="panel" style="margin-bottom:14px">
+      <div class="ph"><div class="rep"><div class="av" style="background:#737373">ต</div><b>เติ้ล</b><span class="badge b-over">5 งาน</span></div><span class="sub">ตามตรงเวลา 71%</span></div>
+      <table><thead><tr><th>รหัส</th><th>ลูกค้า</th><th>อำเภอ</th><th>นัดไว้</th><th class="n">เลย</th></tr></thead><tbody>
+        <tr class="link" data-go="detail"><td class="code">690912-02</td><td>ช่างต้น</td><td>ปักธงชัย</td><td class="num">05/10/69</td><td class="n" style="color:var(--warning-ink);font-weight:700">12 วัน</td></tr>
+        <tr class="link" data-go="detail"><td class="code">690920-01</td><td>คุณสมศรี</td><td>ปักธงชัย</td><td class="num">10/10/69</td><td class="n" style="color:var(--warning-ink);font-weight:700">7 วัน</td></tr>
+        <tr class="link" data-go="detail"><td class="code">691001-03</td><td>ช่างเอก</td><td>ปักธงชัย</td><td class="num">14/10/69</td><td class="n" style="color:var(--warning-ink);font-weight:700">3 วัน</td></tr>
+      </tbody></table>
+    </div>
+    <div class="panel"><div class="ph"><div class="rep"><div class="av" style="background:#525252">บ</div><b>บอม</b><span class="badge b-over">2 งาน</span></div><span class="sub">ตามตรงเวลา 85%</span></div>
+      <table><tbody><tr class="link" data-go="detail"><td class="code">690825-02</td><td>คุณพี · ช่างกวาง</td><td>สูงเนิน</td><td class="num">15/10/69</td><td class="n" style="color:var(--warning-ink);font-weight:700">2 วัน</td></tr></tbody></table></div>
+  </div>
+  <div class="pane" data-pane="follow:today">
+    <div class="panel" style="margin-bottom:14px"><div class="ph"><div class="rep"><div class="av" style="background:#525252">บ</div><b>บอม</b><span class="badge b-today">4 งาน</span></div></div>
+      <table><tbody>
+        <tr class="link" data-go="detail"><td class="code">691007-01</td><td>ช่างเซียน</td><td>เมือง</td><td>ครั้งที่ 3</td></tr>
+        <tr class="link" data-go="detail"><td class="code">691010-02</td><td>คุณวิไล</td><td>โนนสูง</td><td>ครั้งที่ 2</td></tr>
+      </tbody></table></div>
+    <div class="panel"><div class="ph"><div class="rep"><div class="av">พ</div><b>พัช</b><span class="badge b-today">3 งาน</span></div></div>
+      <table><tbody><tr class="link" data-go="detail"><td class="code">691003-01</td><td>ช่างณรง</td><td>เมือง</td><td>ครั้งที่ 2</td></tr></tbody></table></div>
+  </div>
+</section>
+
+<!-- A7 REPS -->
+<section class="page" id="reps" data-t="เซลล์">
+  <div class="head"><div><h1>เซลล์</h1><div class="sub">เซลล์ใหม่ต้องได้รับอนุมัติก่อนส่งรายงาน</div></div><div class="tabs" data-group="reps"><span data-tab="pend" class="on">รออนุมัติ 2</span><span data-tab="act">ใช้งาน 6</span><span data-tab="off">ปิดใช้งาน 1</span></div></div>
+  <div class="pane on" data-pane="reps:pend">
+    <div class="cards2">
+      <div class="pend"><div class="av lg">ฟ</div><div class="grow"><b>ฟ้า</b> <span style="color:var(--mfg)">LINE: Fah UP Steel</span><div class="sub">พื้นที่ อ.ปากช่อง · สมัคร 17 ต.ค. 09:12</div></div><button class="btn sm">ปฏิเสธ</button><button class="btn sm ok">อนุมัติ</button></div>
+      <div class="pend"><div class="av lg" style="background:#525252">เ</div><div class="grow"><b>เบียร์</b> <span style="color:var(--mfg)">LINE: beer.s</span><div class="sub">พื้นที่ อ.โนนสูง · สมัคร 16 ต.ค. 18:40</div></div><button class="btn sm">ปฏิเสธ</button><button class="btn sm ok">อนุมัติ</button></div>
+    </div>
+  </div>
+  <div class="pane" data-pane="reps:act">
+    <div class="panel" style="padding:0"><table><thead><tr><th class="pl">เซลล์</th><th>พื้นที่</th><th class="n">วิ่งงานเดือนนี้</th><th>ใช้งานล่าสุด</th><th></th></tr></thead><tbody>
+      <tr><td class="pl"><div class="rep"><div class="av" style="background:#525252">บ</div><div>บอม<small>LINE: เซลล์ บอม UP Steel</small></div></div></td><td>อ.เมือง, อ.โนนสูง</td><td class="n">52</td><td class="num">วันนี้ 10:08</td><td class="pr" style="text-align:right"><button class="btn sm">แก้ไข</button> <button class="btn sm">ปิดใช้งาน</button></td></tr>
+      <tr><td class="pl"><div class="rep"><div class="av">พ</div><div>พัช<small>LINE: Up steel sales3-พัช</small></div></div></td><td>อ.เมือง, อ.สูงเนิน</td><td class="n">47</td><td class="num">วันนี้ 10:44</td><td class="pr" style="text-align:right"><button class="btn sm">แก้ไข</button> <button class="btn sm">ปิดใช้งาน</button></td></tr>
+      <tr><td class="pl"><div class="rep"><div class="av" style="background:#737373">ต</div><div>เติ้ล<small>LINE: เซลล์ เติ้ล</small></div></div></td><td>อ.ปักธงชัย</td><td class="n">39</td><td class="num">เมื่อวาน 17:20</td><td class="pr" style="text-align:right"><button class="btn sm">แก้ไข</button> <button class="btn sm">ปิดใช้งาน</button></td></tr>
+    </tbody></table></div>
+  </div>
+  <div class="pane" data-pane="reps:off">
+    <div class="panel" style="padding:0"><table><tbody>
+      <tr><td class="pl"><div class="rep"><div class="av" style="background:#c4c4c4">ม</div><div>มิ้นท์<small>ปิดเมื่อ 30 ก.ย. 69 · หน้างาน 12 งานยังอยู่ในระบบ</small></div></div></td><td><span class="badge b-off">ปิดใช้งาน</span></td><td class="pr" style="text-align:right"><button class="btn sm">เปิดใช้งาน</button></td></tr>
+    </tbody></table></div>
+  </div>
+</section>
+
+<!-- A8 OPTIONS -->
+<section class="page" id="options" data-t="ตั้งค่าตัวเลือก">
+  <div class="head"><div><h1>ตั้งค่าตัวเลือก</h1><div class="sub">รายการที่เซลล์เลือกในฟอร์ม · ซ่อนแทนการลบ เพื่อให้รายงานย้อนหลังไม่เสีย</div></div></div>
+  <div class="opt">
+    <div class="optnav"><a>ขั้นตอนหน้างาน <span class="num">6</span></a><a>ผู้ตัดสินใจ <span class="num">3</span></a><a>ประเภทผู้ติดต่อ <span class="num">3</span></a><a class="on">สาเหตุจบที่อื่น <span class="num">5</span></a><a>ร้านคู่แข่ง <span class="num">4</span></a><a>อำเภอที่ให้บริการ <span class="num">12</span></a><a>ช่องบังคับในฟอร์ม</a></div>
+    <div class="panel"><div class="ph"><h2>สาเหตุจบที่อื่น</h2><button class="btn sm"><svg class="icon"><use href="#i-plus"/></svg>เพิ่ม</button></div>
+      <div class="optrow"><span class="grip">⋮⋮</span>ราคาสูงกว่า<span style="margin-left:auto;color:var(--mfg)" class="num">ใช้ 9 ครั้ง</span><button class="btn sm">ซ่อน</button></div>
+      <div class="optrow"><span class="grip">⋮⋮</span>ช่างมีร้านประจำ<span style="margin-left:auto;color:var(--mfg)" class="num">ใช้ 6 ครั้ง</span><button class="btn sm">ซ่อน</button></div>
+      <div class="optrow"><span class="grip">⋮⋮</span>ส่งของช้า<span style="margin-left:auto;color:var(--mfg)" class="num">ใช้ 3 ครั้ง</span><button class="btn sm">ซ่อน</button></div>
+      <div class="optrow"><span class="grip">⋮⋮</span>ของไม่พร้อม<span style="margin-left:auto;color:var(--mfg)" class="num">ใช้ 0 ครั้ง</span><button class="btn sm">ซ่อน</button></div>
+      <div class="optrow" style="border-bottom:none;color:var(--mfg)"><span class="grip">⋮⋮</span>อื่นๆ (ให้พิมพ์เพิ่ม)<span style="margin-left:auto" class="num">ใช้ 2 ครั้ง</span><span class="badge b-fut">ล็อก</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- A9 USERS -->
+<section class="page" id="users" data-t="ผู้ใช้ระบบ">
+  <div class="head"><div><h1>ผู้ใช้ระบบ</h1><div class="sub">คนที่เข้าหน้าแอดมินได้ · "ดูอย่างเดียว" เห็นรายงานแต่แก้ไขไม่ได้</div></div><button class="btn pri"><svg class="icon"><use href="#i-plus"/></svg>เพิ่มผู้ใช้</button></div>
+  <div class="panel" style="padding:0"><table><thead><tr><th class="pl">ชื่อ</th><th>อีเมล</th><th>บทบาท</th><th>ใช้งานล่าสุด</th><th></th></tr></thead><tbody>
+    <tr><td class="pl"><div class="rep"><div class="av" style="background:#404040">อ</div>น้าอร</div></td><td>aon@upsteel.co.th</td><td><span class="badge b-today">แอดมิน</span></td><td class="num">วันนี้ 11:02</td><td class="pr" style="text-align:right"><button class="btn sm">แก้ไข</button></td></tr>
+    <tr><td class="pl"><div class="rep"><div class="av" style="background:#737373">ห</div>หัวหน้าทีมขาย</div></td><td>sales.lead@upsteel.co.th</td><td><span class="badge b-fut">ดูอย่างเดียว</span></td><td class="num">เมื่อวาน 18:30</td><td class="pr" style="text-align:right"><button class="btn sm">แก้ไข</button></td></tr>
+    <tr><td class="pl"><div class="rep"><div class="av" style="background:#0a0a0a">N</div>Notz</div></td><td>devzstack@gmail.com</td><td><span class="badge b-today">แอดมิน</span></td><td class="num">วันนี้ 19:40</td><td class="pr" style="text-align:right"><button class="btn sm">แก้ไข</button></td></tr>
+  </tbody></table></div>
+</section>
+
+</div></div></div>
+
+<!-- A10 EXPORT MODAL -->
+<div class="modal-bg" id="m-export" role="dialog" aria-modal="true" aria-labelledby="exp-t">
+  <div class="modal">
+    <h2 id="exp-t" style="font-size:18px">Export Excel</h2>
+    <div class="sub">คอลัมน์เรียงตามชีทติดตามงานเดิมของทีม</div>
+    <label class="l">ช่วงวันที่</label><span class="field" style="width:100%"><svg class="icon"><use href="#i-cal"/></svg><span class="num">1–17 ต.ค. 69</span></span>
+    <label class="l">เซลล์</label><span class="field" style="width:100%">ทุกคน ▾</span>
+    <label class="l">สถานะ</label><span class="field" style="width:100%">ทุกสถานะ ▾</span>
+    <div class="check" style="margin-top:14px"><i>✓</i>ใส่ลิงก์รูปและแผนที่</div>
+    <div class="check"><i class="off"></i>แยกชีทตามเซลล์</div>
+    <div class="hint">จะได้ไฟล์ <b class="num">หน้างาน_1-17ต.ค.69.xlsx</b> · 412 แถว</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px"><button class="btn" data-close>ยกเลิก</button><button class="btn pri" data-close><svg class="icon"><use href="#i-dl"/></svg>ดาวน์โหลด</button></div>
+  </div>
+</div>
+
+<script>
+const app=document.getElementById('app'),login=document.getElementById('login');
+const links=document.querySelectorAll('nav a[data-p]');
+function show(id){
+  if(id==='login'){app.style.display='none';login.classList.add('on');window.scrollTo(0,0);return}
+  app.style.display='';login.classList.remove('on');
+  const pg=document.getElementById(id); if(!pg) return;
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('on',p===pg));
+  const navId = id==='detail' ? 'sites' : id;
+  links.forEach(a=>a.classList.toggle('on',a.dataset.p===navId));
+  document.getElementById('crumb').innerHTML='<b>'+pg.dataset.t+'</b>';
+  document.getElementById('backBtn').style.display=pg.dataset.back?'':'none';
+  window.scrollTo(0,0);
+}
+function setTab(group,tab){
+  document.querySelectorAll('.tabs[data-group="'+group+'"] span').forEach(s=>s.classList.toggle('on',s.dataset.tab===tab));
+  document.querySelectorAll('[data-pane^="'+group+':"]').forEach(p=>p.classList.toggle('on',p.dataset.pane===group+':'+tab));
+}
+links.forEach(a=>{a.addEventListener('click',()=>show(a.dataset.p));a.addEventListener('keydown',e=>{if(e.key==='Enter')show(a.dataset.p)})});
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-tab]');
+  if(t&&t.parentElement.dataset.group){setTab(t.parentElement.dataset.group,t.dataset.tab);return}
+  const tt=e.target.closest('[data-tabto]');
+  if(tt){const go=tt.dataset.go; if(go)show(go); const [g,v]=tt.dataset.tabto.split(':'); setTab(g,v); window.scrollTo(0,0); return}
+  const g=e.target.closest('[data-go]'); if(g){show(g.dataset.go);return}
+  const m=e.target.closest('[data-modal]'); if(m){document.getElementById('m-'+m.dataset.modal).classList.add('on');return}
+  if(e.target.closest('[data-close]')||e.target.classList.contains('modal-bg')){document.querySelectorAll('.modal-bg').forEach(x=>x.classList.remove('on'))}
+  const period=e.target.closest('.tabs[data-group="period"] span'); if(period){period.parentElement.querySelectorAll('span').forEach(s=>s.classList.toggle('on',s===period))}
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal-bg').forEach(x=>x.classList.remove('on'))});
+const h=location.hash.slice(1); if(h) show(h);
+// heatmap sample
+const hm=document.getElementById('hm');const lv=['','a','b','c','d'];let seed=7;
+for(let w=0;w<12;w++){const c=document.createElement('div');c.className='col';for(let d=0;d<7;d++){seed=(seed*37+11)%101;const i=document.createElement('i');const v=d===6?0:seed%5;i.className=lv[v];i.title=v+' รายงาน';c.appendChild(i)}hm.appendChild(c)}
+</script>
+</body>
+</html>

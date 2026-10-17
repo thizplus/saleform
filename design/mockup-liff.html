@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UP Sales LIFF — Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Preview only: LINE Seed from npm mirror. Production: self-host official files (see 01_DESIGN_SYSTEM.md) */
+@font-face{font-family:"LINE Seed Sans TH";src:url("https://cdn.jsdelivr.net/npm/@fontpkg/line-seed-sans-th@1.0.1/LINESeedSansTH_Rg.ttf");font-weight:400}
+@font-face{font-family:"LINE Seed Sans TH";src:url("https://cdn.jsdelivr.net/npm/@fontpkg/line-seed-sans-th@1.0.1/LINESeedSansTH_Bd.ttf");font-weight:700}
+@font-face{font-family:"LINE Seed Sans TH";src:url("https://cdn.jsdelivr.net/npm/@fontpkg/line-seed-sans-th@1.0.1/LINESeedSansTH_He.ttf");font-weight:900}
+:root{
+  --bg:#fff;--fg:#0a0a0a;--muted:#f5f5f5;--mfg:#737373;--border:#e5e5e5;
+  --success:#16a34a;--success-soft:#dcfce7;--success-ink:#15803d;
+  --warning:#d97706;--warning-soft:#fef3c7;--warning-ink:#b45309;
+  --danger:#dc2626;--danger-soft:#fee2e2;--danger-ink:#b91c1c;
+  --r:12px;--rs:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Inter","LINE Seed Sans TH",system-ui,sans-serif;background:#e9e9e7;color:var(--fg);-webkit-font-smoothing:antialiased;padding:40px 32px 80px}
+.num{font-family:"Inter",sans-serif;font-variant-numeric:tabular-nums}
+.page-head{max-width:1500px;margin:0 auto 32px}
+.page-head h1{font-size:28px;font-weight:700}
+.page-head p{color:var(--mfg);margin-top:6px;font-size:15px;line-height:1.6;max-width:70ch}
+.board{max-width:1500px;margin:0 auto;display:flex;flex-wrap:wrap;gap:40px 32px;align-items:flex-start}
+figure{width:375px}
+figcaption{font-size:14px;line-height:1.5;margin-bottom:10px}
+figcaption b{font-weight:700}
+figcaption span{display:block;color:var(--mfg);font-size:13px}
+.phone{width:375px;height:780px;background:var(--bg);border-radius:28px;overflow:hidden;position:relative;border:1px solid #d4d4d4;display:flex;flex-direction:column}
+.phone.tall{height:auto;min-height:780px}
+.lbar{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;font-size:13px;color:var(--mfg);border-bottom:1px solid var(--border);flex:none}
+.lbar b{color:var(--fg);font-weight:700;font-size:14px}
+.scroll{flex:1;overflow:hidden;position:relative}
+.pad{padding:16px}
+.row{display:flex;align-items:center;gap:8px}
+.between{justify-content:space-between}
+.muted{color:var(--mfg)}
+.small{font-size:14px;line-height:1.5}
+.cap{font-size:12px;line-height:1.4}
+.title{font-size:22px;font-weight:700;line-height:1.35}
+.h{font-size:18px;font-weight:700;line-height:1.4}
+.sec{padding:16px;border-bottom:8px solid var(--muted)}
+.sec h3{font-size:16px;font-weight:700;margin-bottom:12px}
+label.l{display:block;font-size:14px;font-weight:700;margin:14px 0 6px}
+label.l:first-of-type{margin-top:0}
+.input{height:48px;border:1px solid var(--border);border-radius:var(--rs);padding:0 14px;display:flex;align-items:center;font-size:16px}
+.input.ph{color:#a3a3a3}
+.input.focus{border-color:var(--fg);box-shadow:0 0 0 1px var(--fg)}
+.textarea{min-height:96px;align-items:flex-start;padding-top:12px;line-height:1.6}
+.btn{height:48px;border-radius:var(--rs);display:flex;align-items:center;justify-content:center;gap:8px;font-weight:700;font-size:16px;border:1px solid var(--border);background:#fff}
+.btn.primary{background:var(--fg);color:#fff;border-color:var(--fg)}
+.btn.sm{height:40px;font-size:14px;font-weight:700;padding:0 12px}
+.btn.ghost{border-color:transparent}
+.btn.dis{background:#d4d4d4;border-color:#d4d4d4;color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--border);display:inline-flex;align-items:center;font-size:15px;background:#fff;white-space:nowrap}
+.chip.on{background:var(--fg);color:#fff;border-color:var(--fg);font-weight:700}
+.chip small{font-size:12px;opacity:.75;margin-left:6px}
+.badge{display:inline-flex;align-items:center;gap:4px;height:26px;padding:0 10px;border-radius:999px;font-size:13px;font-weight:700;white-space:nowrap}
+.b-today{background:var(--fg);color:#fff}
+.b-over{background:var(--warning-soft);color:var(--warning-ink)}
+.b-fut{border:1px solid var(--border);color:#404040;font-weight:400}
+.b-won{background:var(--success-soft);color:var(--success-ink)}
+.b-lost{background:var(--danger-soft);color:var(--danger-ink)}
+.code{font-family:"Inter",sans-serif;font-variant-numeric:tabular-nums;font-weight:700;font-size:15px;letter-spacing:.01em}
+.card{border:1px solid var(--border);border-radius:var(--r);padding:14px;background:#fff}
+.card + .card{margin-top:12px}
+.acts{display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:8px;margin-top:12px}
+.acts .btn{height:40px;font-size:14px}
+.sticky{position:absolute;left:0;right:0;bottom:0;padding:12px 16px 22px;background:#fff;border-top:1px solid var(--border)}
+.icon{width:20px;height:20px;flex:none;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.icon.s{width:16px;height:16px}
+.avatar{width:36px;height:36px;border-radius:50%;background:#d4d4d4;flex:none;display:grid;place-items:center;font-weight:700;color:#fff;font-size:14px}
+.avatar.lg{width:72px;height:72px;font-size:26px}
+/* home hero */
+.hero{padding:20px 16px 16px}
+.hero .big{font-family:"Inter","LINE Seed Sans TH";font-weight:900;font-size:64px;line-height:.95;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.hero .big span{font-size:22px;font-weight:700;letter-spacing:0;margin-left:6px}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:18px}
+.day{border-radius:10px;padding:8px 0 7px;text-align:center;border:1px solid var(--border)}
+.day .d{font-size:12px;color:var(--mfg)}
+.day .n{font-family:Inter;font-weight:700;font-size:17px;margin:2px 0}
+.day .c{font-family:Inter;font-size:12px;height:16px;color:var(--fg)}
+.day.today{background:var(--fg);border-color:var(--fg);color:#fff}
+.day.today .d,.day.today .c{color:#fff}
+.day.over .c{color:var(--warning-ink);font-weight:700}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);background:var(--muted);border-radius:var(--rs);padding:4px;gap:4px}
+.tab{height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;color:#404040}
+.tab.on{background:#fff;font-weight:700;color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.search{height:44px;border-radius:var(--rs);background:var(--muted);display:flex;align-items:center;gap:8px;padding:0 12px;color:#a3a3a3;font-size:15px;margin-top:12px}
+.photos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.slot{aspect-ratio:1;border-radius:var(--rs);border:1.5px dashed #c4c4c4;display:grid;place-items:center;color:var(--mfg)}
+.slot.img{border:none;background:linear-gradient(160deg,#b9c2c9,#7d8a93 55%,#5d6a72);position:relative}
+.slot.img::after{content:"";position:absolute;left:10%;right:10%;bottom:22%;height:28%;border-top:3px solid rgba(255,255,255,.55);transform:skewY(-8deg)}
+.map{height:150px;background:repeating-linear-gradient(0deg,#f2f2f0 0 22px,#ebebe8 22px 23px),repeating-linear-gradient(90deg,transparent 0 30px,#e3e3df 30px 31px);background-blend-mode:multiply;position:relative;border-radius:var(--rs);overflow:hidden}
+.map::before{content:"";position:absolute;left:-10%;right:-10%;top:55%;height:10px;background:#fff;transform:rotate(-12deg);border-top:1px solid #ddd;border-bottom:1px solid #ddd}
+.pin{position:absolute;left:50%;top:40%;width:22px;height:22px;border-radius:50% 50% 50% 0;background:var(--fg);transform:translate(-50%,-50%) rotate(-45deg)}
+.pin::after{content:"";position:absolute;inset:7px;border-radius:50%;background:#fff}
+.alert{border-radius:var(--rs);padding:10px 12px;font-size:14px;line-height:1.5;display:flex;gap:8px;margin-top:8px}
+.alert.warn{background:var(--warning-soft);color:var(--warning-ink)}
+.alert.ok{background:var(--success-soft);color:var(--success-ink)}
+.kv{display:grid;grid-template-columns:110px 1fr;row-gap:10px;font-size:15px;line-height:1.5}
+.kv dt{color:var(--mfg)}
+.tl{position:relative;padding-left:22px}
+.tl::before{content:"";position:absolute;left:5px;top:8px;bottom:8px;width:2px;background:var(--border)}
+.tl-i{position:relative;padding-bottom:18px}
+.tl-i::before{content:"";position:absolute;left:-22px;top:5px;width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid var(--fg)}
+.tl-i.first::before{background:var(--fg)}
+.tl-i .meta{font-size:13px;color:var(--mfg)}
+.tl-i p{font-size:15px;line-height:1.6;margin-top:4px}
+.mini{display:flex;gap:6px;margin-top:8px}
+.mini i{width:56px;height:56px;border-radius:8px;background:linear-gradient(160deg,#b9c2c9,#6f7c85)}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--border);border-radius:var(--rs);overflow:hidden}
+.seg div{height:48px;display:flex;align-items:center;justify-content:center;gap:4px;font-size:14px;border-right:1px solid var(--border)}
+.seg div:last-child{border-right:none}
+.seg .on-lost{background:var(--danger);color:#fff;font-weight:700}
+.sheet-bg{position:absolute;inset:0;background:rgba(10,10,10,.45)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:20px 20px 0 0;padding:10px 16px 22px}
+.grab{width:40px;height:5px;border-radius:9px;background:#d4d4d4;margin:0 auto 14px}
+.flex{border:1px solid var(--border);border-radius:16px;overflow:hidden;background:#fff;width:290px}
+.flex .hero-img{height:150px;background:linear-gradient(160deg,#c3ccd2,#7d8a93 60%,#56636b)}
+.flex .fb{padding:14px}
+.flex .ft{border-top:1px solid var(--border);padding:10px 14px;display:flex;justify-content:space-between;font-size:13px;color:var(--mfg)}
+.flex .fbtn{margin:0 14px 14px;height:40px;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700}
+.chat{background:#8cabd9;padding:16px;display:flex;flex-direction:column;gap:14px;flex:1}
+.bubble-row{display:flex;gap:8px;align-items:flex-start}
+.bubble-row .who{font-size:12px;color:#fff;margin-bottom:4px}
+.statgrid{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--border);border-radius:var(--r)}
+.statgrid div{padding:14px;border-bottom:1px solid var(--border)}
+.statgrid div:nth-child(odd){border-right:1px solid var(--border)}
+.statgrid div:nth-last-child(-n+2){border-bottom:none}
+.statgrid .v{font-family:Inter;font-weight:800;font-size:30px;font-variant-numeric:tabular-nums;line-height:1.1;margin-top:4px}
+.obar{display:flex;height:14px;border-radius:7px;overflow:hidden;gap:2px;margin:10px 0 8px}
+.obar i{display:block}
+.legend{display:flex;gap:14px;font-size:13px;color:#404040;flex-wrap:wrap}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px;background:var(--c)}
+.progress{height:6px;border-radius:3px;background:var(--muted);overflow:hidden;margin-top:6px}
+.progress i{display:block;height:100%;background:var(--fg)}
+.missing{font-size:13px;color:var(--warning-ink);text-align:center;margin-bottom:8px}
+@media (max-width:820px){body{padding:20px 12px}figure,.phone{width:100%}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></symbol>
+  <symbol id="phone" viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z"/></symbol>
+  <symbol id="nav" viewBox="0 0 24 24"><path d="m3 11 19-9-9 19-2-8-8-2z"/></symbol>
+  <symbol id="cam" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></symbol>
+  <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="back" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="alarm" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M5 3 2 6M22 6l-3-3"/></symbol>
+  <symbol id="check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="x" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></symbol>
+  <symbol id="send" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></symbol>
+  <symbol id="chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 16v-4M12 16V8M17 16v-7"/></symbol>
+  <symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="copy" viewBox="0 0 24 24"><rect x="8" y="8" width="14" height="14" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+</svg>
+
+<header class="page-head">
+  <h1>UP Sales — LIFF ฝั่งเซลล์</h1>
+  <p>ทุกหน้าจอในขนาดมือถือ 375px · ฟอนต์ LINE Seed Sans TH + Inter · ขาวดำ คอนทราสต์สูงสำหรับใช้กลางแดด · สถานะใช้สี success / warning / danger พร้อมไอคอนและข้อความเสมอ · ข้อมูลตัวอย่างจากข้อความจริงในกลุ่ม</p>
+</header>
+
+<main class="board">
+
+<!-- L4 HOME -->
+<figure>
+<figcaption><b>L4 · งานของฉัน (หน้าแรก)</b><span>ตอบ "วันนี้ต้องตามงานไหน" ก่อนอย่างอื่น · แถบ 7 วันแตะเพื่อกรองวัน · ปุ่มรายงานงานใหม่ล่างจอ</span></figcaption>
+<div class="phone">
+  <div class="lbar"><span>✕</span><b>UP Sales</b><span>⋯</span></div>
+  <div class="scroll">
+    <div class="pad row between" style="padding-bottom:0">
+      <div class="row"><div class="avatar" style="background:#525252">บ</div><div><div style="font-weight:700;font-size:15px">บอม</div><div class="cap muted">อ.เมือง · อ.โนนสูง</div></div></div>
+      <div class="btn sm ghost" aria-label="ผลงานของฉัน"><svg class="icon"><use href="#chart"/></svg></div>
+    </div>
+    <div class="hero">
+      <div class="small muted">วันนี้ต้องตาม · ศ. 17 ต.ค.</div>
+      <div class="big">3<span>งาน</span></div>
+      <div class="row small" style="margin-top:8px;gap:14px"><span style="color:var(--warning-ink);font-weight:700" class="row"><svg class="icon s"><use href="#alarm"/></svg>เลยกำหนด <span class="num">2</span></span><span class="muted">ติดตามอยู่ <span class="num">14</span></span></div>
+      <div class="week">
+        <div class="day over"><div class="d">พ</div><div class="n">15</div><div class="c">2</div></div>
+        <div class="day"><div class="d">พฤ</div><div class="n">16</div><div class="c"></div></div>
+        <div class="day today"><div class="d">ศ</div><div class="n">17</div><div class="c">3</div></div>
+        <div class="day"><div class="d">ส</div><div class="n">18</div><div class="c">1</div></div>
+        <div class="day"><div class="d">อา</div><div class="n">19</div><div class="c"></div></div>
+        <div class="day"><div class="d">จ</div><div class="n">20</div><div class="c">2</div></div>
+        <div class="day"><div class="d">อ</div><div class="n">21</div><div class="c">1</div></div>
+      </div>
+    </div>
+    <div style="padding:0 16px">
+      <div class="tabs"><div class="tab on">ต้องตาม 3</div><div class="tab">เลยกำหนด 2</div><div class="tab">ทั้งหมด</div></div>
+      <div class="search"><svg class="icon s"><use href="#search"/></svg>ค้นหาชื่อ เบอร์ รหัสงาน</div>
+      <div style="margin-top:12px">
+        <div class="card">
+          <div class="row between"><span class="code">#690825-02</span><span class="badge b-today">ตามวันนี้</span></div>
+          <div class="h" style="margin-top:6px">คุณพี · ช่างกวาง</div>
+          <div class="small muted">ต.หนองตะไก้ อ.สูงเนิน · ครั้งที่ <span class="num">4</span></div>
+          <div class="acts"><div class="btn"><svg class="icon s"><use href="#phone"/></svg>โทร</div><div class="btn"><svg class="icon s"><use href="#nav"/></svg>นำทาง</div><div class="btn primary">อัปเดต</div></div>
+        </div>
+        <div class="card">
+          <div class="row between"><span class="code">#691007-01</span><span class="badge b-today">ตามวันนี้</span></div>
+          <div class="h" style="margin-top:6px">ช่างเซียน</div>
+          <div class="small muted">ต.ตลาด อ.เมือง · ครั้งที่ <span class="num">2</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="sticky" style="border-top:none;background:linear-gradient(to top,#fff 70%,rgba(255,255,255,0))"><div class="btn primary"><svg class="icon"><use href="#plus"/></svg>รายงานงานใหม่</div></div>
+</div>
+</figure>
+
+<!-- L5 NEW REPORT -->
+<figure>
+<figcaption><b>L5 · รายงานงานใหม่ (บน)</b><span>เรียงตามที่ทำจริงหน้างาน: ปักตำแหน่ง → ถ่ายรูป → เบอร์ (ตรวจซ้ำทันที)</span></figcaption>
+<div class="phone">
+  <div class="lbar"><svg class="icon"><use href="#back"/></svg><b>รายงานงานใหม่</b><span class="cap">ร่างบันทึกแล้ว</span></div>
+  <div class="scroll">
+    <div class="sec">
+      <h3>หน้างาน</h3>
+      <div class="map"><div class="pin"></div></div>
+      <div class="alert ok"><svg class="icon s"><use href="#pin"/></svg><div>90 ซอย 3 ต.ในเมือง อ.เมือง นครราชสีมา<div class="cap">ความแม่นยำ ±12 ม. · <u>ปรับหมุด</u></div></div></div>
+      <div class="row" style="gap:8px;margin-top:10px"><div class="input" style="flex:1;font-size:15px">ต.ในเมือง ▾</div><div class="input" style="flex:1;font-size:15px">อ.เมือง ▾</div></div>
+      <label class="l" style="margin-top:16px">รูปหน้างาน <span class="muted" style="font-weight:400">1–3 รูป</span></label>
+      <div class="photos"><div class="slot img"></div><div class="slot"><svg class="icon"><use href="#cam"/></svg></div><div class="slot"><svg class="icon"><use href="#cam"/></svg></div></div>
+    </div>
+    <div class="sec">
+      <h3>ผู้ติดต่อ</h3>
+      <label class="l">เบอร์โทร *</label>
+      <div class="input focus num">089-716-5403</div>
+      <div class="alert warn"><svg class="icon s"><use href="#copy"/></svg><div>เบอร์นี้มีงาน <b class="num">#690825-02</b> ของบอมอยู่แล้ว <u>ดูงานนี้</u></div></div>
+      <label class="l">ชื่อช่าง</label>
+      <div class="input">แคน</div>
+      <label class="l">ผู้ติดต่อคือ</label>
+      <div class="chips"><span class="chip">เจ้าของ</span><span class="chip on">ช่าง</span><span class="chip">ผู้รับเหมา</span></div>
+    </div>
+  </div>
+</div>
+</figure>
+
+<figure>
+<figcaption><b>L5 · รายงานงานใหม่ (ล่าง)</b><span>chips แทนการพิมพ์ · ปุ่มส่งติดล่างจอ บอกว่ายังขาดอะไร</span></figcaption>
+<div class="phone">
+  <div class="lbar"><svg class="icon"><use href="#back"/></svg><b>รายงานงานใหม่</b><span class="cap">ร่างบันทึกแล้ว</span></div>
+  <div class="scroll">
+    <div class="sec">
+      <h3>รายละเอียดหน้างาน</h3>
+      <label class="l">ผู้มีอำนาจตัดสินใจ</label>
+      <div class="chips"><span class="chip on">เจ้าของบ้าน</span><span class="chip">ช่าง</span><span class="chip">อื่นๆ</span></div>
+      <label class="l">ขั้นตอนตอนนี้</label>
+      <div class="chips"><span class="chip">เทฐาน</span><span class="chip">ตั้งเสา</span><span class="chip on">ขึ้นโครง</span><span class="chip">รอมุงหลังคา</span></div>
+      <label class="l">รายละเอียด</label>
+      <div class="input textarea" style="font-size:15px">ช่างให้เข้ามาดูหน้างาน นำแผ่นตัวอย่าง PU และสีให้เจ้าของบ้านเลือก วัดปริมาณคร่าวๆ แล้ว</div>
+    </div>
+    <div class="sec" style="border-bottom:none">
+      <h3>นัดหมาย</h3>
+      <label class="l">ตามต่อ *</label>
+      <div class="chips"><span class="chip">พรุ่งนี้</span><span class="chip on">+2 วัน<small>อา. 19 ต.ค.</small></span><span class="chip">+7</span><span class="chip">+14</span><span class="chip">เลือกวัน</span></div>
+      <label class="l">คาดว่าจะสั่งของ</label>
+      <div class="chips"><span class="chip">ไม่ทราบ</span><span class="chip on">ภายใน 2 สัปดาห์</span><span class="chip">ภายในเดือน</span></div>
+    </div>
+  </div>
+  <div class="sticky">
+    <div class="btn primary"><svg class="icon"><use href="#send"/></svg>บันทึกและส่งเข้ากลุ่ม</div>
+  </div>
+</div>
+</figure>
+
+<!-- L6 DUP -->
+<figure>
+<figcaption><b>L6 · พบหน้างานที่อาจซ้ำ</b><span>Drawer จากล่าง · งานของตัวเอง = อัปเดตแทน · งานของคนอื่น = แจ้งแอดมิน</span></figcaption>
+<div class="phone">
+  <div class="lbar"><svg class="icon"><use href="#back"/></svg><b>รายงานงานใหม่</b><span></span></div>
+  <div class="scroll" style="background:#fafafa"><div class="sheet-bg"></div>
+    <div class="sheet">
+      <div class="grab"></div>
+      <div class="title" style="font-size:20px">พบหน้างานที่อาจซ้ำ 2 งาน</div>
+      <div class="small muted" style="margin-bottom:14px">ตรวจก่อนสร้างงานใหม่ เพื่อไม่ให้ข้อมูลซ้ำ</div>
+      <div class="card">
+        <div class="row between"><span class="code">#690825-02</span><span class="badge b-over">เบอร์ตรงกัน</span></div>
+        <div class="h" style="margin-top:6px;font-size:16px">คุณพี · ช่างกวาง</div>
+        <div class="small muted">ของคุณ · ตามต่อ · ล่าสุด 15 ต.ค.</div>
+        <div class="btn primary" style="margin-top:12px;height:44px">อัปเดตงานนี้แทน</div>
+      </div>
+      <div class="card">
+        <div class="row between"><span class="code">#690901-05</span><span class="badge b-over">ห่าง 85 ม.</span></div>
+        <div class="h" style="margin-top:6px;font-size:16px">ช่างณรง</div>
+        <div class="small muted">ของพัช · ตามต่อ · ล่าสุด 10 ต.ค.</div>
+        <div class="btn" style="margin-top:12px;height:44px">แจ้งแอดมินว่าซ้ำ</div>
+      </div>
+      <div class="btn ghost" style="margin-top:8px;text-decoration:underline">ไม่ใช่ — สร้างเป็นงานใหม่</div>
+    </div>
+  </div>
+</div>
+</figure>
+
+<!-- L8 SUCCESS -->
+<figure>
+<figcaption><b>L8 · ส่งสำเร็จ</b><span>ให้เห็นการ์ดที่เพื่อนในกลุ่มจะเห็น · ปุ่มหลักพากลับกลุ่ม</span></figcaption>
+<div class="phone">
+  <div class="lbar"><span></span><b>UP Sales</b><span></span></div>
+  <div class="scroll pad" style="display:flex;flex-direction:column;align-items:center;text-align:center">
+    <svg class="icon" style="width:48px;height:48px;color:var(--success);margin-top:24px"><use href="#check"/></svg>
+    <div class="title" style="margin-top:10px">ส่งเข้ากลุ่มแล้ว</div>
+    <div class="small muted">บันทึกงาน <span class="code" style="color:var(--fg)">#691017-03</span></div>
+    <div style="margin-top:20px;text-align:left">
+      <div class="flex">
+        <div class="hero-img"></div>
+        <div class="fb">
+          <div class="row"><span class="badge b-today">งานใหม่</span><span class="code">#691017-03</span></div>
+          <div class="h" style="margin-top:8px;font-size:16px">ช่างแคน</div>
+          <div class="small muted">ต.ในเมือง อ.เมือง</div>
+          <div class="small" style="margin-top:6px">ขึ้นโครง · ตามต่อ 19 ต.ค.</div>
+        </div>
+        <div class="ft"><span>บอม</span><span class="num">10:44</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="sticky" style="border-top:none">
+    <div class="btn primary">กลับไปที่กลุ่ม</div>
+    <div class="btn" style="margin-top:8px">รายงานงานถัดไป</div>
+  </div>
+</div>
+</figure>
+
+<!-- L7 DETAIL -->
+<figure>
+<figcaption><b>L7 · รายละเอียดหน้างาน</b><span>ปุ่มลัดโทร/นำทาง · ประวัติแบบ timeline (ใหม่→เก่า) แทนคอลัมน์ "รายละเอียด" ใน Excel</span></figcaption>
+<div class="phone">
+  <div class="lbar"><svg class="icon"><use href="#back"/></svg><b class="code">#690825-02</b><span class="badge b-over"><svg class="icon s"><use href="#alarm"/></svg>เลย 2 วัน</span></div>
+  <div class="scroll">
+    <div class="pad">
+      <div class="map" style="height:110px"><div class="pin"></div></div>
+      <div class="title" style="margin-top:12px">คุณพี (หล่อมาก)</div>
+      <div class="small muted">ช่างกวาง · <span class="num">084-773-3405</span></div>
+      <div class="small muted">ต.หนองตะไก้ อ.สูงเนิน</div>
+      <div class="acts" style="grid-template-columns:1fr 1fr"><div class="btn"><svg class="icon s"><use href="#phone"/></svg>โทร</div><div class="btn"><svg class="icon s"><use href="#nav"/></svg>นำทาง</div></div>
+    </div>
+    <div class="sec" style="border-top:8px solid var(--muted)">
+      <dl class="kv"><dt>ผู้ตัดสินใจ</dt><dd>เจ้าของบ้าน</dd><dt>ขั้นตอน</dt><dd>รอวางแปลน</dd><dt>ตามต่อ</dt><dd>15 ต.ค. 69 <span style="color:var(--warning-ink)">(เลย 2 วัน)</span></dd><dt>เจ้าของงาน</dt><dd>บอม</dd></dl>
+    </div>
+    <div class="pad">
+      <h3 class="h" style="font-size:16px;margin-bottom:12px">ประวัติ (<span class="num">4</span>)</h3>
+      <div class="tl">
+        <div class="tl-i first"><div class="meta">25 ส.ค. · บอม · ตามต่อ</div><p>เจ้าของบ้านแจ้งว่ารอกลับจากต่างจังหวัดก่อนถึงจะสั่งแผ่น</p></div>
+        <div class="tl-i"><div class="meta">22 ส.ค. · บอม</div><p>ทำโครงแล้ว เหลือวางแปลนกับติดเชิงชาย</p><div class="mini"><i></i><i></i></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="sticky"><div class="btn primary">อัปเดตงานนี้</div></div>
+</div>
+</figure>
+
+<!-- L9 FOLLOWUP -->
+<figure>
+<figcaption><b>L9 · อัปเดตงาน — เลือก "จบที่อื่น"</b><span>ช่องที่ต้องกรอกเปลี่ยนตามผล · สาเหตุ/คู่แข่งเป็นตัวเลือก → รายงานสาเหตุแม่นยำ</span></figcaption>
+<div class="phone">
+  <div class="lbar"><svg class="icon"><use href="#back"/></svg><b>อัปเดต <span class="code">#690825-02</span></b><span></span></div>
+  <div class="scroll">
+    <div class="sec">
+      <div class="small muted" style="margin-bottom:12px">คุณพี · ช่างกวาง</div>
+      <label class="l">ผลการติดตาม *</label>
+      <div class="seg"><div>ตามต่อ</div><div>จบได้</div><div class="on-lost"><svg class="icon s"><use href="#x"/></svg>จบที่อื่น</div><div>ยกเลิก</div></div>
+      <label class="l">สาเหตุ *</label>
+      <div class="chips"><span class="chip on">ราคาสูงกว่า</span><span class="chip">ช่างมีร้านประจำ</span><span class="chip">ส่งของช้า</span><span class="chip">ของไม่พร้อม</span><span class="chip">อื่นๆ</span></div>
+      <label class="l">จบที่ร้าน</label>
+      <div class="chips"><span class="chip on">กระทิง</span><span class="chip">ไม่ทราบ</span><span class="chip">อื่นๆ</span></div>
+      <label class="l">รายละเอียด *</label>
+      <div class="input textarea" style="font-size:15px">เจ้าของบ้านได้ราคาถูกกว่าจากกระทิง ต่างประมาณ 8%</div>
+    </div>
+  </div>
+  <div class="sticky"><div class="btn primary"><svg class="icon"><use href="#send"/></svg>บันทึกและส่งเข้ากลุ่ม</div></div>
+</div>
+</figure>
+
+<!-- L10 MY STATS -->
+<figure>
+<figcaption><b>L10 · ผลงานของฉัน</b><span>เทียบกับค่าเฉลี่ยทีมเป็นข้อความ ไม่จัดอันดับรายคน</span></figcaption>
+<div class="phone">
+  <div class="lbar"><svg class="icon"><use href="#back"/></svg><b>ผลงานของฉัน</b><span></span></div>
+  <div class="scroll pad">
+    <div class="tabs"><div class="tab">สัปดาห์นี้</div><div class="tab on">เดือนนี้</div><div class="tab">ปีนี้</div></div>
+    <div class="statgrid" style="margin-top:16px">
+      <div><div class="small muted">วิ่งงาน</div><div class="v">52</div><div class="cap muted">ทีมเฉลี่ย 37</div></div>
+      <div><div class="small muted">งานใหม่</div><div class="v">18</div><div class="cap muted">ทีมเฉลี่ย 12</div></div>
+      <div><div class="small muted">จบได้</div><div class="v" style="color:var(--success-ink)">5</div><div class="cap muted">จาก 11 งานที่จบ</div></div>
+      <div><div class="small muted">อัตราปิดได้</div><div class="v">45%</div><div class="cap muted">ทีม 38%</div></div>
+    </div>
+    <h3 class="h" style="font-size:16px;margin-top:22px">ผลลัพธ์งานทั้งหมด (<span class="num">34</span>)</h3>
+    <div class="obar"><i style="flex:5;background:var(--success)"></i><i style="flex:23;background:#737373"></i><i style="flex:6;background:var(--danger)"></i></div>
+    <div class="legend"><span style="--c:var(--success)">จบได้ 5</span><span style="--c:#737373">ตามต่อ 23</span><span style="--c:var(--danger)">จบที่อื่น 6</span></div>
+    <div class="card" style="margin-top:20px">
+      <div class="row between"><span class="small">ตามตรงวันนัด</span><b class="num" style="font-size:20px">85%</b></div>
+      <div class="progress"><i style="width:85%"></i></div>
+      <div class="cap muted" style="margin-top:6px">23 จาก 27 ครั้ง · เลยกำหนดอยู่ 2 งาน</div>
+    </div>
+  </div>
+</div>
+</figure>
+
+<!-- L1 REGISTER -->
+<figure>
+<figcaption><b>L1 · ลงทะเบียนครั้งแรก</b><span>เลือกพื้นที่จากรายการ (ใช้ทำรายงานตามพื้นที่)</span></figcaption>
+<div class="phone">
+  <div class="lbar"><span>✕</span><b>UP Sales</b><span></span></div>
+  <div class="scroll pad">
+    <div style="text-align:center;margin:12px 0 22px"><div class="avatar lg" style="margin:0 auto;background:#a3a3a3">พ</div><div class="title" style="margin-top:12px">สวัสดี พัช</div><div class="small muted">ลงทะเบียนครั้งเดียวเพื่อเริ่มส่งรายงาน</div></div>
+    <label class="l">ชื่อเล่นในทีม *</label><div class="input">พัช</div>
+    <label class="l">พื้นที่ที่ดูแล</label><div class="chips"><span class="chip on">อ.เมือง</span><span class="chip on">อ.สูงเนิน</span><span class="chip">อ.โนนสูง</span><span class="chip">อ.ปักธงชัย</span><span class="chip">+ เพิ่ม</span></div>
+    <label class="l">เบอร์โทรของคุณ</label><div class="input ph">08x-xxx-xxxx</div>
+  </div>
+  <div class="sticky" style="border-top:none"><div class="btn primary">ส่งให้แอดมินอนุมัติ</div></div>
+</div>
+</figure>
+
+<!-- L2 PENDING -->
+<figure>
+<figcaption><b>L2 · รอแอดมินอนุมัติ</b><span>ปุ่มตรวจสถานะเรียก auth ใหม่ (ไม่ใช่ liff.login)</span></figcaption>
+<div class="phone">
+  <div class="lbar"><span>✕</span><b>UP Sales</b><span></span></div>
+  <div class="scroll pad" style="text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center">
+    <svg class="icon" style="width:48px;height:48px;color:var(--warning)"><use href="#clock"/></svg>
+    <div class="title" style="margin-top:12px">รอแอดมินอนุมัติ</div>
+    <p class="small muted" style="margin-top:6px;max-width:28ch">ส่งข้อมูลแล้ว แอดมินจะอนุมัติให้ก่อนเริ่มใช้งาน</p>
+    <div class="card" style="margin-top:20px;width:100%;text-align:left"><dl class="kv"><dt>ชื่อเล่น</dt><dd>พัช</dd><dt>พื้นที่</dt><dd>อ.เมือง, อ.สูงเนิน</dd></dl></div>
+  </div>
+  <div class="sticky" style="border-top:none"><div class="btn primary">ตรวจสอบสถานะ</div><div class="btn ghost" style="margin-top:4px">ปิด</div></div>
+</div>
+</figure>
+
+<!-- FLEX IN GROUP -->
+<figure style="width:375px">
+<figcaption><b>การ์ดในกลุ่ม LINE (Flex)</b><span>ส่งในชื่อเซลล์ผ่าน liff.sendMessages · ป้ายสีตามผล · ปุ่มเปิดรายละเอียด</span></figcaption>
+<div class="phone" style="background:#8cabd9">
+  <div class="lbar" style="background:#fff"><svg class="icon"><use href="#back"/></svg><b>UP เซลล์ทีม (16)</b><span></span></div>
+  <div class="chat">
+    <div class="bubble-row"><div class="avatar" style="background:#525252">บ</div><div><div class="who">บอม</div>
+      <div class="flex" style="width:250px"><div class="hero-img" style="height:120px"></div><div class="fb"><div class="row"><span class="badge b-won"><svg class="icon s"><use href="#check"/></svg>จบได้</span><span class="code">#690825-01</span></div><div class="h" style="font-size:16px;margin-top:8px">ช่างแคน</div><div class="small muted">ต.หนองตะไก้ อ.สูงเนิน · ติดตาม 5 ครั้ง</div></div><div class="fbtn">ดูรายละเอียด</div></div>
+    </div></div>
+    <div class="bubble-row"><div class="avatar" style="background:#a3a3a3">พ</div><div><div class="who">พัช</div>
+      <div class="flex" style="width:250px"><div class="fb"><div class="row"><span class="badge b-lost"><svg class="icon s"><use href="#x"/></svg>จบที่อื่น</span><span class="code">#690901-05</span></div><div class="h" style="font-size:16px;margin-top:8px">ช่างณรง</div><div class="small muted">จบที่ กระทิง · ราคาสูงกว่า</div></div><div class="fbtn">ดูรายละเอียด</div></div>
+    </div></div>
+  </div>
+</div>
+</figure>
+
+<!-- L0 LOADING -->
+<figure>
+<figcaption><b>L0 · กำลังเข้าสู่ระบบ</b><span>แสดงไม่เกินไม่กี่วินาที · ถ้าช้าเกิน 8 วิ ขึ้นปุ่ม "ลองอีกครั้ง"</span></figcaption>
+<div class="phone">
+  <div class="lbar"><span>✕</span><b>UP Sales</b><span></span></div>
+  <div class="scroll" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px">
+    <div style="width:56px;height:56px;border-radius:14px;background:var(--fg);color:#fff;display:grid;place-items:center;font-family:Inter;font-weight:800">UP</div>
+    <div style="width:28px;height:28px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--fg)"></div>
+    <div class="small muted">กำลังเข้าสู่ระบบด้วย LINE</div>
+  </div>
+</div>
+</figure>
+
+<!-- L0b OUTSIDE LINE -->
+<figure>
+<figcaption><b>L0 · เปิดนอกแอป LINE</b><span>ไม่แสดงฟอร์ม · บอกวิธีแก้ชัดเจน</span></figcaption>
+<div class="phone">
+  <div class="lbar"><span></span><b>liff.puekk.com</b><span></span></div>
+  <div class="scroll pad" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
+    <svg class="icon" style="width:44px;height:44px;color:var(--mfg)"><use href="#send"/></svg>
+    <div class="title" style="margin-top:12px">เปิดจากกลุ่ม LINE ของทีม</div>
+    <p class="small muted" style="margin-top:6px;max-width:30ch">หน้านี้ใช้ได้เมื่อแตะลิงก์ในประกาศกลุ่ม "UP เซลล์ทีม" ในแอป LINE เท่านั้น</p>
+  </div>
+</div>
+</figure>
+
+<!-- L3 INACTIVE -->
+<figure>
+<figcaption><b>L3 · บัญชีถูกปิดใช้งาน</b><span>แอดมินปิดแล้วเข้าใช้ไม่ได้ทันที</span></figcaption>
+<div class="phone">
+  <div class="lbar"><span>✕</span><b>UP Sales</b><span></span></div>
+  <div class="scroll pad" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
+    <svg class="icon" style="width:44px;height:44px;color:var(--danger)"><use href="#x"/></svg>
+    <div class="title" style="margin-top:12px">บัญชีนี้ถูกปิดใช้งาน</div>
+    <p class="small muted" style="margin-top:6px">ติดต่อแอดมินของทีมเพื่อเปิดใช้งานอีกครั้ง</p>
+  </div>
+  <div class="sticky" style="border-top:none"><div class="btn">ปิด</div></div>
+</div>
+</figure>
+
+<!-- L4 EMPTY -->
+<figure>
+<figcaption><b>L4 · ไม่มีงานต้องตามวันนี้</b><span>หน้าว่างชวนให้ทำต่อ ไม่ใช่แค่บอกว่าว่าง</span></figcaption>
+<div class="phone">
+  <div class="lbar"><span>✕</span><b>UP Sales</b><span>⋯</span></div>
+  <div class="scroll">
+    <div class="hero">
+      <div class="small muted">วันนี้ต้องตาม · ส. 18 ต.ค.</div>
+      <div class="big">0<span>งาน</span></div>
+      <div class="small muted" style="margin-top:8px">ติดตามอยู่ <span class="num">14</span> · นัดถัดไป จ. 20 ต.ค. (2 งาน)</div>
+    </div>
+    <div style="padding:0 16px"><div class="tabs"><div class="tab on">ต้องตาม</div><div class="tab">เลยกำหนด</div><div class="tab">ทั้งหมด</div></div></div>
+    <div class="pad" style="text-align:center;margin-top:40px">
+      <svg class="icon" style="width:40px;height:40px;color:var(--success)"><use href="#check"/></svg>
+      <div class="h" style="margin-top:8px">ตามครบทุกงานแล้ว</div>
+      <p class="small muted" style="margin-top:4px">ออกหาหน้างานใหม่ แล้วรายงานจากปุ่มด้านล่าง</p>
+    </div>
+  </div>
+  <div class="sticky" style="border-top:none"><div class="btn primary"><svg class="icon"><use href="#plus"/></svg>รายงานงานใหม่</div></div>
+</div>
+</figure>
+
+<!-- L5 UPLOADING -->
+<figure>
+<figcaption><b>L5 · กำลังบันทึก</b><span>เห็นความคืบหน้าทีละรูป · ปิดปุ่มกันกดซ้ำ</span></figcaption>
+<div class="phone">
+  <div class="lbar"><svg class="icon"><use href="#back"/></svg><b>รายงานงานใหม่</b><span></span></div>
+  <div class="scroll" style="background:#fafafa"><div class="sheet-bg"></div>
+    <div class="sheet">
+      <div class="grab"></div>
+      <div class="h">กำลังบันทึก</div>
+      <div style="margin-top:14px" class="small">
+        <div class="row between"><span class="row"><svg class="icon s" style="color:var(--success)"><use href="#check"/></svg>อัปโหลดรูป 1/3</span></div>
+        <div class="row between" style="margin-top:10px"><span>อัปโหลดรูป 2/3</span><span class="num muted">64%</span></div>
+        <div class="progress"><i style="width:64%"></i></div>
+        <div class="row muted" style="margin-top:10px">อัปโหลดรูป 3/3</div>
+        <div class="row muted" style="margin-top:10px">บันทึกงานและส่งเข้ากลุ่ม</div>
+      </div>
+      <div class="btn dis" style="margin-top:18px">กำลังบันทึก…</div>
+    </div>
+  </div>
+</div>
+</figure>
+
+<!-- L8 FAILED SEND -->
+<figure>
+<figcaption><b>L8 · บันทึกแล้ว แต่ส่งเข้ากลุ่มไม่ได้</b><span>ข้อมูลไม่หาย · ให้คัดลอกข้อความไปวางเองได้</span></figcaption>
+<div class="phone">
+  <div class="lbar"><span></span><b>UP Sales</b><span></span></div>
+  <div class="scroll pad" style="display:flex;flex-direction:column;align-items:center;text-align:center">
+    <svg class="icon" style="width:48px;height:48px;color:var(--warning);margin-top:40px"><use href="#alarm"/></svg>
+    <div class="title" style="margin-top:10px">บันทึกแล้ว</div>
+    <p class="small muted" style="margin-top:4px;max-width:30ch">แต่ส่งการ์ดเข้ากลุ่มไม่ได้ เพราะไม่ได้เปิดจากห้องกลุ่ม</p>
+    <div class="card" style="margin-top:20px;width:100%;text-align:left;font-size:14px;line-height:1.6;background:var(--muted);border:none">งานใหม่ #691017-03 ช่างแคน<br>ต.ในเมือง อ.เมือง · ตามต่อ 19 ต.ค.</div>
+  </div>
+  <div class="sticky" style="border-top:none">
+    <div class="btn primary"><svg class="icon"><use href="#copy"/></svg>คัดลอกข้อความ</div>
+    <div class="btn" style="margin-top:8px">กลับไปที่กลุ่ม</div>
+  </div>
+</div>
+</figure>
+
+<!-- L9 FOLLOWING -->
+<figure>
+<figcaption><b>L9 · อัปเดตงาน — "ตามต่อ"</b><span>ค่าตั้งต้นที่ใช้บ่อยที่สุด · กรอก 2 ช่องก็ส่งได้</span></figcaption>
+<div class="phone">
+  <div class="lbar"><svg class="icon"><use href="#back"/></svg><b>อัปเดต <span class="code">#691007-01</span></b><span></span></div>
+  <div class="scroll">
+    <div class="sec" style="border-bottom:none">
+      <div class="small muted" style="margin-bottom:12px">ช่างเซียน · ครั้งที่ 3</div>
+      <label class="l">ผลการติดตาม *</label>
+      <div class="seg"><div style="background:var(--fg);color:#fff;font-weight:700">ตามต่อ</div><div>จบได้</div><div>จบที่อื่น</div><div>ยกเลิก</div></div>
+      <label class="l">ความคืบหน้า *</label>
+      <div class="input textarea" style="font-size:15px">ถอดแบบเสร็จแล้ว ส่งใบเสนอราคาให้ลูกค้าแล้ว รอตัดสินใจ</div>
+      <label class="l">ขั้นตอนตอนนี้</label>
+      <div class="chips"><span class="chip">ขึ้นโครง</span><span class="chip on">เสนอราคาแล้ว</span><span class="chip">รอมุงหลังคา</span></div>
+      <label class="l">ตามต่อครั้งถัดไป *</label>
+      <div class="chips"><span class="chip">พรุ่งนี้</span><span class="chip on">+3<small>อ. 21 ต.ค.</small></span><span class="chip">+7</span><span class="chip">เลือกวัน</span></div>
+      <label class="l">รูปเพิ่มเติม</label>
+      <div class="photos"><div class="slot"><svg class="icon"><use href="#cam"/></svg></div><div class="slot"></div><div class="slot"></div></div>
+    </div>
+  </div>
+  <div class="sticky"><div class="btn primary"><svg class="icon"><use href="#send"/></svg>บันทึกและส่งเข้ากลุ่ม</div></div>
+</div>
+</figure>
+
+</main>
+</body>
+</html>

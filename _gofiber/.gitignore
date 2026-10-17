@@ -1,0 +1,10 @@
+.env
+logs/
+tmp/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+__debug_bin*
+vendor/

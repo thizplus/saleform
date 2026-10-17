@@ -1,0 +1,100 @@
+services:
+  # ===== Database =====
+  postgres:
+    image: postgres:16-alpine
+    container_name: saleform-postgres
+    environment:
+      POSTGRES_USER: linesales
+      POSTGRES_PASSWORD: linesales_secret
+      POSTGRES_DB: linesales_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U linesales -d linesales_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ===== Cache =====
+  redis:
+    image: redis:7-alpine
+    container_name: saleform-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ===== Backend API (Go Fiber) =====
+  api:
+    build:
+      context: ./_gofiber
+      dockerfile: Dockerfile
+    container_name: saleform-api
+    ports:
+      - "9100:9100"
+    env_file:
+      - ./_gofiber/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - api_logs:/app/logs
+    restart: unless-stopped
+
+  # ===== LIFF Frontend (Vite React) =====
+  liff:
+    build:
+      context: ./_liff
+      dockerfile: Dockerfile
+    container_name: saleform-liff
+    ports:
+      - "5173:5173"
+    env_file:
+      - ./_liff/.env
+    volumes:
+      - ./_liff/src:/app/src
+      - ./_liff/public:/app/public
+    restart: unless-stopped
+
+  # ===== Admin Frontend (Vite React) =====
+  admin:
+    build:
+      context: ./_admin
+      dockerfile: Dockerfile
+    container_name: saleform-admin
+    ports:
+      - "5174:5174"
+    env_file:
+      - ./_admin/.env
+    volumes:
+      - ./_admin/src:/app/src
+      - ./_admin/public:/app/public
+    restart: unless-stopped
+
+  # ===== Cloudflare Tunnel =====
+  # Public Hostnames (ตั้งใน Zero Trust dashboard):
+  #   saleform-api.puekk.com    → http://api:9100
+  #   saleform-liff.puekk.com   → http://liff:5173
+  #   saleform-admin.puekk.com  → http://admin:5174
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: saleform-tunnel
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:-}
+    depends_on:
+      - api
+      - liff
+      - admin
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  api_logs:

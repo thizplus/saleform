@@ -1,0 +1,25 @@
+# Environment
+.env
+
+# IDE / Editor
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Images (optional - remove if you want to track them)
+*.png
+*.jpg
+*.jpeg
+
+# Node modules
+node_modules/
+
+# Go
+tmp/
+vendor/
+
+# Logs
+logs/
+*.log
