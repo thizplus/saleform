@@ -18,6 +18,12 @@ const badgeVariants = cva(
         ghost:
           "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
         link: "text-primary underline-offset-4 hover:underline",
+        // สถานะ
+        success: "bg-success-soft text-success-ink border-transparent",
+        warning: "bg-warning-soft text-warning-ink border-transparent",
+        danger: "bg-danger-soft text-danger-ink border-transparent",
+        today: "bg-primary text-primary-foreground border-transparent",
+        neutral: "bg-transparent text-muted-foreground border-border",
       },
     },
     defaultVariants: {

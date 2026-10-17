@@ -120,8 +120,10 @@ export function FollowUpSheet({
           <DrawerTitle className="text-base">
             Follow-up #{siteCode}
           </DrawerTitle>
-          <DrawerClose asChild>
-            <Button variant="ghost" size="sm">ปิด</Button>
+          <DrawerClose
+            className="inline-flex items-center justify-center rounded-lg px-2.5 h-7 text-sm font-medium hover:bg-muted"
+          >
+            ปิด
           </DrawerClose>
         </DrawerHeader>
 
