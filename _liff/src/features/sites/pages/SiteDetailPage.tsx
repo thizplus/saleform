@@ -1,6 +1,15 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Phone, MapPin, Navigation } from 'lucide-react'
+import {
+  ArrowLeft,
+  Phone,
+  Navigation,
+  MapPin,
+  User,
+  Calendar,
+  Clock,
+  Image as ImageIcon,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/shared'
 import { PhotoLightbox } from '@/components/shared/PhotoLightbox'
@@ -8,51 +17,45 @@ import { formatThaiDate, formatPhone, formatRelativeDay } from '@/lib/format-th'
 import { useSiteDetail } from '../hooks'
 import type { ReportBrief, PhotoBrief } from '../types'
 
-/** L7 — รายละเอียดหน้างาน (กะทัดรัด: ข้อมูลหลักอยู่ในจอแรก) */
+/** L7 — รายละเอียดหน้างาน (full page) */
 export function SiteDetailPage() {
   const { code } = useParams<{ code: string }>()
   const navigate = useNavigate()
-  const { data: site, isLoading, isError, refetch } = useSiteDetail(code || '')
-
-  // hooks ต้องอยู่ก่อน return ใด ๆ เสมอ
+  const { data: site, isLoading } = useSiteDetail(code || '')
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
 
-  const back = () => (window.history.length > 1 ? navigate(-1) : navigate('/'))
-
   if (isLoading) {
     return (
-      <div className="min-h-dvh bg-background">
-        <TopBar onBack={back}><div className="h-4 bg-muted rounded w-28 animate-pulse" /></TopBar>
-        <div className="px-4 py-4 space-y-3 animate-pulse">
-          <div className="h-6 bg-muted rounded w-2/3" />
-          <div className="h-4 bg-muted rounded w-1/2" />
-          <div className="h-24 bg-muted rounded-xl" />
-          <div className="h-32 bg-muted rounded-xl" />
+      <div className="min-h-dvh bg-background flex flex-col">
+        <header className="sticky top-0 z-10 bg-background border-b px-4 py-3 flex items-center gap-3">
+          <button onClick={() => navigate(-1)} className="p-1" aria-label="กลับ">
+            <ArrowLeft className="size-5" />
+          </button>
+          <div className="h-5 bg-muted rounded w-32 animate-pulse" />
+        </header>
+        <div className="flex-1 px-4 py-4 space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-20 bg-muted rounded-xl animate-pulse" />
+          ))}
         </div>
       </div>
     )
   }
 
-  if (isError || !site) {
+  if (!site) {
     return (
-      <div className="min-h-dvh bg-background">
-        <TopBar onBack={back}><span className="text-sm font-bold">ไม่พบงาน</span></TopBar>
-        <div className="px-6 py-14 text-center space-y-3">
-          <p className="text-sm text-muted-foreground">ไม่พบข้อมูลงาน #{code} หรือโหลดไม่สำเร็จ</p>
-          <div className="flex gap-2 justify-center">
-            <Button variant="outline" onClick={() => refetch()}>ลองอีกครั้ง</Button>
-            <Button onClick={() => navigate('/')}>กลับหน้าแรก</Button>
-          </div>
-        </div>
+      <div className="min-h-dvh bg-background flex flex-col items-center justify-center gap-3 px-4">
+        <p className="text-muted-foreground">ไม่พบข้อมูลงาน</p>
+        <Button variant="outline" onClick={() => navigate('/')}>กลับหน้าแรก</Button>
       </div>
     )
   }
 
-  // รวมรูปทั้งหมดไม่ซ้ำ (ใหม่ → เก่า)
+  // รวมรูปทั้งหมด (จาก reports + site.photos)
   const allPhotos: PhotoBrief[] = [
-    ...(site.reports || []).flatMap((r) => r.photos || []),
     ...(site.photos || []),
+    ...(site.reports || []).flatMap((r) => r.photos || []),
   ].filter((p, i, arr) => arr.findIndex((x) => x.id === p.id) === i)
 
   function openPhoto(photoId: string) {
@@ -61,105 +64,189 @@ export function SiteDetailPage() {
     setLightboxOpen(true)
   }
 
-  const hasLocation = !!(site.lat && site.lng)
-  const navUrl = hasLocation
-    ? `https://www.google.com/maps/dir/?api=1&destination=${site.lat},${site.lng}`
-    : site.mapsUrl
-  const place = [site.tambon && `ต.${site.tambon}`, site.amphoe && `อ.${site.amphoe}`].filter(Boolean).join(' ') || site.address
-  const title = site.customerName || (site.contractorName ? `ช่าง${site.contractorName}` : 'ไม่ระบุชื่อ')
-  const showUpdate = site.canEdit && site.status === 'following'
-
-  // ข้อมูลย่อยแบบ 2 คอลัมน์ — แสดงเฉพาะที่มีค่า
-  const facts: [string, string, boolean?][] = [
-    ['นัดตามต่อ', site.nextFollowUpDate ? `${formatThaiDate(site.nextFollowUpDate)} (${formatRelativeDay(site.nextFollowUpDate)})` : '', true],
-    ['ขั้นตอน', site.stage],
-    ['ผู้ตัดสินใจ', site.decisionMaker],
-    ['คาดว่าจะสั่ง', site.expectedOrderDate ? formatThaiDate(site.expectedOrderDate) : ''],
-    ['สาเหตุจบที่อื่น', site.lostReason],
-    ['ร้านที่ได้งาน', site.competitor],
-    ['เจ้าของงาน', site.ownerName],
-    ['เปิดงานเมื่อ', formatThaiDate(site.createdAt)],
-  ].filter(([, v]) => !!v) as [string, string, boolean?][]
+  const hasLocation = site.lat && site.lng
+  const mapsUrl = site.mapsUrl || (hasLocation ? `https://www.google.com/maps?q=${site.lat},${site.lng}` : '')
 
   return (
-    <div className="min-h-dvh bg-background">
-      <TopBar onBack={back}>
-        <span className="num font-bold text-[15px] flex-1 truncate">#{site.siteCode}</span>
-        <StatusBadge status={site.status} nextFollowUpDate={site.nextFollowUpDate} />
-      </TopBar>
+    <div className="min-h-dvh bg-background flex flex-col">
+      {/* Header */}
+      <header className="sticky top-0 z-10 bg-background border-b px-4 py-3">
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate(-1)} className="p-1" aria-label="กลับ">
+            <ArrowLeft className="size-5" />
+          </button>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-base font-bold truncate">
+              <span className="num">#{site.siteCode}</span>
+            </h1>
+          </div>
+          <StatusBadge status={site.status} nextFollowUpDate={site.nextFollowUpDate} />
+        </div>
+      </header>
 
-      <main className={showUpdate ? 'pb-24' : 'pb-8'}>
-        {/* ผู้ติดต่อ + ที่ตั้ง */}
-        <section className="px-4 pt-3 pb-4 space-y-1.5">
-          <h1 className="text-lg font-bold leading-snug">{title}</h1>
-          {site.customerName && site.contractorName && (
-            <p className="text-sm text-muted-foreground">ช่าง{site.contractorName}{site.customerType ? ` · ผู้ติดต่อ: ${site.customerType}` : ''}</p>
+      <div className="flex-1 overflow-y-auto pb-28">
+        {/* แผนที่ย่อ */}
+        {hasLocation && (
+          <a
+            href={mapsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-full h-40 bg-muted relative overflow-hidden"
+          >
+            <img
+              src={`https://maps.googleapis.com/maps/api/staticmap?center=${site.lat},${site.lng}&zoom=15&size=640x320&markers=${site.lat},${site.lng}&key=${import.meta.env.VITE_GOOGLE_MAPS_KEY || ''}`}
+              alt="แผนที่"
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                // fallback ถ้าไม่มี API key
+                (e.target as HTMLImageElement).style.display = 'none'
+              }}
+            />
+            <div className="absolute inset-0 flex items-center justify-center bg-muted/30">
+              <MapPin className="size-8 text-primary" />
+            </div>
+          </a>
+        )}
+
+        {/* ข้อมูลลูกค้า */}
+        <div className="px-4 pt-4 space-y-1">
+          <h2 className="text-lg font-bold">{site.customerName || 'ไม่ระบุชื่อ'}</h2>
+          {site.address && (
+            <p className="text-sm text-muted-foreground">{site.address}</p>
           )}
+          {site.amphoe && (
+            <p className="text-sm text-muted-foreground">อ.{site.amphoe}</p>
+          )}
+        </div>
 
+        {/* ปุ่มติดต่อ */}
+        <div className="flex gap-2 px-4 pt-3" onClick={(e) => e.stopPropagation()}>
           {site.phone && (
-            <a href={`tel:${site.phone}`} className="inline-flex items-center gap-1.5 text-[15px] font-bold underline decoration-1 underline-offset-4 py-1">
+            <a
+              href={`tel:${site.phone}`}
+              className="flex-1 flex items-center justify-center gap-1.5 h-12 rounded-xl border text-sm font-bold hover:bg-muted transition-colors"
+            >
               <Phone className="size-4" />
               <span className="num">{formatPhone(site.phone)}</span>
             </a>
           )}
-
-          {(place || hasLocation) && (
-            <div className="flex items-start gap-1.5 text-sm">
-              <MapPin className="size-4 mt-0.5 shrink-0 text-muted-foreground" />
-              <span className="text-muted-foreground flex-1">{place || 'มีพิกัดหน้างาน'}</span>
-              {navUrl && (
-                <a href={navUrl} target="_blank" rel="noopener noreferrer" className="shrink-0 inline-flex items-center gap-1 font-bold underline underline-offset-4">
-                  <Navigation className="size-3.5" />นำทาง
-                </a>
-              )}
-            </div>
+          {hasLocation && (
+            <a
+              href={mapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-1.5 h-12 px-4 rounded-xl border text-sm font-bold hover:bg-muted transition-colors"
+            >
+              <Navigation className="size-4" />
+              นำทาง
+            </a>
           )}
-        </section>
+        </div>
 
-        {/* ข้อมูลหน้างาน 2 คอลัมน์ */}
-        {facts.length > 0 && (
-          <section className="mx-4 rounded-xl bg-muted/70 px-3 py-2.5 grid grid-cols-2 gap-x-3 gap-y-2">
-            {facts.map(([label, value, wide]) => (
-              <div key={label} className={wide ? 'col-span-2' : ''}>
-                <p className="text-xs text-muted-foreground">{label}</p>
-                <p className="text-sm font-bold leading-snug">{value}</p>
-              </div>
-            ))}
-          </section>
+        {/* Key-value pairs */}
+        <div className="px-4 pt-4">
+          <div className="border rounded-xl divide-y">
+            <InfoRow icon={User} label="เจ้าของงาน" value={site.ownerName} />
+            {site.contractorName && (
+              <InfoRow icon={User} label="ช่าง" value={site.contractorName} />
+            )}
+            {site.decisionMaker && (
+              <InfoRow icon={User} label="ผู้ตัดสินใจ" value={site.decisionMaker} />
+            )}
+            {site.stage && (
+              <InfoRow icon={Clock} label="ขั้นตอน" value={site.stage} />
+            )}
+            {site.nextFollowUpDate && (
+              <InfoRow
+                icon={Calendar}
+                label="นัดติดตาม"
+                value={`${formatThaiDate(site.nextFollowUpDate)} (${formatRelativeDay(site.nextFollowUpDate)})`}
+                valueClass="num"
+              />
+            )}
+            {site.expectedOrderDate && (
+              <InfoRow
+                icon={Calendar}
+                label="คาดว่าจะสั่ง"
+                value={formatThaiDate(site.expectedOrderDate)}
+                valueClass="num"
+              />
+            )}
+            {site.lostReason && (
+              <InfoRow icon={Clock} label="สาเหตุจบที่อื่น" value={site.lostReason} />
+            )}
+            {site.competitor && (
+              <InfoRow icon={Clock} label="ร้านที่ได้งาน" value={site.competitor} />
+            )}
+            <InfoRow
+              icon={Calendar}
+              label="สร้างเมื่อ"
+              value={formatThaiDate(site.createdAt)}
+              valueClass="num"
+            />
+          </div>
+        </div>
+
+        {/* Timeline */}
+        {site.reports?.length > 0 && (
+          <div className="px-4 pt-6">
+            <h3 className="text-base font-bold mb-3">ประวัติการติดตาม</h3>
+            <div className="space-y-0">
+              {site.reports.map((report, idx) => (
+                <TimelineItem
+                  key={report.id}
+                  report={report}
+                  isLast={idx === (site.reports?.length ?? 0) - 1}
+                  onPhotoClick={openPhoto}
+                />
+              ))}
+            </div>
+          </div>
         )}
 
-        {/* รูปทั้งหมด — แถบเลื่อนแนวนอน */}
-        {allPhotos.length > 0 && (
-          <section className="pt-4">
-            <h2 className="px-4 text-sm font-bold mb-2">รูปหน้างาน <span className="num text-muted-foreground font-normal">({allPhotos.length})</span></h2>
-            <div className="flex gap-2 overflow-x-auto no-scrollbar px-4">
-              {allPhotos.map((photo) => (
-                <button key={photo.id} onClick={() => openPhoto(photo.id)} className="size-20 shrink-0 rounded-lg overflow-hidden bg-muted">
-                  <img src={photo.thumbUrl || photo.fullUrl} alt="" className="size-full object-cover" loading="lazy" />
+        {/* รูปทั้งหมด */}
+        {site.photos?.length > 0 && (
+          <div className="px-4 pt-6">
+            <h3 className="text-base font-bold mb-3 flex items-center gap-1.5">
+              <ImageIcon className="size-4" />
+              รูปภาพ ({site.photos?.length})
+            </h3>
+            <div className="grid grid-cols-3 gap-1.5">
+              {(site.photos || []).map((photo) => (
+                <button
+                  key={photo.id}
+                  onClick={() => openPhoto(photo.id)}
+                  className="aspect-square rounded-lg overflow-hidden bg-muted"
+                >
+                  <img
+                    src={photo.thumbUrl}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
                 </button>
               ))}
             </div>
-          </section>
+          </div>
         )}
+      </div>
 
-        {/* ประวัติ */}
-        {site.reports?.length > 0 && (
-          <section className="px-4 pt-5">
-            <h2 className="text-sm font-bold mb-2">ประวัติการติดตาม <span className="num text-muted-foreground font-normal">({site.reports.length})</span></h2>
-            <ol>
-              {site.reports.map((report, idx) => (
-                <TimelineItem key={report.id} report={report} first={idx === 0} isLast={idx === site.reports.length - 1} onPhotoClick={openPhoto} />
-              ))}
-            </ol>
-          </section>
-        )}
-      </main>
+      {/* Lightbox */}
+      <PhotoLightbox
+        photos={allPhotos}
+        initialIndex={lightboxIndex}
+        open={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+      />
 
-      <PhotoLightbox photos={allPhotos} initialIndex={lightboxIndex} open={lightboxOpen} onClose={() => setLightboxOpen(false)} />
-
-      {showUpdate && (
-        <div className="fixed bottom-0 inset-x-0 bg-background/95 backdrop-blur border-t px-4 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
-          <Button onClick={() => navigate(`/sites/${site.siteCode}/update`)} size="xl" className="w-full">
+      {/* Sticky update button */}
+      {site.canEdit && site.status === 'following' && (
+        <div className="fixed bottom-0 inset-x-0 bg-background border-t px-4 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
+          <Button
+            onClick={() => navigate(`/sites/${site.siteCode}/update`)}
+            size="xl"
+            className="w-full"
+          >
             อัปเดตงานนี้
           </Button>
         </div>
@@ -168,47 +255,69 @@ export function SiteDetailPage() {
   )
 }
 
-function TopBar({ onBack, children }: { onBack: () => void; children: React.ReactNode }) {
+/** แถว key-value */
+function InfoRow({
+  icon: Icon,
+  label,
+  value,
+  valueClass,
+}: {
+  icon: typeof User
+  label: string
+  value: string
+  valueClass?: string
+}) {
   return (
-    <header className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b h-12 px-2 flex items-center gap-2">
-      <button onClick={onBack} className="size-10 grid place-items-center rounded-full active:bg-muted" aria-label="กลับ">
-        <ArrowLeft className="size-5" />
-      </button>
-      {children}
-      <span className="w-2" />
-    </header>
+    <div className="flex items-center gap-3 px-3 py-2.5">
+      <Icon className="size-4 text-muted-foreground shrink-0" />
+      <span className="text-sm text-muted-foreground shrink-0">{label}</span>
+      <span className={`text-sm font-medium ml-auto text-right ${valueClass || ''}`}>{value}</span>
+    </div>
   )
 }
 
-function TimelineItem({ report, first, isLast, onPhotoClick }: { report: ReportBrief; first: boolean; isLast: boolean; onPhotoClick: (id: string) => void }) {
-  const label = report.reportType === 'new' ? 'งานใหม่' : null
+/** Timeline item */
+function TimelineItem({ report, isLast, onPhotoClick }: { report: ReportBrief; isLast: boolean; onPhotoClick?: (id: string) => void }) {
   return (
-    <li className="flex gap-3">
-      <div className="flex flex-col items-center pt-1.5">
-        <span className={`size-2.5 rounded-full shrink-0 ${first ? 'bg-primary' : 'border-2 border-primary bg-background'}`} />
-        {!isLast && <span className="w-px flex-1 bg-border mt-1" />}
+    <div className="flex gap-3">
+      {/* เส้น timeline */}
+      <div className="flex flex-col items-center">
+        <div className="size-2.5 rounded-full bg-primary mt-1.5 shrink-0" />
+        {!isLast && <div className="w-px flex-1 bg-border" />}
       </div>
+
+      {/* เนื้อหา */}
       <div className="pb-4 min-w-0 flex-1">
-        <p className="text-xs text-muted-foreground flex flex-wrap items-center gap-x-1.5">
-          <span className="num">{formatThaiDate(report.reportDate)}</span>
-          <span>· {report.repName}</span>
-          {label && <span>· {label}</span>}
-          {report.stage && <span>· {report.stage}</span>}
-        </p>
-        {report.status && report.status !== 'following' && (
-          <div className="mt-1"><StatusBadge status={report.status} /></div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground num">
+            {formatThaiDate(report.reportDate)}
+          </span>
+          {report.status && report.status !== 'following' && (
+            <StatusBadge status={report.status} />
+          )}
+        </div>
+        <p className="text-sm font-bold mt-0.5">{report.repName}</p>
+        {report.stage && (
+          <p className="text-xs text-muted-foreground">ขั้นตอน: {report.stage}</p>
         )}
-        {report.note && <p className="text-sm leading-relaxed mt-0.5 whitespace-pre-line">{report.note}</p>}
+        {report.note && (
+          <p className="text-sm mt-1 text-foreground/80">{report.note}</p>
+        )}
+        {/* รูปในรายการนี้ */}
         {report.photos?.length > 0 && (
-          <div className="flex gap-1.5 mt-1.5">
-            {report.photos.map((photo) => (
-              <button key={photo.id} onClick={() => onPhotoClick(photo.id)} className="size-14 rounded-md overflow-hidden bg-muted shrink-0">
-                <img src={photo.thumbUrl || photo.fullUrl} alt="" className="size-full object-cover" loading="lazy" />
+          <div className="flex gap-1.5 mt-2">
+            {report.photos.map((photo: PhotoBrief) => (
+              <button
+                key={photo.id}
+                onClick={() => onPhotoClick?.(photo.id)}
+                className="size-16 rounded-lg overflow-hidden bg-muted shrink-0"
+              >
+                <img src={photo.thumbUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
               </button>
             ))}
           </div>
         )}
       </div>
-    </li>
+    </div>
   )
 }
