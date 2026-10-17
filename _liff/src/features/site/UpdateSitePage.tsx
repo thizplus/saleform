@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { sendChatMessages } from '@/lib/liff-helpers'
+import { getLiffContext } from '@/lib/liff-helpers'
 import { addDays } from '@/lib/thai-date'
 import { PhotoPicker } from '@/features/report-new/components/PhotoPicker'
 import { FollowUpDateChips } from '@/features/report-new/components/FollowUpDateChips'
@@ -64,7 +64,10 @@ export function UpdateSitePage() {
         photoIds = uploadResult.files.map((f) => f.id)
       }
 
-      // สร้าง follow-up
+      // สร้าง follow-up + backend push เข้ากลุ่ม
+      const liffCtx = getLiffContext()
+      const groupId = liffCtx?.groupId || liffCtx?.roomId || ''
+
       const result = await followUpService.createFollowUp(code, {
         note,
         status,
@@ -74,14 +77,11 @@ export function UpdateSitePage() {
         stage,
         decisionMaker: '',
         photoIds,
+        groupId,
       })
 
-      // ส่งข้อความเข้ากลุ่ม
-      let sent = false
-      if (result.chatMessages?.length) {
-        sent = await sendChatMessages(result.chatMessages)
-        if (sent) toast.success('ส่งเข้ากลุ่มแล้ว')
-      }
+      const sent = result.messageSent
+      if (sent) toast.success('ส่งเข้ากลุ่มแล้ว')
 
       navigate(`/success?code=${code}&name=${encodeURIComponent(site?.customerName || '')}&sent=${sent}`)
     } catch (err) {

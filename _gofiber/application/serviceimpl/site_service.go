@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"strings"
 	"time"
 
 	"line-sales-api/domain/dto"
@@ -106,13 +105,12 @@ func (s *siteServiceImpl) Create(ctx context.Context, repID uuid.UUID, req *dto.
 		Latitude:          req.Latitude,
 		Longitude:         req.Longitude,
 		Address:           req.Address,
-		Tambon:            strings.TrimSpace(req.Tambon),
-		Amphoe:            strings.TrimSpace(req.Amphoe),
 		Stage:             firstNonEmpty(req.Stage, "new"),
 		Status:            "following",
 		ExpectedOrderDate: expectedDate,
 		NextFollowUpDate:  followUpDate,
 		OwnerRepID:        repID,
+		GroupID:           req.GroupID,
 		ReportCount:       1,
 		LastReportAt:      &now,
 	}
@@ -187,7 +185,8 @@ func (s *siteServiceImpl) Create(ctx context.Context, repID uuid.UUID, req *dto.
 	photoURLs := s.getPhotoURLs(ctx, reportID)
 	lineMessages := BuildNewSiteMessages(site, report, repName, photoURLs)
 
-	// ส่งเข้ากลุ่ม LINE (ถ้ามี GroupID + lineMessenger)
+	// ส่งเข้ากลุ่ม LINE ผ่าน Push API (รูปจัดกลุ่มอัตโนมัติ)
+	messageSent := false
 	if site.GroupID != "" && s.lineMessenger != nil {
 		msgInterfaces := make([]any, len(lineMessages))
 		for i, m := range lineMessages {
@@ -197,6 +196,7 @@ func (s *siteServiceImpl) Create(ctx context.Context, repID uuid.UUID, req *dto.
 			logger.WarnContext(ctx, "Failed to push message to group", "group_id", site.GroupID, "error", err)
 		} else {
 			logger.InfoContext(ctx, "Message pushed to group", "group_id", site.GroupID, "site_code", siteCode)
+			messageSent = true
 		}
 	}
 
@@ -220,7 +220,7 @@ func (s *siteServiceImpl) Create(ctx context.Context, repID uuid.UUID, req *dto.
 			RepName:    repName,
 			ReportDate: report.ReportDate,
 		},
-		ChatMessages: lineMessages,
+		MessageSent: messageSent,
 	}, nil
 }
 
@@ -361,7 +361,6 @@ func (s *siteServiceImpl) GetByCode(ctx context.Context, code string, viewerRepI
 		Longitude:         site.Longitude,
 		Address:           site.Address,
 		Amphoe:            site.Amphoe,
-		Tambon:            site.Tambon,
 		Stage:             site.Stage,
 		Status:            site.Status,
 		LostReason:        site.LostReason,
@@ -431,12 +430,6 @@ func (s *siteServiceImpl) List(ctx context.Context, repID *uuid.UUID, filter *dt
 			IsMine:           isMine,
 			OwnerName:        ownerName,
 			ReportCount:      site.ReportCount,
-			ContractorName:   site.ContractorName,
-			Tambon:           site.Tambon,
-			Amphoe:           site.Amphoe,
-			Lat:              site.Latitude,
-			Lng:              site.Longitude,
-			LastReportAt:     site.LastReportAt,
 		})
 	}
 
@@ -541,14 +534,18 @@ func (s *siteServiceImpl) AddFollowUp(ctx context.Context, repID uuid.UUID, code
 	photoURLs := s.getPhotoURLs(ctx, reportID)
 	lineMessages := BuildFollowUpMessages(site, report, repName, photoURLs)
 
-	// ส่งเข้ากลุ่ม LINE (ถ้ามี GroupID + lineMessenger)
-	if site.GroupID != "" && s.lineMessenger != nil {
+	// ส่งเข้ากลุ่ม LINE — ใช้ groupId จาก request หรือ site
+	messageSent := false
+	pushGroupID := firstNonEmpty(req.GroupID, site.GroupID)
+	if pushGroupID != "" && s.lineMessenger != nil {
 		msgInterfaces := make([]any, len(lineMessages))
 		for i, m := range lineMessages {
 			msgInterfaces[i] = m
 		}
-		if err := s.lineMessenger.PushMessage(ctx, site.GroupID, msgInterfaces...); err != nil {
-			logger.WarnContext(ctx, "Failed to push follow-up to group", "group_id", site.GroupID, "error", err)
+		if err := s.lineMessenger.PushMessage(ctx, pushGroupID, msgInterfaces...); err != nil {
+			logger.WarnContext(ctx, "Failed to push follow-up to group", "group_id", pushGroupID, "error", err)
+		} else {
+			messageSent = true
 		}
 	}
 
@@ -579,7 +576,7 @@ func (s *siteServiceImpl) AddFollowUp(ctx context.Context, repID uuid.UUID, code
 			RepName:    repName,
 			ReportDate: report.ReportDate,
 		},
-		ChatMessages: lineMessages,
+		MessageSent: messageSent,
 	}, nil
 }
 

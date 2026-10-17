@@ -5,7 +5,7 @@ import type { CreateSiteForm, OptionsData, DuplicateMatch } from './types'
 interface CreateSiteResponse {
   site: { siteCode: string; customerName: string }
   report: { id: string }
-  chatMessages: unknown[] // LINE messages (text+image+location)
+  messageSent: boolean
 }
 
 interface DuplicateCheckResponse {

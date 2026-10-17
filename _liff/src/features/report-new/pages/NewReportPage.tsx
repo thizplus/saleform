@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { sendChatMessages } from '@/lib/liff-helpers'
+import { getLiffContext } from '@/lib/liff-helpers'
 import { addDays } from '@/lib/thai-date'
 import { PhotoPicker } from '../components/PhotoPicker'
 import { GPSButton } from '../components/GPSButton'
@@ -161,6 +161,10 @@ export function NewReportPage() {
         setShowProgress(true)
       }
 
+      // ดึง groupId จาก LIFF context
+      const liffCtx = getLiffContext()
+      const groupId = liffCtx?.groupId || liffCtx?.roomId || ''
+
       const result = await createMutation.mutateAsync({
         phone: digits,
         customerName: form.customerName,
@@ -179,20 +183,15 @@ export function NewReportPage() {
         photoIds,
         forceNew,
         idempotencyKey: idempotencyKeyRef.current,
+        groupId,
       })
 
+      const sent = result.messageSent
+      if (sent) toast.success('ส่งเข้ากลุ่มแล้ว')
+
       setUploadSteps((prev) => prev.map((s) =>
-        s.label === 'บันทึกข้อมูล' ? { ...s, status: 'done' } :
-        s.label === 'ส่งเข้ากลุ่ม' ? { ...s, status: 'uploading' } : s
+        s.label === 'บันทึกข้อมูล' || s.label === 'ส่งเข้ากลุ่ม' ? { ...s, status: 'done' } : s
       ))
-
-      let sent = false
-      if (result.chatMessages?.length) {
-        sent = await sendChatMessages(result.chatMessages)
-        if (sent) toast.success('ส่งเข้ากลุ่มแล้ว')
-      }
-
-      setUploadSteps((prev) => prev.map((s) => s.label === 'ส่งเข้ากลุ่ม' ? { ...s, status: 'done' } : s))
 
       localStorage.removeItem(DRAFT_KEY)
       setTimeout(() => {

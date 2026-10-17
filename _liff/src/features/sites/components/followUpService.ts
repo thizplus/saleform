@@ -10,12 +10,13 @@ interface CreateFollowUpParams {
   stage: string
   decisionMaker: string
   photoIds: string[]
+  groupId?: string
 }
 
 interface FollowUpResponse {
   site: { siteCode: string }
   report: { id: string }
-  chatMessages: unknown[]
+  messageSent: boolean
 }
 
 export const followUpService = {

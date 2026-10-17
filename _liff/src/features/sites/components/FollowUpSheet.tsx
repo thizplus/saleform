@@ -93,13 +93,8 @@ export function FollowUpSheet({
         photoIds,
       })
 
-      // ส่งข้อความเข้ากลุ่ม
-      if (result.chatMessages?.length) {
-        const { sendChatMessages } = await import('@/lib/liff-helpers')
-        const sent = await sendChatMessages(result.chatMessages)
-        if (sent) {
-          toast.success('ส่งเข้ากลุ่มแล้ว')
-        }
+      if (result.messageSent) {
+        toast.success('ส่งเข้ากลุ่มแล้ว')
       }
 
       // Invalidate queries

@@ -16,6 +16,7 @@ export interface CreateSiteForm {
   photoIds: string[]
   forceNew: boolean
   idempotencyKey?: string
+  groupId?: string
 }
 
 export interface OptionsData {

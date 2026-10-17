@@ -14,18 +14,17 @@ type CreateSiteRequest struct {
 	Latitude         *float64 `json:"lat"`
 	Longitude        *float64 `json:"lng"`
 	Address          string   `json:"address"`
-	Tambon           string   `json:"tambon"`
-	Amphoe           string   `json:"amphoe"`
 	ExpectedOrderDate *string `json:"expectedOrderDate"` // YYYY-MM-DD
 	NextFollowUpDate  *string `json:"nextFollowUpDate"`  // YYYY-MM-DD
 	PhotoIDs         []string `json:"photoIds"`
 	ForceNew         bool     `json:"forceNew"` // skip duplicate check
+	GroupID          string   `json:"groupId"`  // LINE group ID for push message
 }
 
 type CreateSiteResponse struct {
-	Site         SiteBrief        `json:"site"`
-	Report       ReportBrief      `json:"report"`
-	ChatMessages []map[string]any `json:"chatMessages"` // LINE messages (text+image+location) ส่งผ่าน liff.sendMessages()
+	Site        SiteBrief `json:"site"`
+	Report      ReportBrief `json:"report"`
+	MessageSent bool      `json:"messageSent"` // backend push สำเร็จหรือไม่
 }
 
 // Follow-up
@@ -38,12 +37,13 @@ type CreateFollowUpRequest struct {
 	Stage            string   `json:"stage"`
 	DecisionMaker    string   `json:"decisionMaker"`
 	PhotoIDs         []string `json:"photoIds"`
+	GroupID          string   `json:"groupId"`
 }
 
 type CreateFollowUpResponse struct {
-	Site         SiteBrief        `json:"site"`
-	Report       ReportBrief      `json:"report"`
-	ChatMessages []map[string]any `json:"chatMessages"`
+	Site        SiteBrief   `json:"site"`
+	Report      ReportBrief `json:"report"`
+	MessageSent bool        `json:"messageSent"`
 }
 
 // Site list
@@ -76,12 +76,6 @@ type SiteBrief struct {
 	IsMine           bool    `json:"isMine"`
 	OwnerName        string  `json:"ownerName"`
 	ReportCount      int     `json:"reportCount"`
-	ContractorName   string     `json:"contractorName"`
-	Tambon           string     `json:"tambon"`
-	Amphoe           string     `json:"amphoe"`
-	Lat              *float64   `json:"lat"`
-	Lng              *float64   `json:"lng"`
-	LastReportAt     *time.Time `json:"lastReportAt"`
 }
 
 // Site detail
@@ -96,7 +90,6 @@ type SiteDetailResponse struct {
 	Longitude        *float64  `json:"lng"`
 	Address          string    `json:"address"`
 	Amphoe           string    `json:"amphoe"`
-	Tambon           string    `json:"tambon"`
 	Stage            string    `json:"stage"`
 	Status           string    `json:"status"`
 	LostReason       string    `json:"lostReason"`
