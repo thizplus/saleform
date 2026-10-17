@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { MapPin, Loader2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 
 interface GPSButtonProps {
   lat: number | null
@@ -48,31 +47,33 @@ export function GPSButton({ lat, onLocation }: GPSButtonProps) {
 
   return (
     <div className="space-y-2">
-      <Button
+      <button
         type="button"
-        variant={hasLocation ? 'secondary' : 'outline'}
-        size="xl"
         onClick={getLocation}
         disabled={loading}
-        className="w-full gap-2"
+        className={`w-full h-11 rounded-xl flex items-center justify-center gap-2 text-sm font-bold transition-colors ${
+          hasLocation
+            ? 'bg-success-soft text-success-ink border border-success/30'
+            : 'border-2 border-dashed border-muted-foreground/30 text-muted-foreground hover:bg-muted/50'
+        }`}
       >
         {loading ? (
           <>
-            <Loader2 className="size-5 animate-spin" />
+            <Loader2 className="size-4 animate-spin" />
             กำลังค้นหาตำแหน่ง...
           </>
         ) : hasLocation ? (
           <>
-            <MapPin className="size-5" />
-            ✓ ได้ตำแหน่งแล้ว — แตะเพื่อปักใหม่
+            <MapPin className="size-4" />
+            ได้ตำแหน่งแล้ว — แตะเพื่อปักใหม่
           </>
         ) : (
           <>
-            <MapPin className="size-5" />
-            ใช้ตำแหน่งปัจจุบัน
+            <MapPin className="size-4" />
+            ปักตำแหน่งหน้างาน
           </>
         )}
-      </Button>
+      </button>
       {error && (
         <p className="text-sm text-danger-ink bg-danger-soft rounded-lg px-3 py-2">{error}</p>
       )}
