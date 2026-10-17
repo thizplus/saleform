@@ -8,10 +8,8 @@ import (
 	"line-sales-api/domain/models"
 )
 
-// LINE Message types ที่ใช้กับ Messaging API
-
-// BuildNewSiteMessages สร้างข้อความ+ตำแหน่งสำหรับงานใหม่
-// คืน slice ของ LINE messages (text, location, image)
+// BuildNewSiteMessages สร้างข้อความ+รูป+ตำแหน่งสำหรับงานใหม่
+// คืน slice ของ LINE messages — ส่งทีเดียว รูปจะจัดกลุ่มอัตโนมัติ
 func BuildNewSiteMessages(site *models.Site, report *models.SiteReport, repName string, photoURLs []string) []map[string]any {
 	var messages []map[string]any
 
@@ -52,11 +50,8 @@ func BuildNewSiteMessages(site *models.Site, report *models.SiteReport, repName 
 		"text": strings.Join(lines, "\n"),
 	})
 
-	// 2. รูปภาพ (ส่งได้สูงสุด 5 ข้อความ, ใช้ 3 ก็พอ)
-	for i, url := range photoURLs {
-		if i >= 3 {
-			break
-		}
+	// 2. รูปภาพทั้งหมด (ไม่จำกัด — backend push ส่งได้เกิน 5)
+	for _, url := range photoURLs {
 		messages = append(messages, map[string]any{
 			"type":               "image",
 			"originalContentUrl": url,
@@ -86,7 +81,7 @@ func BuildNewSiteMessages(site *models.Site, report *models.SiteReport, repName 
 	return messages
 }
 
-// BuildFollowUpMessages สร้างข้อความ+ตำแหน่งสำหรับอัปเดตงาน
+// BuildFollowUpMessages สร้างข้อความ+รูปสำหรับอัปเดตงาน
 func BuildFollowUpMessages(site *models.Site, report *models.SiteReport, repName string, photoURLs []string) []map[string]any {
 	var messages []map[string]any
 
@@ -104,7 +99,6 @@ func BuildFollowUpMessages(site *models.Site, report *models.SiteReport, repName
 		statusText = "ยกเลิก"
 	}
 
-	// 1. ข้อความหลัก
 	var lines []string
 	lines = append(lines, fmt.Sprintf("%s %s #%s", statusEmoji, statusText, site.SiteCode))
 	lines = append(lines, fmt.Sprintf("👤 %s", repName))
@@ -142,11 +136,8 @@ func BuildFollowUpMessages(site *models.Site, report *models.SiteReport, repName
 		"text": strings.Join(lines, "\n"),
 	})
 
-	// 2. รูปภาพ
-	for i, url := range photoURLs {
-		if i >= 3 {
-			break
-		}
+	// รูปภาพทั้งหมด
+	for _, url := range photoURLs {
 		messages = append(messages, map[string]any{
 			"type":               "image",
 			"originalContentUrl": url,

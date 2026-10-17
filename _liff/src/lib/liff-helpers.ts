@@ -53,7 +53,7 @@ export async function sendFlexToChat(flexMessage: unknown): Promise<boolean> {
   }
 }
 
-/** ส่งหลาย messages เข้ากลุ่ม (text, image, location) — สูงสุด 5 ต่อครั้ง */
+/** ส่งหลาย messages เข้ากลุ่ม — แบ่งเป็นชุด 5 อัตโนมัติ */
 export async function sendChatMessages(messages: unknown[]): Promise<boolean> {
   try {
     const context = liff.getContext()
@@ -62,9 +62,11 @@ export async function sendChatMessages(messages: unknown[]): Promise<boolean> {
       return false
     }
 
-    // LINE LIFF sendMessages รองรับสูงสุด 5 messages ต่อครั้ง
-    const batch = messages.slice(0, 5)
-    await liff.sendMessages(batch as never[])
+    // LINE LIFF sendMessages รองรับสูงสุด 5 messages ต่อครั้ง — ส่งหลาย batch
+    for (let i = 0; i < messages.length; i += 5) {
+      const batch = messages.slice(i, i + 5)
+      await liff.sendMessages(batch as never[])
+    }
     return true
   } catch (err) {
     console.error('sendMessages failed:', err)
