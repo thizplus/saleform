@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Button } from '@/components/ui/button'
+import { Camera, X } from 'lucide-react'
 import { compressImage } from '@/lib/image-compress'
 
 interface PhotoPickerProps {
@@ -8,6 +8,7 @@ interface PhotoPickerProps {
   max?: number
 }
 
+/** 3 ช่องสี่เหลี่ยมแตะ = เปิดกล้อง */
 export function PhotoPicker({ photos, onChange, max = 3 }: PhotoPickerProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [compressing, setCompressing] = useState(false)
@@ -43,36 +44,44 @@ export function PhotoPicker({ photos, onChange, max = 3 }: PhotoPickerProps) {
     onChange(photos.filter((_, i) => i !== index))
   }
 
+  const slots = Array.from({ length: max }, (_, i) => photos[i] || null)
+
   return (
-    <div className="space-y-2">
-      <div className="flex gap-2 flex-wrap">
-        {photos.map((photo, i) => (
-          <div key={i} className="relative w-20 h-20">
-            <img
-              src={photo.preview}
-              alt={`รูป ${i + 1}`}
-              className="w-full h-full object-cover rounded-md border"
-            />
-            <button
-              type="button"
-              onClick={() => removePhoto(i)}
-              className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground rounded-full text-xs flex items-center justify-center"
-            >
-              x
-            </button>
+    <div>
+      <div className="grid grid-cols-3 gap-2">
+        {slots.map((photo, i) => (
+          <div key={i} className="relative aspect-square">
+            {photo ? (
+              <>
+                <img
+                  src={photo.preview}
+                  alt={`รูป ${i + 1}`}
+                  className="size-full object-cover rounded-xl border"
+                />
+                <button
+                  type="button"
+                  onClick={() => removePhoto(i)}
+                  className="absolute -top-1.5 -right-1.5 size-6 bg-foreground text-background rounded-full flex items-center justify-center"
+                  aria-label={`ลบรูป ${i + 1}`}
+                >
+                  <X className="size-3.5" />
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => inputRef.current?.click()}
+                disabled={compressing}
+                className="size-full rounded-xl border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center gap-1 text-muted-foreground hover:bg-muted/50 transition-colors"
+              >
+                <Camera className="size-6" />
+                {compressing && i === photos.length ? (
+                  <span className="text-xs">บีบอัด...</span>
+                ) : null}
+              </button>
+            )}
           </div>
         ))}
-
-        {photos.length < max && (
-          <button
-            type="button"
-            onClick={() => inputRef.current?.click()}
-            disabled={compressing}
-            className="w-20 h-20 border-2 border-dashed border-muted-foreground/30 rounded-md flex items-center justify-center text-muted-foreground text-2xl hover:bg-muted/50 transition-colors"
-          >
-            {compressing ? '...' : '+'}
-          </button>
-        )}
       </div>
 
       <input
@@ -84,19 +93,6 @@ export function PhotoPicker({ photos, onChange, max = 3 }: PhotoPickerProps) {
         onChange={handleFiles}
         className="hidden"
       />
-
-      {photos.length === 0 && (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => inputRef.current?.click()}
-          disabled={compressing}
-          className="w-full"
-        >
-          {compressing ? 'กำลังบีบอัดรูป...' : 'ถ่ายรูป / เลือกรูป (สูงสุด 3 รูป)'}
-        </Button>
-      )}
     </div>
   )
 }

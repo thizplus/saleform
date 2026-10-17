@@ -1,13 +1,14 @@
 import { useState } from 'react'
+import { MapPin, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface GPSButtonProps {
   lat: number | null
   lng: number | null
-  onLocation: (lat: number, lng: number) => void
+  onLocation: (lat: number, lng: number, accuracy?: number) => void
 }
 
-export function GPSButton({ lat, lng, onLocation }: GPSButtonProps) {
+export function GPSButton({ lat, onLocation }: GPSButtonProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -22,20 +23,20 @@ export function GPSButton({ lat, lng, onLocation }: GPSButtonProps) {
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        onLocation(pos.coords.latitude, pos.coords.longitude)
+        onLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy)
         setLoading(false)
       },
       (err) => {
         setLoading(false)
         switch (err.code) {
           case err.PERMISSION_DENIED:
-            setError('กรุณาอนุญาตการเข้าถึงตำแหน่ง')
+            setError('กรุณาอนุญาตการเข้าถึงตำแหน่ง — ไปที่ตั้งค่า > แอป LINE > ตำแหน่ง')
             break
           case err.POSITION_UNAVAILABLE:
-            setError('ไม่สามารถหาตำแหน่งได้')
+            setError('ไม่สามารถหาตำแหน่งได้ — ลองเปิด GPS แล้วกดอีกครั้ง')
             break
           case err.TIMEOUT:
-            setError('หมดเวลาในการค้นหาตำแหน่ง')
+            setError('หมดเวลา — ลองอีกครั้งในที่โล่ง')
             break
         }
       },
@@ -43,23 +44,38 @@ export function GPSButton({ lat, lng, onLocation }: GPSButtonProps) {
     )
   }
 
+  const hasLocation = lat !== null
+
   return (
-    <div className="space-y-1">
+    <div className="space-y-2">
       <Button
         type="button"
-        variant={lat ? 'secondary' : 'outline'}
-        size="sm"
+        variant={hasLocation ? 'secondary' : 'outline'}
+        size="xl"
         onClick={getLocation}
         disabled={loading}
-        className="w-full"
+        className="w-full gap-2"
       >
-        {loading
-          ? 'กำลังค้นหาตำแหน่ง...'
-          : lat
-            ? `ตำแหน่ง: ${lat.toFixed(5)}, ${lng?.toFixed(5)}`
-            : 'ปักหมุดตำแหน่ง GPS'}
+        {loading ? (
+          <>
+            <Loader2 className="size-5 animate-spin" />
+            กำลังค้นหาตำแหน่ง...
+          </>
+        ) : hasLocation ? (
+          <>
+            <MapPin className="size-5" />
+            ✓ ได้ตำแหน่งแล้ว — แตะเพื่อปักใหม่
+          </>
+        ) : (
+          <>
+            <MapPin className="size-5" />
+            ใช้ตำแหน่งปัจจุบัน
+          </>
+        )}
       </Button>
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && (
+        <p className="text-sm text-danger-ink bg-danger-soft rounded-lg px-3 py-2">{error}</p>
+      )}
     </div>
   )
 }
