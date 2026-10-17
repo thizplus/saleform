@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Camera, X } from 'lucide-react'
+import { Camera, Plus, X, Loader2 } from 'lucide-react'
 import { compressImage } from '@/lib/image-compress'
 
 interface PhotoPickerProps {
@@ -8,8 +8,8 @@ interface PhotoPickerProps {
   max?: number
 }
 
-/** 3 ช่องสี่เหลี่ยมแตะ = เปิดกล้อง */
-export function PhotoPicker({ photos, onChange, max = 3 }: PhotoPickerProps) {
+/** เลือกรูป 0-6: ไม่มีรูป = ปุ่มใหญ่, มีรูปแล้ว = grid + ปุ่มเพิ่ม */
+export function PhotoPicker({ photos, onChange, max = 6 }: PhotoPickerProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [compressing, setCompressing] = useState(false)
 
@@ -44,45 +44,60 @@ export function PhotoPicker({ photos, onChange, max = 3 }: PhotoPickerProps) {
     onChange(photos.filter((_, i) => i !== index))
   }
 
-  const slots = Array.from({ length: max }, (_, i) => photos[i] || null)
+  const canAdd = photos.length < max
 
   return (
     <div>
-      <div className="grid grid-cols-3 gap-2">
-        {slots.map((photo, i) => (
-          <div key={i} className="relative aspect-square">
-            {photo ? (
-              <>
-                <img
-                  src={photo.preview}
-                  alt={`รูป ${i + 1}`}
-                  className="size-full object-cover rounded-xl border"
-                />
-                <button
-                  type="button"
-                  onClick={() => removePhoto(i)}
-                  className="absolute -top-1.5 -right-1.5 size-6 bg-foreground text-background rounded-full flex items-center justify-center"
-                  aria-label={`ลบรูป ${i + 1}`}
-                >
-                  <X className="size-3.5" />
-                </button>
-              </>
-            ) : (
+      {photos.length === 0 ? (
+        /* ยังไม่มีรูป — ปุ่มใหญ่อันเดียว */
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={compressing}
+          className="w-full h-24 rounded-xl border-2 border-dashed border-muted-foreground/30 flex items-center justify-center gap-2 text-muted-foreground hover:bg-muted/50 transition-colors"
+        >
+          {compressing ? (
+            <><Loader2 className="size-5 animate-spin" /> กำลังบีบอัด...</>
+          ) : (
+            <><Camera className="size-5" /> ถ่ายรูปหรือเลือกจากอัลบั้ม</>
+          )}
+        </button>
+      ) : (
+        /* มีรูปแล้ว — grid thumbnail + ปุ่มเพิ่ม */
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {photos.map((photo, i) => (
+            <div key={i} className="relative shrink-0 size-20">
+              <img
+                src={photo.preview}
+                alt={`รูป ${i + 1}`}
+                className="size-full object-cover rounded-lg border"
+              />
               <button
                 type="button"
-                onClick={() => inputRef.current?.click()}
-                disabled={compressing}
-                className="size-full rounded-xl border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center gap-1 text-muted-foreground hover:bg-muted/50 transition-colors"
+                onClick={() => removePhoto(i)}
+                className="absolute -top-1.5 -right-1.5 size-5 bg-foreground text-background rounded-full flex items-center justify-center"
+                aria-label={`ลบรูป ${i + 1}`}
               >
-                <Camera className="size-6" />
-                {compressing && i === photos.length ? (
-                  <span className="text-xs">บีบอัด...</span>
-                ) : null}
+                <X className="size-3" />
               </button>
-            )}
-          </div>
-        ))}
-      </div>
+            </div>
+          ))}
+          {canAdd && (
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              disabled={compressing}
+              className="shrink-0 size-20 rounded-lg border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center gap-0.5 text-muted-foreground hover:bg-muted/50 transition-colors"
+            >
+              {compressing ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <><Plus className="size-5" /><span className="text-[10px]">{photos.length}/{max}</span></>
+              )}
+            </button>
+          )}
+        </div>
+      )}
 
       <input
         ref={inputRef}

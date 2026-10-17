@@ -251,11 +251,11 @@ export function NewReportPage() {
         </section>
 
         <section className="space-y-2">
-          <Label className="text-sm font-bold">รูปหน้างาน * <span className="font-normal text-muted-foreground">({form.photos.length}/3)</span></Label>
+          <Label className="text-sm font-bold">รูปหน้างาน * <span className="font-normal text-muted-foreground">({form.photos.length}/6)</span></Label>
           <PhotoPicker
             photos={form.photos}
             onChange={(photos) => update('photos', photos)}
-            max={3}
+            max={6}
           />
         </section>
 
