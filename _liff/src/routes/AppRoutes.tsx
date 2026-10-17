@@ -1,6 +1,5 @@
 import { Routes, Route } from 'react-router-dom'
 import { HomePage } from '@/features/sites/pages/HomePage'
-import { LiffTestPage } from '@/features/auth/pages/LiffTestPage'
 import { NewReportPage, SuccessPage } from '@/features/report-new'
 
 export function AppRoutes() {
@@ -9,7 +8,8 @@ export function AppRoutes() {
       <Route path="/" element={<HomePage />} />
       <Route path="/new" element={<NewReportPage />} />
       <Route path="/success" element={<SuccessPage />} />
-      <Route path="/test" element={<LiffTestPage />} />
+      {/* Deep link จากการ์ดในกลุ่ม LINE */}
+      <Route path="/sites/:code" element={<div>TODO: SiteDetailPage (L-06)</div>} />
     </Routes>
   )
 }

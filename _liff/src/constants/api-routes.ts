@@ -2,6 +2,9 @@ const API_BASE = import.meta.env.VITE_API_URL
 
 export const AUTH_ROUTES = {
   LIFF_AUTH: `${API_BASE}/liff/auth`,
+  REGISTER: `${API_BASE}/liff/auth/register`,
+  ME: `${API_BASE}/liff/me`,
+  ME_STATS: `${API_BASE}/liff/me/stats`,
 } as const
 
 export const LIFF_ROUTES = {

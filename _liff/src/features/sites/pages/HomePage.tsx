@@ -1,308 +1,245 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Plus, Phone, Navigation, RefreshCw, BarChart3, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { StatusBadge } from '@/components/shared'
 import { useAuthStore } from '@/stores/auth'
-import { isInLiff, getIDToken, isLoggedIn, liffLogin, closeLiff } from '@/lib/liff-helpers'
-import { useLIFFAuth } from '@/features/auth'
-import { SITE_STATUS_LABELS, SITE_STATUS_STYLES, TAB_OPTIONS } from '@/constants/enums'
-import { formatThaiDate } from '@/lib/thai-date'
+import { formatThaiDate, formatPhone } from '@/lib/format-th'
 import { useSiteList } from '../hooks'
-import { SiteDetailSheet } from '../components/SiteDetailSheet'
-import type { SiteListParams } from '../types'
+import type { SiteListParams, SiteBrief } from '../types'
 
+const TAB_OPTIONS = [
+  { value: 'due_today', label: 'ต้องตาม' },
+  { value: 'overdue', label: 'เลยกำหนด' },
+  { value: 'all', label: 'ทั้งหมด' },
+] as const
+
+/** L4 — งานของฉัน (หน้าแรก) */
 export function HomePage() {
   const navigate = useNavigate()
-  const { isAuthenticated, profile, clearAuth } = useAuthStore()
-  const liffAuth = useLIFFAuth()
+  const profile = useAuthStore((s) => s.profile)
+
   const [activeTab, setActiveTab] = useState('due_today')
-  const [params, setParams] = useState<SiteListParams>({ tab: 'due_today', page: 1, limit: 20 })
-  const [selectedSiteCode, setSelectedSiteCode] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
+  const [params, setParams] = useState<SiteListParams>({ tab: 'due_today', page: 1, limit: 50 })
 
-  // Auto-login once when LIFF is ready
-  const [loginAttempted, setLoginAttempted] = useState(false)
-
-  useEffect(() => {
-    if (isAuthenticated || loginAttempted) return
-
-    async function autoLogin() {
-      setLoginAttempted(true)
-
-      if (!isLoggedIn()) {
-        if (isInLiff()) {
-          liffLogin()
-        }
-        return
-      }
-
-      const idToken = await getIDToken()
-      if (idToken) {
-        liffAuth.mutate({ idToken })
-      }
-    }
-    autoLogin()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  const { data, isLoading } = useSiteList(params, isAuthenticated)
+  const { data, isLoading, refetch } = useSiteList(params, true)
 
   function handleTabChange(tab: string) {
     setActiveTab(tab)
     setParams((prev) => ({ ...prev, tab, page: 1 }))
   }
 
-  // Registration form state
-  const [regNickname, setRegNickname] = useState('')
-  const [regArea, setRegArea] = useState('')
-  const [regSubmitting, setRegSubmitting] = useState(false)
-
-  const authData = liffAuth.data
-  const notActive = liffAuth.isSuccess && !authData?.token && authData?.profile
-
-  async function handleRegister() {
-    if (!regNickname.trim()) return
-    setRegSubmitting(true)
-    const idToken = await getIDToken()
-    if (idToken) {
-      liffAuth.mutate({ idToken, nickname: regNickname, area: regArea })
-    }
-    setRegSubmitting(false)
+  function handleSearch(q: string) {
+    setSearch(q)
+    setParams((prev) => ({ ...prev, q: q || undefined, page: 1 }))
   }
 
-  // Not active states
-  if (notActive) {
-    const p = authData.profile
-
-    // Inactive (disabled by admin)
-    if (p.status === 'inactive') {
-      return (
-        <div className="min-h-screen bg-background flex items-center justify-center p-4">
-          <Card className="w-full max-w-sm">
-            <CardContent className="pt-6 text-center space-y-4">
-              <div className="text-4xl">🚫</div>
-              <h2 className="text-lg font-semibold">บัญชีถูกปิดใช้งาน</h2>
-              <p className="text-sm text-muted-foreground">กรุณาติดต่อแอดมิน</p>
-              <Button variant="outline" onClick={() => closeLiff()} className="w-full">ปิด</Button>
-            </CardContent>
-          </Card>
-        </div>
-      )
-    }
-
-    // Pending + already registered → waiting for approval
-    if (p.registered) {
-      return (
-        <div className="min-h-screen bg-background flex items-center justify-center p-4">
-          <Card className="w-full max-w-sm">
-            <CardContent className="pt-6 text-center space-y-4">
-              {p.pictureUrl && <img src={p.pictureUrl} alt="" className="w-16 h-16 rounded-full mx-auto" />}
-              <h2 className="text-lg font-semibold">{p.displayName}</h2>
-              <p className="text-sm text-muted-foreground">ชื่อเล่น: {p.nickname} · พื้นที่: {p.area || '-'}</p>
-              <div className="text-4xl">🕐</div>
-              <p className="text-base font-medium">รอแอดมินอนุมัติ</p>
-              <p className="text-sm text-muted-foreground">ข้อมูลของคุณถูกส่งแล้ว กรุณารอแอดมินตรวจสอบและอนุมัติ</p>
-              <Button variant="outline" onClick={() => closeLiff()} className="w-full">ปิด</Button>
-            </CardContent>
-          </Card>
-        </div>
-      )
-    }
-
-    // Pending + not registered → show registration form
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="w-full max-w-sm">
-          <CardContent className="pt-6 space-y-4">
-            <div className="text-center">
-              {p.pictureUrl && <img src={p.pictureUrl} alt="" className="w-16 h-16 rounded-full mx-auto" />}
-              <h2 className="text-lg font-semibold mt-2">{p.displayName}</h2>
-              <p className="text-sm text-muted-foreground">กรอกข้อมูลเพื่อลงทะเบียน</p>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-sm font-medium">ชื่อเล่น *</label>
-              <input
-                type="text"
-                placeholder="ชื่อเล่นที่ใช้ในทีม"
-                value={regNickname}
-                onChange={(e) => setRegNickname(e.target.value)}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-sm font-medium">พื้นที่รับผิดชอบ</label>
-              <input
-                type="text"
-                placeholder="เช่น อ.เมือง จ.ขอนแก่น"
-                value={regArea}
-                onChange={(e) => setRegArea(e.target.value)}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              />
-            </div>
-
-            <Button
-              onClick={handleRegister}
-              disabled={regSubmitting || !regNickname.trim()}
-              className="w-full"
-            >
-              {regSubmitting ? 'กำลังส่ง...' : 'ลงทะเบียน'}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
-  // Loading / Not logged in state
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="w-full max-w-sm">
-          <CardContent className="pt-6 text-center space-y-4">
-            <div className="text-4xl">📋</div>
-            <h2 className="text-lg font-semibold">ระบบรายงานเซลล์</h2>
-            <p className="text-sm text-muted-foreground">UP Steel Sales Report</p>
-            {liffAuth.isPending ? (
-              <p className="text-sm text-muted-foreground">กำลังเข้าสู่ระบบ...</p>
-            ) : liffAuth.isError ? (
-              <div className="space-y-2">
-                <p className="text-sm text-destructive">เข้าสู่ระบบไม่สำเร็จ</p>
-                <Button onClick={() => liffLogin()} size="sm">
-                  ลองใหม่
-                </Button>
-              </div>
-            ) : (
-              <Button onClick={() => liffLogin()} className="w-full">
-                เข้าสู่ระบบด้วย LINE
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/test')}
-              className="text-xs text-muted-foreground"
-            >
-              LIFF Test Page
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
+  const counts = profile?.counts
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background flex flex-col">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-background border-b px-4 py-3">
+      <header className="sticky top-0 z-10 bg-background border-b px-4 pt-3 pb-2">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             {profile?.pictureUrl && (
-              <img
-                src={profile.pictureUrl}
-                alt=""
-                className="w-8 h-8 rounded-full"
-              />
+              <img src={profile.pictureUrl} alt="" className="size-8 rounded-full" />
             )}
             <div>
-              <div className="font-medium text-sm">{profile?.displayName}</div>
-              <div className="text-xs text-muted-foreground">{profile?.area || 'ไม่ระบุพื้นที่'}</div>
+              <p className="text-sm font-bold">{profile?.nickname || profile?.displayName}</p>
+              <p className="text-xs text-muted-foreground">
+                {profile?.areas?.join(', ') || 'ไม่ระบุพื้นที่'}
+              </p>
             </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={clearAuth}>
-            ออก
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('/my-stats')}
+            aria-label="ผลงานของฉัน"
+          >
+            <BarChart3 className="size-5" />
           </Button>
         </div>
 
-        {/* Summary badges */}
-        <div className="flex gap-2 mt-2 text-xs">
-          <Badge variant="destructive" className="text-xs">
-            เลยกำหนด {profile?.counts.overdue ?? 0}
-          </Badge>
-          <Badge variant="default" className="text-xs">
-            วันนี้ {profile?.counts.dueToday ?? 0}
-          </Badge>
-          <Badge variant="secondary" className="text-xs">
-            ติดตาม {profile?.counts.following ?? 0}
-          </Badge>
+        {/* Hero: ต้องตามวันนี้ */}
+        <div className="mt-3">
+          <p className="text-sm text-muted-foreground">วันนี้ต้องตาม</p>
+          <p className="text-[56px] leading-none font-black num">
+            {counts?.dueToday ?? 0}
+            <span className="text-base font-normal text-muted-foreground ml-2">งาน</span>
+          </p>
+          <div className="flex gap-3 mt-1 text-sm">
+            {(counts?.overdue ?? 0) > 0 && (
+              <span className="text-warning-ink font-bold">
+                เลยกำหนด <span className="num">{counts?.overdue}</span> งาน
+              </span>
+            )}
+            <span className="text-muted-foreground">
+              ติดตามอยู่ <span className="num">{counts?.following ?? 0}</span>
+            </span>
+          </div>
+        </div>
+
+        {/* TODO: WeekStrip 7 วัน (L-02) */}
+      </header>
+
+      {/* Tabs + Search */}
+      <div className="border-b px-4 pt-2">
+        <div className="flex gap-1">
+          {TAB_OPTIONS.map((tab) => (
+            <button
+              key={tab.value}
+              className={`px-3 py-2 text-sm rounded-t-lg transition-colors ${
+                activeTab === tab.value
+                  ? 'bg-primary text-primary-foreground font-bold'
+                  : 'text-muted-foreground hover:bg-muted'
+              }`}
+              onClick={() => handleTabChange(tab.value)}
+            >
+              {tab.label}
+              {tab.value === 'overdue' && (counts?.overdue ?? 0) > 0 && (
+                <span className="ml-1 num">{counts?.overdue}</span>
+              )}
+            </button>
+          ))}
+        </div>
+        <div className="relative py-2">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Input
+            placeholder="ค้นหาชื่อ เบอร์ รหัสงาน"
+            value={search}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="pl-8 h-10 text-base"
+          />
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex border-b overflow-x-auto">
-        {TAB_OPTIONS.map((tab) => (
-          <button
-            key={tab.value}
-            className={`px-4 py-2 text-sm whitespace-nowrap border-b-2 transition-colors ${
-              activeTab === tab.value
-                ? 'border-primary text-primary font-medium'
-                : 'border-transparent text-muted-foreground'
-            }`}
-            onClick={() => handleTabChange(tab.value)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
       {/* Site list */}
-      <div className="p-4 space-y-3">
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2 pb-24">
         {isLoading ? (
-          <div className="text-center py-8 text-muted-foreground text-sm">กำลังโหลด...</div>
+          // Skeleton 3 การ์ด
+          <>
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="border rounded-xl p-3 space-y-2 animate-pulse">
+                <div className="h-4 bg-muted rounded w-1/3" />
+                <div className="h-5 bg-muted rounded w-2/3" />
+                <div className="h-3 bg-muted rounded w-1/2" />
+                <div className="flex gap-2 mt-2">
+                  <div className="h-9 bg-muted rounded flex-1" />
+                  <div className="h-9 bg-muted rounded flex-1" />
+                  <div className="h-9 bg-muted rounded flex-1" />
+                </div>
+              </div>
+            ))}
+          </>
         ) : !data?.sites?.length ? (
-          <div className="text-center py-8 space-y-2">
-            <div className="text-3xl">📭</div>
-            <p className="text-sm text-muted-foreground">ยังไม่มีงาน</p>
+          <div className="text-center py-12 space-y-3">
+            <p className="text-muted-foreground">ไม่มีงานต้องตามวันนี้</p>
+            <Button variant="outline" onClick={() => navigate('/new')}>
+              รายงานงานใหม่
+            </Button>
           </div>
         ) : (
           data.sites.map((site) => (
-            <Card
+            <SiteCard
               key={site.siteCode}
-              className="cursor-pointer hover:bg-accent/50 transition-colors"
-              onClick={() => setSelectedSiteCode(site.siteCode)}
-            >
-              <CardContent className="p-3">
-                <div className="flex justify-between items-start">
-                  <div className="space-y-1">
-                    <div className="font-medium text-sm">{site.customerName}</div>
-                    <div className="text-xs text-muted-foreground">
-                      #{site.siteCode} · {site.phone}
-                    </div>
-                    {site.nextFollowUpDate && (
-                      <div className="text-xs text-muted-foreground">
-                        นัดติดตาม: {formatThaiDate(site.nextFollowUpDate)}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <Badge className={SITE_STATUS_STYLES[site.status] || ''}>
-                      {SITE_STATUS_LABELS[site.status] || site.status}
-                    </Badge>
-                    {!site.isMine && (
-                      <span className="text-xs text-muted-foreground">{site.ownerName}</span>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              site={site}
+              onTap={() => navigate(`/sites/${site.siteCode}`)}
+              onUpdate={() => navigate(`/sites/${site.siteCode}/update`)}
+            />
           ))
+        )}
+
+        {/* Pull to refresh hint */}
+        {!isLoading && data?.sites?.length && (
+          <button
+            onClick={() => refetch()}
+            className="w-full py-3 text-sm text-muted-foreground flex items-center justify-center gap-1"
+          >
+            <RefreshCw className="size-3.5" />
+            โหลดใหม่
+          </button>
         )}
       </div>
 
-      {/* FAB - New Report */}
-      <button
-        className="fixed bottom-6 right-6 w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center text-2xl hover:opacity-90 transition-opacity"
-        onClick={() => navigate('/new')}
-      >
-        +
-      </button>
+      {/* Floating action button */}
+      <div className="fixed bottom-0 inset-x-0 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <Button
+          onClick={() => navigate('/new')}
+          size="xl"
+          className="w-full gap-2"
+        >
+          <Plus className="size-5" />
+          รายงานงานใหม่
+        </Button>
+      </div>
+    </div>
+  )
+}
 
-      {/* Site Detail Bottom Sheet */}
-      <SiteDetailSheet
-        code={selectedSiteCode}
-        onClose={() => setSelectedSiteCode(null)}
-      />
+/** การ์ดงาน (SiteCard) */
+function SiteCard({
+  site,
+  onTap,
+  onUpdate,
+}: {
+  site: SiteBrief
+  onTap: () => void
+  onUpdate: () => void
+}) {
+  return (
+    <div
+      className="border rounded-xl p-3 space-y-2 active:bg-muted/50 transition-colors"
+      onClick={onTap}
+    >
+      {/* Row 1: รหัส + สถานะ */}
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-bold num">#{site.siteCode}</span>
+        <StatusBadge status={site.status} nextFollowUpDate={site.nextFollowUpDate} />
+      </div>
+
+      {/* Row 2: ชื่อ */}
+      <p className="text-lg font-bold leading-tight">{site.customerName}</p>
+
+      {/* Row 3: ตำบล อำเภอ */}
+      <p className="text-sm text-muted-foreground">
+        {site.reportCount > 0 && (
+          <>ครั้งที่ <span className="num">{site.reportCount}</span> · </>
+        )}
+        {site.nextFollowUpDate && (
+          <>ล่าสุด {formatThaiDate(site.nextFollowUpDate)}</>
+        )}
+      </p>
+
+      {/* Row 4: ปุ่มลัด */}
+      <div className="flex gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
+        {site.phone && (
+          <a
+            href={`tel:${site.phone}`}
+            className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-lg border text-sm font-bold hover:bg-muted transition-colors"
+          >
+            <Phone className="size-4" />
+            <span className="num">{formatPhone(site.phone)}</span>
+          </a>
+        )}
+        {/* TODO: ปุ่มนำทางใช้ lat/lng */}
+        <button
+          className="flex items-center justify-center gap-1.5 h-10 px-3 rounded-lg border text-sm font-bold hover:bg-muted transition-colors"
+          onClick={() => {/* TODO: open maps */}}
+        >
+          <Navigation className="size-4" />
+        </button>
+        <Button
+          variant="default"
+          className="flex-1"
+          onClick={onUpdate}
+        >
+          อัปเดต
+        </Button>
+      </div>
     </div>
   )
 }
