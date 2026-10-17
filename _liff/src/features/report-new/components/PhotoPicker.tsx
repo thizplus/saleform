@@ -66,16 +66,16 @@ export function PhotoPicker({ photos, onChange, max = 6 }: PhotoPickerProps) {
         /* มีรูปแล้ว — grid thumbnail + ปุ่มเพิ่ม */
         <div className="flex gap-2 overflow-x-auto pb-1">
           {photos.map((photo, i) => (
-            <div key={i} className="relative shrink-0 size-20">
+            <div key={i} className="relative shrink-0 size-20 rounded-lg overflow-hidden border">
               <img
                 src={photo.preview}
                 alt={`รูป ${i + 1}`}
-                className="size-full object-cover rounded-lg border"
+                className="size-full object-cover"
               />
               <button
                 type="button"
                 onClick={() => removePhoto(i)}
-                className="absolute -top-1.5 -right-1.5 size-5 bg-foreground text-background rounded-full flex items-center justify-center"
+                className="absolute top-1 right-1 size-5 bg-danger text-white rounded-full flex items-center justify-center shadow-sm"
                 aria-label={`ลบรูป ${i + 1}`}
               >
                 <X className="size-3" />
