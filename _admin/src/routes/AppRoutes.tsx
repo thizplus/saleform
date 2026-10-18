@@ -2,7 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/auth'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { LoginPage } from '@/features/auth'
-import { SitesPage } from '@/features/sites'
+import { SitesPage, SiteDetailPage } from '@/features/sites'
 import { RepsPage } from '@/features/reps'
 import { OptionsPage } from '@/features/options'
 import { PlaceholderPage } from '@/components/layout/PlaceholderPage'
@@ -27,6 +27,7 @@ export function AppRoutes() {
         <Route path="/" element={<PlaceholderPage title="ภาพรวม" description="Dashboard — กำลังพัฒนา" />} />
         <Route path="/reports" element={<PlaceholderPage title="รายงาน" description="รายงานประสิทธิภาพ — กำลังพัฒนา" />} />
         <Route path="/sites" element={<SitesPage />} />
+        <Route path="/sites/:code" element={<SiteDetailPage />} />
         <Route path="/follow-ups" element={<PlaceholderPage title="ต้องติดตาม" description="งานต้องติดตามวันนี้ — กำลังพัฒนา" />} />
         <Route path="/reps" element={<RepsPage />} />
         <Route path="/options" element={<OptionsPage />} />

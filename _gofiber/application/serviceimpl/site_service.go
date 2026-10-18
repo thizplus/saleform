@@ -413,6 +413,12 @@ func (s *siteServiceImpl) GetByCode(ctx context.Context, code string, viewerRepI
 		followUpStr = &s
 	}
 
+	// รวมรูปทั้งหมดจากทุก report
+	var allPhotos []dto.PhotoBrief
+	for _, rb := range reportBriefs {
+		allPhotos = append(allPhotos, rb.Photos...)
+	}
+
 	return &dto.SiteDetailResponse{
 		SiteCode:          site.SiteCode,
 		CustomerName:      site.CustomerName,
@@ -436,6 +442,7 @@ func (s *siteServiceImpl) GetByCode(ctx context.Context, code string, viewerRepI
 		MapsURL:           mapsURL,
 		CreatedAt:         site.CreatedAt,
 		Reports:           reportBriefs,
+		Photos:            allPhotos,
 	}, nil
 }
 

@@ -36,19 +36,62 @@ export interface SiteListParams {
   limit?: number
 }
 
+export interface PhotoBrief {
+  id: string
+  thumbUrl: string
+  fullUrl: string
+}
+
+export interface ReportBrief {
+  id: string
+  reportType: string
+  note: string
+  stage: string
+  status: string
+  repName: string
+  reportDate: string
+  photos: PhotoBrief[]
+}
+
+export interface SiteDetail {
+  siteCode: string
+  customerName: string
+  customerType: string
+  contractorName: string
+  decisionMaker: string
+  phone: string
+  lat: number | null
+  lng: number | null
+  address: string
+  amphoe: string
+  stage: string
+  status: string
+  lostReason: string
+  competitor: string
+  expectedOrderDate: string | null
+  nextFollowUpDate: string | null
+  ownerName: string
+  ownerId: string
+  canEdit: boolean
+  mapsUrl: string
+  createdAt: string
+  reports: ReportBrief[]
+  photos: PhotoBrief[]
+}
+
 export const siteService = {
   async getList(params?: SiteListParams): Promise<SiteListResponse> {
     const res = await apiClient.get<{ data: SiteListResponse }>(ADMIN_ROUTES.SITES, { params })
     return res.data.data
   },
 
-  async getByCode(code: string) {
-    const res = await apiClient.get<{ data: unknown }>(ADMIN_ROUTES.SITE_BY_CODE(code))
+  async getByCode(code: string): Promise<SiteDetail> {
+    const res = await apiClient.get<{ data: SiteDetail }>(ADMIN_ROUTES.SITE_BY_CODE(code))
     return res.data.data
   },
 
   async updateSite(code: string, data: Record<string, unknown>) {
-    const res = await apiClient.patch<{ data: unknown }>(ADMIN_ROUTES.SITE_BY_CODE(code), data)
+    const res = await apiClient.patch<{ data: { updated: boolean } }>(ADMIN_ROUTES.SITE_BY_CODE(code), data)
     return res.data.data
   },
 }

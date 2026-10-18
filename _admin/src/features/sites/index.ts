@@ -1,2 +1,3 @@
 export { SitesPage } from './pages/SitesPage'
-export { useSiteList, siteKeys } from './hooks'
+export { SiteDetailPage } from './pages/SiteDetailPage'
+export { useSiteList, useSiteDetail, siteKeys } from './hooks'

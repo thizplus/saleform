@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   useReactTable,
   getCoreRowModel,
@@ -140,6 +141,7 @@ const columns = [
 ]
 
 export function SitesPage() {
+  const navigate = useNavigate()
   const [params, setParams] = useState<SiteListParams>({ page: 1, limit: 50 })
   const [searchInput, setSearchInput] = useState('')
   const { data, isLoading } = useSiteList(params)
@@ -230,7 +232,7 @@ export function SitesPage() {
               </TableRow>
             ) : (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} className="cursor-pointer hover:bg-muted/50">
+                <TableRow key={row.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/sites/${row.original.siteCode}`)}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="py-2 text-sm">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
