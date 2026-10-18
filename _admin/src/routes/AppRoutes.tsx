@@ -6,9 +6,9 @@ import { SitesPage, SiteDetailPage } from '@/features/sites'
 import { RepsPage } from '@/features/reps'
 import { OptionsPage } from '@/features/options'
 import { FollowUpsPage } from '@/features/followups'
+import { UsersPage } from '@/features/users'
 import { DashboardPage } from '@/features/dashboard'
 import { ReportsPage } from '@/features/reports'
-import { PlaceholderPage } from '@/components/layout/PlaceholderPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
@@ -34,7 +34,7 @@ export function AppRoutes() {
         <Route path="/follow-ups" element={<FollowUpsPage />} />
         <Route path="/reps" element={<RepsPage />} />
         <Route path="/options" element={<OptionsPage />} />
-        <Route path="/users" element={<PlaceholderPage title="ผู้ใช้ระบบ" description="จัดการผู้ใช้ระบบ — กำลังพัฒนา" />} />
+        <Route path="/users" element={<UsersPage />} />
       </Route>
     </Routes>
   )

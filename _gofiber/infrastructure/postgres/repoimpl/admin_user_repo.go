@@ -33,3 +33,13 @@ func (r *adminUserRepository) GetByEmail(ctx context.Context, email string) (*mo
 	err := postgres.GetDB(ctx, r.db).Where("email = ?", email).First(&user).Error
 	return &user, err
 }
+
+func (r *adminUserRepository) List(ctx context.Context) ([]models.AdminUser, error) {
+	var users []models.AdminUser
+	err := postgres.GetDB(ctx, r.db).Order("created_at ASC").Find(&users).Error
+	return users, err
+}
+
+func (r *adminUserRepository) Update(ctx context.Context, user *models.AdminUser) error {
+	return postgres.GetDB(ctx, r.db).Save(user).Error
+}

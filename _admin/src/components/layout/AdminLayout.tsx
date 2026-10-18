@@ -1,4 +1,5 @@
 import { Outlet, useLocation } from 'react-router-dom'
+import { Download } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
@@ -10,6 +11,8 @@ import {
 } from '@/components/ui/breadcrumb'
 import { apiClient } from '@/lib/api-client'
 import { ADMIN_ROUTES } from '@/constants/api-routes'
+import { Button } from '@/components/ui/button'
+import { useAuthStore } from '@/stores/auth'
 import { AppSidebar } from './AppSidebar'
 
 const ROUTE_TITLES: Record<string, string> = {
@@ -58,6 +61,22 @@ function useSidebarBadges() {
   }
 }
 
+function ExportButton() {
+  const token = useAuthStore((s) => s.token)
+
+  function handleExport() {
+    const url = `${ADMIN_ROUTES.EXPORT_SITES}?token=${token}`
+    window.open(url, '_blank')
+  }
+
+  return (
+    <Button variant="outline" size="sm" onClick={handleExport}>
+      <Download className="size-4 mr-1" />
+      Export
+    </Button>
+  )
+}
+
 export function AdminLayout() {
   const location = useLocation()
   const pageTitle = getPageTitle(location.pathname)
@@ -80,6 +99,9 @@ export function AdminLayout() {
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
+          <div className="ml-auto">
+            <ExportButton />
+          </div>
         </header>
 
         {/* Page content */}

@@ -46,6 +46,8 @@ type Container struct {
 	AdminRepHandler       *handlers.AdminRepHandler
 	AdminOptionsHandler   *handlers.AdminOptionsHandler
 	AdminAnalyticsHandler *handlers.AdminAnalyticsHandler
+	AdminUserHandler      *handlers.AdminUserHandler
+	AdminExportHandler    *handlers.AdminExportHandler
 }
 
 func NewContainer(cfg *config.Config) *Container {
@@ -100,6 +102,8 @@ func NewContainer(cfg *config.Config) *Container {
 
 	analyticsService := serviceimpl.NewAnalyticsService(repos.analytics, repos.salesRep)
 	c.AdminAnalyticsHandler = handlers.NewAdminAnalyticsHandler(analyticsService)
+	c.AdminUserHandler = handlers.NewAdminUserHandler(repos.adminUser)
+	c.AdminExportHandler = handlers.NewAdminExportHandler(c.SiteService)
 
 	// Seed default admin (dev only)
 	if cfg.App.Env == "development" {

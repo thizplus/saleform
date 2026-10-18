@@ -21,6 +21,8 @@ type Handlers struct {
 	AdminRep       *handlers.AdminRepHandler
 	AdminOptions   *handlers.AdminOptionsHandler
 	AdminAnalytics *handlers.AdminAnalyticsHandler
+	AdminUser      *handlers.AdminUserHandler
+	AdminExport    *handlers.AdminExportHandler
 }
 
 func Setup(app *fiber.App, cfg *config.Config, h Handlers) {
@@ -73,4 +75,12 @@ func Setup(app *fiber.App, cfg *config.Config, h Handlers) {
 	analytics.Get("/by-area", h.AdminAnalytics.ByArea)
 	analytics.Get("/lost-reasons", h.AdminAnalytics.LostReasons)
 	analytics.Get("/activity", h.AdminAnalytics.Activity)
+
+	// Users
+	admin.Get("/users", h.AdminUser.ListUsers)
+	admin.Post("/users", h.AdminUser.CreateUser)
+	admin.Patch("/users/:id", h.AdminUser.UpdateUser)
+
+	// Export
+	admin.Get("/export/sites", h.AdminExport.ExportSites)
 }

@@ -12,4 +12,7 @@ export const ADMIN_ROUTES = {
   GROUPS: `${API_BASE}/admin/groups`,
   GROUP_BY_ID: (id: string) => `${API_BASE}/admin/groups/${id}`,
   OPTIONS: `${API_BASE}/admin/options`,
+  USERS: `${API_BASE}/admin/users`,
+  USER_BY_ID: (id: string) => `${API_BASE}/admin/users/${id}`,
+  EXPORT_SITES: `${API_BASE}/admin/export/sites`,
 } as const
