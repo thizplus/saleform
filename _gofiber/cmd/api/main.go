@@ -43,7 +43,8 @@ func main() {
 		AdminAuth:    container.AdminAuthHandler,
 		AdminSite:    container.AdminSiteHandler,
 		AdminRep:     container.AdminRepHandler,
-		AdminOptions: container.AdminOptionsHandler,
+		AdminOptions:   container.AdminOptionsHandler,
+		AdminAnalytics: container.AdminAnalyticsHandler,
 	})
 
 	// Graceful shutdown

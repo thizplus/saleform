@@ -41,10 +41,11 @@ type Container struct {
 	LIFFOptionsHandler *handlers.LIFFOptionsHandler
 
 	// Admin Handlers
-	AdminAuthHandler    *handlers.AdminAuthHandler
-	AdminSiteHandler    *handlers.AdminSiteHandler
-	AdminRepHandler     *handlers.AdminRepHandler
-	AdminOptionsHandler *handlers.AdminOptionsHandler
+	AdminAuthHandler      *handlers.AdminAuthHandler
+	AdminSiteHandler      *handlers.AdminSiteHandler
+	AdminRepHandler       *handlers.AdminRepHandler
+	AdminOptionsHandler   *handlers.AdminOptionsHandler
+	AdminAnalyticsHandler *handlers.AdminAnalyticsHandler
 }
 
 func NewContainer(cfg *config.Config) *Container {
@@ -96,6 +97,9 @@ func NewContainer(cfg *config.Config) *Container {
 	c.AdminSiteHandler = handlers.NewAdminSiteHandler(c.SiteService)
 	c.AdminRepHandler = handlers.NewAdminRepHandler(repService, groupService)
 	c.AdminOptionsHandler = handlers.NewAdminOptionsHandler(optionsService)
+
+	analyticsService := serviceimpl.NewAnalyticsService(repos.analytics, repos.salesRep)
+	c.AdminAnalyticsHandler = handlers.NewAdminAnalyticsHandler(analyticsService)
 
 	// Seed default admin (dev only)
 	if cfg.App.Env == "development" {

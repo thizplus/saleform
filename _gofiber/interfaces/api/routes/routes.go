@@ -16,10 +16,11 @@ type Handlers struct {
 	LIFFUpload  *handlers.LIFFUploadHandler
 	LIFFOptions *handlers.LIFFOptionsHandler
 	// Admin
-	AdminAuth    *handlers.AdminAuthHandler
-	AdminSite    *handlers.AdminSiteHandler
-	AdminRep     *handlers.AdminRepHandler
-	AdminOptions *handlers.AdminOptionsHandler
+	AdminAuth      *handlers.AdminAuthHandler
+	AdminSite      *handlers.AdminSiteHandler
+	AdminRep       *handlers.AdminRepHandler
+	AdminOptions   *handlers.AdminOptionsHandler
+	AdminAnalytics *handlers.AdminAnalyticsHandler
 }
 
 func Setup(app *fiber.App, cfg *config.Config, h Handlers) {
@@ -63,4 +64,13 @@ func Setup(app *fiber.App, cfg *config.Config, h Handlers) {
 	admin.Patch("/groups/:id", h.AdminRep.UpdateGroup)
 	admin.Get("/options", h.AdminOptions.GetOptions)
 	admin.Put("/options", h.AdminOptions.UpdateOptions)
+
+	// Analytics
+	analytics := admin.Group("/analytics")
+	analytics.Get("/summary", h.AdminAnalytics.Summary)
+	analytics.Get("/by-rep", h.AdminAnalytics.ByRep)
+	analytics.Get("/trend", h.AdminAnalytics.Trend)
+	analytics.Get("/by-area", h.AdminAnalytics.ByArea)
+	analytics.Get("/lost-reasons", h.AdminAnalytics.LostReasons)
+	analytics.Get("/activity", h.AdminAnalytics.Activity)
 }

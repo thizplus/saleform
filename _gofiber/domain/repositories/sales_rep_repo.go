@@ -14,4 +14,5 @@ type SalesRepRepository interface {
 	GetByLineUserID(ctx context.Context, lineUserID string) (*models.SalesRep, error)
 	Update(ctx context.Context, rep *models.SalesRep) error
 	List(ctx context.Context) ([]models.SalesRep, error)
+	ListActive(ctx context.Context) ([]models.SalesRep, error)
 }

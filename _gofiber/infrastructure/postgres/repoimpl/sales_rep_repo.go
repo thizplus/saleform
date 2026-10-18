@@ -43,3 +43,9 @@ func (r *salesRepRepository) List(ctx context.Context) ([]models.SalesRep, error
 	err := postgres.GetDB(ctx, r.db).Order("display_name ASC").Find(&reps).Error
 	return reps, err
 }
+
+func (r *salesRepRepository) ListActive(ctx context.Context) ([]models.SalesRep, error) {
+	var reps []models.SalesRep
+	err := postgres.GetDB(ctx, r.db).Where("status = 'active'").Order("display_name ASC").Find(&reps).Error
+	return reps, err
+}
