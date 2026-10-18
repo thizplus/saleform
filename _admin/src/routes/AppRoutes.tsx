@@ -7,6 +7,7 @@ import { RepsPage } from '@/features/reps'
 import { OptionsPage } from '@/features/options'
 import { FollowUpsPage } from '@/features/followups'
 import { DashboardPage } from '@/features/dashboard'
+import { ReportsPage } from '@/features/reports'
 import { PlaceholderPage } from '@/components/layout/PlaceholderPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -27,7 +28,7 @@ export function AppRoutes() {
         }
       >
         <Route path="/" element={<DashboardPage />} />
-        <Route path="/reports" element={<PlaceholderPage title="รายงาน" description="รายงานประสิทธิภาพ — กำลังพัฒนา" />} />
+        <Route path="/reports" element={<ReportsPage />} />
         <Route path="/sites" element={<SitesPage />} />
         <Route path="/sites/:code" element={<SiteDetailPage />} />
         <Route path="/follow-ups" element={<FollowUpsPage />} />
