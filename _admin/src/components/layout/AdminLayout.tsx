@@ -1,57 +1,60 @@
-import { NavLink, Outlet } from 'react-router-dom'
-import { useAuthStore } from '@/stores/auth'
+import { Outlet, useLocation } from 'react-router-dom'
+import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
+import { Separator } from '@/components/ui/separator'
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+} from '@/components/ui/breadcrumb'
+import { AppSidebar } from './AppSidebar'
 
-const navItems = [
-  { to: '/', label: 'งานทั้งหมด' },
-  { to: '/reps', label: 'จัดการเซลล์' },
-  { to: '/options', label: 'ตั้งค่าตัวเลือก' },
-]
+const ROUTE_TITLES: Record<string, string> = {
+  '/': 'ภาพรวม',
+  '/reports': 'รายงาน',
+  '/sites': 'หน้างาน',
+  '/follow-ups': 'ต้องติดตาม',
+  '/reps': 'เซลล์',
+  '/options': 'ตั้งค่าตัวเลือก',
+  '/users': 'ผู้ใช้ระบบ',
+}
+
+function getPageTitle(pathname: string): string {
+  if (ROUTE_TITLES[pathname]) return ROUTE_TITLES[pathname]
+  // /sites/XXX → หน้างาน > รายละเอียด
+  if (pathname.startsWith('/sites/')) return 'รายละเอียดหน้างาน'
+  if (pathname.startsWith('/reports/')) return 'รายงานรายบุคคล'
+  return 'Admin'
+}
 
 export function AdminLayout() {
-  const { user, clearAuth } = useAuthStore()
+  const location = useLocation()
+  const pageTitle = getPageTitle(location.pathname)
 
   return (
-    <div className="min-h-screen flex">
-      {/* Sidebar */}
-      <aside className="w-56 border-r bg-card flex flex-col">
-        <div className="p-4 border-b">
-          <h2 className="font-semibold text-sm">UP Steel Admin</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">{user?.displayName}</p>
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        {/* Header */}
+        <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <Separator orientation="vertical" className="mr-2 h-4" />
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbPage className="text-sm font-medium">
+                  {pageTitle}
+                </BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </header>
+
+        {/* Page content */}
+        <div className="flex-1 overflow-auto p-4">
+          <Outlet />
         </div>
-
-        <nav className="flex-1 p-2 space-y-1">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === '/'}
-              className={({ isActive }) =>
-                `block px-3 py-2 rounded-md text-sm transition-colors ${
-                  isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground hover:bg-muted'
-                }`
-              }
-            >
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
-
-        <div className="p-2 border-t">
-          <button
-            onClick={clearAuth}
-            className="w-full px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-muted text-left"
-          >
-            ออกจากระบบ
-          </button>
-        </div>
-      </aside>
-
-      {/* Content */}
-      <main className="flex-1 p-6 overflow-auto">
-        <Outlet />
-      </main>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   )
 }

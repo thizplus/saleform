@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { formatThaiDate } from '@/lib/thai-date'
+import { formatThaiDate } from '@/lib/format-th'
 import { useSiteList } from '../hooks'
 import type { SiteListParams } from '../service'
 
@@ -11,10 +11,10 @@ const STATUS_LABELS: Record<string, string> = {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  following: 'bg-blue-100 text-blue-800',
-  won: 'bg-green-100 text-green-800',
-  lost: 'bg-red-100 text-red-800',
-  cancelled: 'bg-gray-100 text-gray-800',
+  following: 'status-following',
+  won: 'status-success',
+  lost: 'status-danger',
+  cancelled: 'status-neutral',
 }
 
 export function SitesPage() {

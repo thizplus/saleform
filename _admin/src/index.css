@@ -134,6 +134,19 @@
     }
 }
 
+/* semantic status classes */
+@layer components {
+    .status-following { background-color: var(--muted); color: var(--foreground); }
+    .status-success { background-color: var(--success-soft); color: var(--success-ink); }
+    .status-danger { background-color: var(--danger-soft); color: var(--danger-ink); }
+    .status-warning { background-color: var(--warning-soft); color: var(--warning-ink); }
+    .status-neutral { background-color: var(--muted); color: var(--muted-foreground); }
+}
+
+/* ซ่อน scrollbar ของ sidebar */
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
 /* ตัวเลข / รหัสงาน / เบอร์ / วันที่ */
 .num {
     font-family: "Inter Variable", "LINE Seed Sans TH", sans-serif;
