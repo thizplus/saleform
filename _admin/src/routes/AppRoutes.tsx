@@ -5,6 +5,7 @@ import { LoginPage } from '@/features/auth'
 import { SitesPage, SiteDetailPage } from '@/features/sites'
 import { RepsPage } from '@/features/reps'
 import { OptionsPage } from '@/features/options'
+import { FollowUpsPage } from '@/features/followups'
 import { PlaceholderPage } from '@/components/layout/PlaceholderPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -28,7 +29,7 @@ export function AppRoutes() {
         <Route path="/reports" element={<PlaceholderPage title="รายงาน" description="รายงานประสิทธิภาพ — กำลังพัฒนา" />} />
         <Route path="/sites" element={<SitesPage />} />
         <Route path="/sites/:code" element={<SiteDetailPage />} />
-        <Route path="/follow-ups" element={<PlaceholderPage title="ต้องติดตาม" description="งานต้องติดตามวันนี้ — กำลังพัฒนา" />} />
+        <Route path="/follow-ups" element={<FollowUpsPage />} />
         <Route path="/reps" element={<RepsPage />} />
         <Route path="/options" element={<OptionsPage />} />
         <Route path="/users" element={<PlaceholderPage title="ผู้ใช้ระบบ" description="จัดการผู้ใช้ระบบ — กำลังพัฒนา" />} />
