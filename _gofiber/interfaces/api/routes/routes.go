@@ -39,6 +39,7 @@ func Setup(app *fiber.App, cfg *config.Config, h Handlers) {
 	// LIFF routes
 	liff := v1.Group("/liff", middleware.AuthMiddleware(cfg.JWT, "sales"))
 	liff.Get("/options", h.LIFFOptions.GetOptions)
+	liff.Get("/me/stats", h.LIFFSite.GetMyStats)
 	liff.Get("/sites", h.LIFFSite.ListSites)
 	liff.Get("/sites/check-duplicate", h.LIFFSite.CheckDuplicate)
 	liff.Get("/sites/:code", h.LIFFSite.GetSite)

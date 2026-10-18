@@ -2,6 +2,7 @@ package repoimpl
 
 import (
 	"context"
+	"time"
 
 	"line-sales-api/domain/models"
 	"line-sales-api/domain/repositories"
@@ -72,4 +73,65 @@ func (r *siteReportRepository) List(ctx context.Context, filter repositories.Rep
 	var reports []models.SiteReport
 	err := db.Preload("Photos").Order("report_date DESC").Offset(offset).Limit(filter.Limit).Find(&reports).Error
 	return reports, total, err
+}
+
+// CountByRepAndType นับ reports ของ rep คนนี้ แยก total กับ new
+func (r *siteReportRepository) CountByRepAndType(ctx context.Context, repID uuid.UUID, since time.Time) (int, int, error) {
+	type row struct {
+		ReportType string
+		Count      int
+	}
+	var rows []row
+	err := postgres.GetDB(ctx, r.db).
+		Model(&models.SiteReport{}).
+		Select("report_type, count(*) as count").
+		Where("rep_id = ? AND report_date >= ?", repID, since).
+		Group("report_type").
+		Scan(&rows).Error
+	if err != nil {
+		return 0, 0, err
+	}
+	var total, newCount int
+	for _, r := range rows {
+		total += r.Count
+		if r.ReportType == "new" {
+			newCount = r.Count
+		}
+	}
+	return total, newCount, nil
+}
+
+// CountByType นับ reports ทั้งทีม + จำนวน rep ที่มี report
+func (r *siteReportRepository) CountByType(ctx context.Context, since time.Time) (int, int, int, error) {
+	type row struct {
+		ReportType string
+		Count      int
+	}
+	var rows []row
+	err := postgres.GetDB(ctx, r.db).
+		Model(&models.SiteReport{}).
+		Select("report_type, count(*) as count").
+		Where("report_date >= ?", since).
+		Group("report_type").
+		Scan(&rows).Error
+	if err != nil {
+		return 0, 0, 0, err
+	}
+	var total, newCount int
+	for _, r := range rows {
+		total += r.Count
+		if r.ReportType == "new" {
+			newCount = r.Count
+		}
+	}
+
+	// นับจำนวน rep ที่มี report (สำหรับหาค่าเฉลี่ย)
+	var repCount int64
+	postgres.GetDB(ctx, r.db).
+		Model(&models.SiteReport{}).
+		Where("report_date >= ?", since).
+		Distinct("rep_id").
+		Count(&repCount)
+
+	return total, newCount, int(repCount), nil
 }

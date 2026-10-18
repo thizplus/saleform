@@ -23,9 +23,11 @@ type siteServiceImpl struct {
 	mediaRepo       repositories.MediaFileRepository
 	siteCodeRepo    repositories.SiteCodeCounterRepository
 	salesRepRepo    repositories.SalesRepRepository
+	lineEventRepo   repositories.LineEventRepository
 	txManager       ports.TxManager
 	lineMessenger   ports.LineMessenger
 	r2PublicURL     string
+	liffID          string
 }
 
 func NewSiteService(
@@ -35,8 +37,10 @@ func NewSiteService(
 	mediaRepo repositories.MediaFileRepository,
 	siteCodeRepo repositories.SiteCodeCounterRepository,
 	salesRepRepo repositories.SalesRepRepository,
+	lineEventRepo repositories.LineEventRepository,
 	txManager ports.TxManager,
 	r2PublicURL string,
+	liffID string,
 	lineMessenger ports.LineMessenger,
 ) *siteServiceImpl {
 	return &siteServiceImpl{
@@ -46,10 +50,71 @@ func NewSiteService(
 		mediaRepo:     mediaRepo,
 		siteCodeRepo:  siteCodeRepo,
 		salesRepRepo:  salesRepRepo,
+		lineEventRepo: lineEventRepo,
 		txManager:     txManager,
 		r2PublicURL:   r2PublicURL,
+		liffID:        liffID,
 		lineMessenger: lineMessenger,
 	}
+}
+
+// pushMessagesGrouped แยก push เป็น 2 รอบ: ข้อความ+ตำแหน่ง แล้ว รูปล้วน
+// LINE จะ group รูปเมื่อทุก message ใน push เป็น image ล้วน
+func (s *siteServiceImpl) pushMessagesGrouped(ctx context.Context, groupID string, messages []map[string]any) bool {
+	var textMsgs, imageMsgs []any
+	for _, m := range messages {
+		if m["type"] == "image" {
+			imageMsgs = append(imageMsgs, m)
+		} else {
+			textMsgs = append(textMsgs, m)
+		}
+	}
+
+	success := false
+
+	// Push 1: ข้อความ + ตำแหน่ง
+	if len(textMsgs) > 0 {
+		if err := s.lineMessenger.PushMessage(ctx, groupID, textMsgs...); err != nil {
+			logger.WarnContext(ctx, "Failed to push text to group", "group_id", groupID, "error", err)
+		} else {
+			success = true
+		}
+	}
+
+	// Push 2: รูปล้วน (LINE จะ group อัตโนมัติ) — แบ่ง batch ละ 5
+	for i := 0; i < len(imageMsgs); i += 5 {
+		end := i + 5
+		if end > len(imageMsgs) {
+			end = len(imageMsgs)
+		}
+		batch := imageMsgs[i:end]
+		if err := s.lineMessenger.PushMessage(ctx, groupID, batch...); err != nil {
+			logger.WarnContext(ctx, "Failed to push images to group", "group_id", groupID, "error", err)
+		} else {
+			success = true
+		}
+	}
+
+	return success
+}
+
+// resolveGroupID แปลง LIFF UUID → Messaging API Group ID (C...)
+func (s *siteServiceImpl) resolveGroupID(ctx context.Context, liffGroupID string, repID uuid.UUID) string {
+	// ถ้าเป็น Messaging API group ID อยู่แล้ว ใช้ได้เลย
+	if liffGroupID != "" && (liffGroupID[0] == 'C' || liffGroupID[0] == 'R') {
+		return liffGroupID
+	}
+	// lookup จาก webhook events โดยใช้ rep's LINE user ID
+	rep, err := s.salesRepRepo.GetByID(ctx, repID)
+	if err != nil || rep == nil || rep.LineUserID == "" {
+		return ""
+	}
+	groupID, err := s.lineEventRepo.FindGroupIDByUser(ctx, rep.LineUserID)
+	if err != nil || groupID == "" {
+		return ""
+	}
+	logger.InfoContext(ctx, "Resolved group ID from webhook", "liff_id", liffGroupID, "resolved", groupID)
+	return groupID
 }
 
 func (s *siteServiceImpl) photoURL(key string) string {
@@ -94,6 +159,8 @@ func (s *siteServiceImpl) Create(ctx context.Context, repID uuid.UUID, req *dto.
 		}
 	}
 
+	resolvedGroupID := s.resolveGroupID(ctx, req.GroupID, repID)
+
 	site := &models.Site{
 		BaseModel:         models.BaseModel{ID: siteID},
 		SiteCode:          siteCode,
@@ -110,7 +177,7 @@ func (s *siteServiceImpl) Create(ctx context.Context, repID uuid.UUID, req *dto.
 		ExpectedOrderDate: expectedDate,
 		NextFollowUpDate:  followUpDate,
 		OwnerRepID:        repID,
-		GroupID:           req.GroupID,
+		GroupID:           resolvedGroupID,
 		ReportCount:       1,
 		LastReportAt:      &now,
 	}
@@ -183,22 +250,10 @@ func (s *siteServiceImpl) Create(ctx context.Context, repID uuid.UUID, req *dto.
 
 	// รวม photo URLs
 	photoURLs := s.getPhotoURLs(ctx, reportID)
-	lineMessages := BuildNewSiteMessages(site, report, repName, photoURLs)
+	lineMessages := BuildNewSiteMessages(site, report, repName, photoURLs, s.liffID)
 
-	// ส่งเข้ากลุ่ม LINE ผ่าน Push API (รูปจัดกลุ่มอัตโนมัติ)
-	messageSent := false
-	if site.GroupID != "" && s.lineMessenger != nil {
-		msgInterfaces := make([]any, len(lineMessages))
-		for i, m := range lineMessages {
-			msgInterfaces[i] = m
-		}
-		if err := s.lineMessenger.PushMessage(ctx, site.GroupID, msgInterfaces...); err != nil {
-			logger.WarnContext(ctx, "Failed to push message to group", "group_id", site.GroupID, "error", err)
-		} else {
-			logger.InfoContext(ctx, "Message pushed to group", "group_id", site.GroupID, "site_code", siteCode)
-			messageSent = true
-		}
-	}
+	// ส่งผ่าน liff.sendMessages() (ฟรี) — return chatMessages ให้ frontend ส่งเอง
+	// ไม่ใช้ Push API เพื่อประหยัดโควต้า
 
 	return &dto.CreateSiteResponse{
 		Site: dto.SiteBrief{
@@ -220,7 +275,8 @@ func (s *siteServiceImpl) Create(ctx context.Context, repID uuid.UUID, req *dto.
 			RepName:    repName,
 			ReportDate: report.ReportDate,
 		},
-		MessageSent: messageSent,
+		MessageSent:  false,
+		ChatMessages: lineMessages,
 	}, nil
 }
 
@@ -532,22 +588,9 @@ func (s *siteServiceImpl) AddFollowUp(ctx context.Context, repID uuid.UUID, code
 
 	// Build messages (ข้อความ + รูป)
 	photoURLs := s.getPhotoURLs(ctx, reportID)
-	lineMessages := BuildFollowUpMessages(site, report, repName, photoURLs)
+	lineMessages := BuildFollowUpMessages(site, report, repName, photoURLs, s.liffID)
 
-	// ส่งเข้ากลุ่ม LINE — ใช้ groupId จาก request หรือ site
-	messageSent := false
-	pushGroupID := firstNonEmpty(req.GroupID, site.GroupID)
-	if pushGroupID != "" && s.lineMessenger != nil {
-		msgInterfaces := make([]any, len(lineMessages))
-		for i, m := range lineMessages {
-			msgInterfaces[i] = m
-		}
-		if err := s.lineMessenger.PushMessage(ctx, pushGroupID, msgInterfaces...); err != nil {
-			logger.WarnContext(ctx, "Failed to push follow-up to group", "group_id", pushGroupID, "error", err)
-		} else {
-			messageSent = true
-		}
-	}
+	// ส่งผ่าน liff.sendMessages() (ฟรี) — return chatMessages ให้ frontend ส่งเอง
 
 	var followUpStr *string
 	if site.NextFollowUpDate != nil {
@@ -576,7 +619,8 @@ func (s *siteServiceImpl) AddFollowUp(ctx context.Context, repID uuid.UUID, code
 			RepName:    repName,
 			ReportDate: report.ReportDate,
 		},
-		MessageSent: messageSent,
+		MessageSent:  false,
+		ChatMessages: lineMessages,
 	}, nil
 }
 
@@ -667,6 +711,93 @@ func firstNonEmpty(vals ...string) string {
 		}
 	}
 	return ""
+}
+
+func (s *siteServiceImpl) GetMyStats(ctx context.Context, repID uuid.UUID, period string) (*dto.MyStatsResponse, error) {
+	since := periodToSince(period)
+
+	// 1. นับ reports ของ rep (วิ่งงาน / งานใหม่)
+	running, newJobs, err := s.reportRepo.CountByRepAndType(ctx, repID, since)
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed to count rep reports", "error", err)
+		return nil, err
+	}
+
+	// 2. นับ sites ของ rep แยกตาม status (outcomes)
+	siteCounts, err := s.siteRepo.CountByRepAndStatus(ctx, repID, since)
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed to count rep sites", "error", err)
+		return nil, err
+	}
+
+	won := siteCounts["won"]
+	following := siteCounts["following"]
+	lost := siteCounts["lost"]
+	completed := won + lost // งานที่จบทั้งหมด
+
+	// 3. Close rate = won / (won + lost) * 100
+	var closeRate float64
+	if won+lost > 0 {
+		closeRate = math.Round(float64(won) / float64(won+lost) * 100)
+	}
+
+	// 4. Team stats
+	var teamCloseRate, teamAvgRunning, teamAvgNewJobs *float64
+
+	teamSiteCounts, err := s.siteRepo.CountByStatus(ctx, since)
+	if err == nil {
+		teamWon := teamSiteCounts["won"]
+		teamLost := teamSiteCounts["lost"]
+		if teamWon+teamLost > 0 {
+			rate := math.Round(float64(teamWon) / float64(teamWon+teamLost) * 100)
+			teamCloseRate = &rate
+		}
+	}
+
+	teamTotal, teamNew, repCount, err := s.reportRepo.CountByType(ctx, since)
+	if err == nil && repCount > 0 {
+		avgRun := math.Round(float64(teamTotal) / float64(repCount))
+		avgNew := math.Round(float64(teamNew) / float64(repCount))
+		teamAvgRunning = &avgRun
+		teamAvgNewJobs = &avgNew
+	}
+
+	// 5. Overdue
+	overdue, _ := s.siteRepo.CountOverdue(ctx, repID)
+
+	return &dto.MyStatsResponse{
+		Running:        running,
+		NewJobs:        newJobs,
+		Completed:      completed,
+		CloseRate:      closeRate,
+		TeamCloseRate:  teamCloseRate,
+		TeamAvgRunning: teamAvgRunning,
+		TeamAvgNewJobs: teamAvgNewJobs,
+		Outcomes: dto.StatsOutcomes{
+			Won:       won,
+			Following: following,
+			Lost:      lost,
+		},
+		OnTimeRate: nil, // TODO: ต้องเพิ่ม due_date_before ใน DB ก่อน
+		Overdue:    overdue,
+	}, nil
+}
+
+func periodToSince(period string) time.Time {
+	now := time.Now().UTC()
+	switch period {
+	case "week":
+		// จันทร์ของสัปดาห์นี้
+		weekday := int(now.Weekday())
+		if weekday == 0 {
+			weekday = 7
+		}
+		return time.Date(now.Year(), now.Month(), now.Day()-(weekday-1), 0, 0, 0, 0, time.UTC)
+	case "year":
+		return time.Date(now.Year(), 1, 1, 0, 0, 0, 0, time.UTC)
+	default: // month
+		return time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
+	}
 }
 
 func haversineDistance(lat1, lng1, lat2, lng2 float64) float64 {

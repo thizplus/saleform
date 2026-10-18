@@ -71,7 +71,7 @@ func NewContainer(cfg *config.Config) *Container {
 	// Services
 	c.WebhookService = serviceimpl.NewWebhookService(cfg.LINE, repos.lineEvent, repos.lineGroup, repos.salesRep)
 	c.AuthService = serviceimpl.NewAuthService(cfg.JWT, cfg.LINE, repos.salesRep, repos.adminUser, repos.site)
-	c.SiteService = serviceimpl.NewSiteService(repos.site, repos.siteReport, repos.contact, repos.mediaFile, repos.siteCodeCounter, repos.salesRep, txManager, cfg.R2.PublicURL, lineMessenger)
+	c.SiteService = serviceimpl.NewSiteService(repos.site, repos.siteReport, repos.contact, repos.mediaFile, repos.siteCodeCounter, repos.salesRep, repos.lineEvent, txManager, cfg.R2.PublicURL, cfg.LINE.LiffID, lineMessenger)
 
 	if c.Storage != nil {
 		c.UploadService = serviceimpl.NewUploadService(c.Storage, repos.mediaFile)

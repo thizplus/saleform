@@ -90,14 +90,63 @@ func (r *siteRepository) List(ctx context.Context, filter repositories.SiteFilte
 	offset := (filter.Page - 1) * filter.Limit
 
 	var sites []models.Site
-	// แท็บติดตาม: เรียงตามวันนัด (ใกล้สุดก่อน) เพื่อจัดกลุ่มตามวันในหน้า LIFF
-	order := "created_at DESC"
-	switch filter.Tab {
-	case "due_today", "overdue", "following":
-		order = "next_follow_up_date ASC NULLS LAST, created_at DESC"
-	}
-	err := db.Order(order).Offset(offset).Limit(filter.Limit).Find(&sites).Error
+	err := db.Order("created_at DESC").Offset(offset).Limit(filter.Limit).Find(&sites).Error
 	return sites, total, err
+}
+
+func (r *siteRepository) CountByRepAndStatus(ctx context.Context, repID uuid.UUID, since time.Time) (map[string]int, error) {
+	type row struct {
+		Status string
+		Count  int
+	}
+	var rows []row
+	err := postgres.GetDB(ctx, r.db).
+		Model(&models.Site{}).
+		Select("status, count(*) as count").
+		Where("owner_rep_id = ? AND created_at >= ?", repID, since).
+		Group("status").
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[string]int)
+	for _, r := range rows {
+		result[r.Status] = r.Count
+	}
+	return result, nil
+}
+
+func (r *siteRepository) CountByStatus(ctx context.Context, since time.Time) (map[string]int, error) {
+	type row struct {
+		Status string
+		Count  int
+	}
+	var rows []row
+	err := postgres.GetDB(ctx, r.db).
+		Model(&models.Site{}).
+		Select("status, count(*) as count").
+		Where("created_at >= ?", since).
+		Group("status").
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[string]int)
+	for _, r := range rows {
+		result[r.Status] = r.Count
+	}
+	return result, nil
+}
+
+func (r *siteRepository) CountOverdue(ctx context.Context, repID uuid.UUID) (int, error) {
+	now := time.Now().UTC()
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+	var count int64
+	err := postgres.GetDB(ctx, r.db).
+		Model(&models.Site{}).
+		Where("owner_rep_id = ? AND status = 'following' AND next_follow_up_date < ?", repID, today).
+		Count(&count).Error
+	return int(count), err
 }
 
 func (r *siteRepository) FindNearby(ctx context.Context, lat, lng float64, radiusMeters float64) ([]models.Site, error) {

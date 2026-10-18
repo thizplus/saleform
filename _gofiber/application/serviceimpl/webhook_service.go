@@ -63,16 +63,16 @@ func (s *webhookServiceImpl) HandleEvent(ctx context.Context, body []byte, signa
 			continue
 		}
 
-		// Handle group join event
-		if event.EventType == "join" && event.GroupID != "" {
-			s.handleGroupJoin(ctx, event.GroupID)
+		// เก็บ group ทุกครั้งที่ได้ event จากกลุ่ม (ไม่ใช่แค่ join)
+		if event.GroupID != "" {
+			s.ensureGroupExists(ctx, event.GroupID)
 		}
 	}
 
 	return nil
 }
 
-func (s *webhookServiceImpl) handleGroupJoin(ctx context.Context, groupID string) {
+func (s *webhookServiceImpl) ensureGroupExists(ctx context.Context, groupID string) {
 	existing, _ := s.lineGroupRepo.GetByGroupID(ctx, groupID)
 	if existing != nil {
 		return

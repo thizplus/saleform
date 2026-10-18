@@ -139,7 +139,3 @@
     font-family: "Inter Variable", "LINE Seed Sans TH", sans-serif;
     font-variant-numeric: tabular-nums;
 }
-
-/* ซ่อน scrollbar ของแถบเลื่อนแนวนอน (แท็บ, รูป) */
-.no-scrollbar { scrollbar-width: none; }
-.no-scrollbar::-webkit-scrollbar { display: none; }

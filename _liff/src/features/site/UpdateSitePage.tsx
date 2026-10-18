@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { getLiffContext } from '@/lib/liff-helpers'
+import { getLiffContext, sendChatMessages } from '@/lib/liff-helpers'
 import { addDays } from '@/lib/thai-date'
 import { PhotoPicker } from '@/features/report-new/components/PhotoPicker'
 import { FollowUpDateChips } from '@/features/report-new/components/FollowUpDateChips'
@@ -80,7 +80,10 @@ export function UpdateSitePage() {
         groupId,
       })
 
-      const sent = result.messageSent
+      let sent = result.messageSent
+      if (!sent && result.chatMessages?.length) {
+        sent = await sendChatMessages(result.chatMessages)
+      }
       if (sent) toast.success('ส่งเข้ากลุ่มแล้ว')
 
       navigate(`/success?code=${code}&name=${encodeURIComponent(site?.customerName || '')}&sent=${sent}`)

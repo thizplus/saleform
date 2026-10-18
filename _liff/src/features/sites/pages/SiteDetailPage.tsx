@@ -305,13 +305,13 @@ function TimelineItem({ report, isLast, onPhotoClick }: { report: ReportBrief; i
         )}
         {/* รูปในรายการนี้ */}
         {report.photos?.length > 0 && (
-          <div className="flex gap-1.5 mt-2">
+          <div className="flex gap-1.5 mt-2 overflow-x-auto">
             {report.photos.map((photo: PhotoBrief) => (
               <button
                 key={photo.id}
                 onClick={() => onPhotoClick?.(photo.id)}
                 className="size-16 rounded-lg overflow-hidden bg-muted shrink-0"
-              >
+>
                 <img src={photo.thumbUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
               </button>
             ))}

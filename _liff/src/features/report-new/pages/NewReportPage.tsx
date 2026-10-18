@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { getLiffContext } from '@/lib/liff-helpers'
+import { getLiffContext, sendChatMessages } from '@/lib/liff-helpers'
 import { addDays } from '@/lib/thai-date'
 import { PhotoPicker } from '../components/PhotoPicker'
 import { GPSButton } from '../components/GPSButton'
@@ -164,6 +164,8 @@ export function NewReportPage() {
       // ดึง groupId จาก LIFF context
       const liffCtx = getLiffContext()
       const groupId = liffCtx?.groupId || liffCtx?.roomId || ''
+      console.log('[LIFF Context]', JSON.stringify(liffCtx))
+      console.log('[groupId sent]', groupId)
 
       const result = await createMutation.mutateAsync({
         phone: digits,
@@ -186,7 +188,11 @@ export function NewReportPage() {
         groupId,
       })
 
-      const sent = result.messageSent
+      // ส่งเข้ากลุ่มผ่าน liff.sendMessages() (ฟรี ไม่เสียโควต้า)
+      let sent = false
+      if (result.chatMessages?.length) {
+        sent = await sendChatMessages(result.chatMessages)
+      }
       if (sent) toast.success('ส่งเข้ากลุ่มแล้ว')
 
       setUploadSteps((prev) => prev.map((s) =>

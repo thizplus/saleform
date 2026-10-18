@@ -127,6 +127,24 @@ func (h *LIFFSiteHandler) CreateFollowUp(c *fiber.Ctx) error {
 	return utils.CreatedResponse(c, resp)
 }
 
+func (h *LIFFSiteHandler) GetMyStats(c *fiber.Ctx) error {
+	ctx := c.UserContext()
+	repID := getRepID(c)
+	if repID == nil {
+		return utils.UnauthorizedResponse(c, "Invalid user")
+	}
+
+	period := c.Query("period", "month")
+
+	stats, err := h.siteService.GetMyStats(ctx, *repID, period)
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed to get my stats", "error", err)
+		return utils.InternalErrorResponse(c, "Failed to get stats")
+	}
+
+	return utils.SuccessResponse(c, stats)
+}
+
 func getRepID(c *fiber.Ctx) *uuid.UUID {
 	userIDStr, ok := c.Locals("userID").(string)
 	if !ok {

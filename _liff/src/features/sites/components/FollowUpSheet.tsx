@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-// sendChatMessages imported dynamically below
+import { sendChatMessages } from '@/lib/liff-helpers'
 import { addDays } from '@/lib/thai-date'
 import { PhotoPicker } from '@/features/report-new/components/PhotoPicker'
 import { FollowUpDateChips } from '@/features/report-new/components/FollowUpDateChips'
@@ -93,9 +93,11 @@ export function FollowUpSheet({
         photoIds,
       })
 
-      if (result.messageSent) {
-        toast.success('ส่งเข้ากลุ่มแล้ว')
+      let sent = result.messageSent
+      if (!sent && result.chatMessages?.length) {
+        sent = await sendChatMessages(result.chatMessages)
       }
+      if (sent) toast.success('ส่งเข้ากลุ่มแล้ว')
 
       // Invalidate queries
       queryClient.invalidateQueries({ queryKey: siteKeys.detail(siteCode) })

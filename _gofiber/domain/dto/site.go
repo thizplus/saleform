@@ -22,9 +22,10 @@ type CreateSiteRequest struct {
 }
 
 type CreateSiteResponse struct {
-	Site        SiteBrief `json:"site"`
-	Report      ReportBrief `json:"report"`
-	MessageSent bool      `json:"messageSent"` // backend push สำเร็จหรือไม่
+	Site         SiteBrief        `json:"site"`
+	Report       ReportBrief      `json:"report"`
+	MessageSent  bool             `json:"messageSent"`  // backend push สำเร็จหรือไม่
+	ChatMessages []map[string]any `json:"chatMessages"` // fallback สำหรับ liff.sendMessages()
 }
 
 // Follow-up
@@ -41,9 +42,10 @@ type CreateFollowUpRequest struct {
 }
 
 type CreateFollowUpResponse struct {
-	Site        SiteBrief   `json:"site"`
-	Report      ReportBrief `json:"report"`
-	MessageSent bool        `json:"messageSent"`
+	Site         SiteBrief        `json:"site"`
+	Report       ReportBrief      `json:"report"`
+	MessageSent  bool             `json:"messageSent"`
+	ChatMessages []map[string]any `json:"chatMessages"`
 }
 
 // Site list
@@ -137,6 +139,26 @@ type DuplicateMatch struct {
 	OwnerName    string `json:"ownerName"`
 	Status       string `json:"status"`
 	IsMine       bool   `json:"isMine"`
+}
+
+// My Stats (L10)
+type MyStatsResponse struct {
+	Running         int           `json:"running"`         // COUNT(site_reports) ในช่วงเวลา
+	NewJobs         int           `json:"newJobs"`         // reports WHERE kind='new'
+	Completed       int           `json:"completed"`       // won + lost (งานจบทั้งหมด)
+	CloseRate       float64       `json:"closeRate"`       // won / (won+lost) * 100
+	TeamCloseRate   *float64      `json:"teamCloseRate"`   // สูตรเดียวกันทั้งทีม
+	TeamAvgRunning  *float64      `json:"teamAvgRunning"`  // ค่าเฉลี่ยทีม วิ่งงาน
+	TeamAvgNewJobs  *float64      `json:"teamAvgNewJobs"`  // ค่าเฉลี่ยทีม งานใหม่
+	Outcomes        StatsOutcomes `json:"outcomes"`
+	OnTimeRate      *float64      `json:"onTimeRate"`
+	Overdue         int           `json:"overdue"`         // sites following & next_follow_up < today
+}
+
+type StatsOutcomes struct {
+	Won       int `json:"won"`
+	Following int `json:"following"`
+	Lost      int `json:"lost"`
 }
 
 // Update site (admin)

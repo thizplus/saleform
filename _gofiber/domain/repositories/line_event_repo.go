@@ -14,4 +14,5 @@ type LineEventRepository interface {
 	GetByMessageID(ctx context.Context, messageID string) (*models.LineEvent, error)
 	GetUnprocessed(ctx context.Context, limit int) ([]models.LineEvent, error)
 	MarkProcessed(ctx context.Context, id uuid.UUID, bundleID *uuid.UUID) error
+	FindGroupIDByUser(ctx context.Context, lineUserID string) (string, error)
 }

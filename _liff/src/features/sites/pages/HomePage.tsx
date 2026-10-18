@@ -140,7 +140,7 @@ export function HomePage() {
           ))
         )}
 
-        {!isLoading && data?.sites?.length && (
+        {!isLoading && (data?.sites?.length ?? 0) > 0 && (
           <button
             onClick={() => refetch()}
             className="w-full py-3 text-sm text-muted-foreground flex items-center justify-center gap-1"

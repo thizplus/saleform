@@ -44,6 +44,18 @@ func (r *lineEventRepository) GetUnprocessed(ctx context.Context, limit int) ([]
 	return events, err
 }
 
+func (r *lineEventRepository) FindGroupIDByUser(ctx context.Context, lineUserID string) (string, error) {
+	var groupID string
+	err := postgres.GetDB(ctx, r.db).
+		Model(&models.LineEvent{}).
+		Select("group_id").
+		Where("user_id = ? AND group_id != '' AND group_id LIKE 'C%'", lineUserID).
+		Order("created_at DESC").
+		Limit(1).
+		Scan(&groupID).Error
+	return groupID, err
+}
+
 func (r *lineEventRepository) MarkProcessed(ctx context.Context, id uuid.UUID, bundleID *uuid.UUID) error {
 	return postgres.GetDB(ctx, r.db).
 		Model(&models.LineEvent{}).

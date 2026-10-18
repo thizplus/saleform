@@ -14,6 +14,7 @@ type SiteService interface {
 	List(ctx context.Context, repID *uuid.UUID, filter *dto.SiteListFilter) (*dto.SiteListResponse, error)
 	CheckDuplicate(ctx context.Context, phone string, lat, lng *float64) (*dto.DuplicateCheckResponse, error)
 	AddFollowUp(ctx context.Context, repID uuid.UUID, code string, req *dto.CreateFollowUpRequest) (*dto.CreateFollowUpResponse, error)
+	GetMyStats(ctx context.Context, repID uuid.UUID, period string) (*dto.MyStatsResponse, error)
 	// Admin
 	Update(ctx context.Context, code string, req *dto.UpdateSiteRequest) error
 }

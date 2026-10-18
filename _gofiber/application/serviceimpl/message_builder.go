@@ -8,9 +8,9 @@ import (
 	"line-sales-api/domain/models"
 )
 
-// BuildNewSiteMessages สร้างข้อความ+รูป+ตำแหน่งสำหรับงานใหม่
-// คืน slice ของ LINE messages — ส่งทีเดียว รูปจะจัดกลุ่มอัตโนมัติ
-func BuildNewSiteMessages(site *models.Site, report *models.SiteReport, repName string, photoURLs []string) []map[string]any {
+// BuildNewSiteMessages สร้างข้อความ+Flex รูป+ตำแหน่งสำหรับงานใหม่
+// ส่งผ่าน liff.sendMessages() (ฟรี ไม่เสียโควต้า)
+func BuildNewSiteMessages(site *models.Site, report *models.SiteReport, repName string, photoURLs []string, liffID string) []map[string]any {
 	var messages []map[string]any
 
 	// 1. ข้อความหลัก
@@ -50,13 +50,9 @@ func BuildNewSiteMessages(site *models.Site, report *models.SiteReport, repName 
 		"text": strings.Join(lines, "\n"),
 	})
 
-	// 2. รูปภาพทั้งหมด (ไม่จำกัด — backend push ส่งได้เกิน 5)
-	for _, url := range photoURLs {
-		messages = append(messages, map[string]any{
-			"type":               "image",
-			"originalContentUrl": url,
-			"previewImageUrl":    url,
-		})
+	// 2. Flex carousel รูปภาพ (สูงสุด 12 รูปต่อ 1 ข้อความ)
+	if len(photoURLs) > 0 {
+		messages = append(messages, buildImageFlexCarousel(site.SiteCode, photoURLs, liffID))
 	}
 
 	// 3. ตำแหน่ง (ถ้ามี GPS)
@@ -81,8 +77,8 @@ func BuildNewSiteMessages(site *models.Site, report *models.SiteReport, repName 
 	return messages
 }
 
-// BuildFollowUpMessages สร้างข้อความ+รูปสำหรับอัปเดตงาน
-func BuildFollowUpMessages(site *models.Site, report *models.SiteReport, repName string, photoURLs []string) []map[string]any {
+// BuildFollowUpMessages สร้างข้อความ+Flex รูปสำหรับอัปเดตงาน
+func BuildFollowUpMessages(site *models.Site, report *models.SiteReport, repName string, photoURLs []string, liffID string) []map[string]any {
 	var messages []map[string]any
 
 	statusEmoji := "🔄"
@@ -136,16 +132,59 @@ func BuildFollowUpMessages(site *models.Site, report *models.SiteReport, repName
 		"text": strings.Join(lines, "\n"),
 	})
 
-	// รูปภาพทั้งหมด
-	for _, url := range photoURLs {
-		messages = append(messages, map[string]any{
-			"type":               "image",
-			"originalContentUrl": url,
-			"previewImageUrl":    url,
-		})
+	// Flex carousel รูปภาพ
+	if len(photoURLs) > 0 {
+		messages = append(messages, buildImageFlexCarousel(site.SiteCode, photoURLs, liffID))
 	}
 
 	return messages
+}
+
+// buildImageFlexCarousel สร้าง Flex carousel แสดงรูปภาพ — แตะเปิดหน้ารายละเอียดงาน
+func buildImageFlexCarousel(siteCode string, photoURLs []string, liffID string) map[string]any {
+	detailURL := fmt.Sprintf("https://liff.line.me/%s/sites/%s", liffID, siteCode)
+
+	// จำกัด 12 รูปต่อ carousel (LINE limit)
+	urls := photoURLs
+	if len(urls) > 12 {
+		urls = urls[:12]
+	}
+
+	var bubbles []map[string]any
+	for _, url := range urls {
+		bubbles = append(bubbles, map[string]any{
+			"type": "bubble",
+			"size": "micro",
+			"hero": map[string]any{
+				"type":       "image",
+				"url":        url,
+				"size":       "full",
+				"aspectRatio": "1:1",
+				"aspectMode": "cover",
+				"action": map[string]any{
+					"type": "uri",
+					"uri":  detailURL,
+				},
+			},
+		})
+	}
+
+	// ถ้ามีรูปเดียว ส่งเป็น bubble เดี่ยว ไม่ต้อง carousel
+	var contents map[string]any
+	if len(bubbles) == 1 {
+		contents = bubbles[0]
+	} else {
+		contents = map[string]any{
+			"type":     "carousel",
+			"contents": bubbles,
+		}
+	}
+
+	return map[string]any{
+		"type":    "flex",
+		"altText": fmt.Sprintf("รูปภาพ #%s (%d รูป)", siteCode, len(urls)),
+		"contents": contents,
+	}
 }
 
 // formatThaiDateShort formats as DD/MM/YYYY+543 (Buddhist year)

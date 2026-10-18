@@ -74,10 +74,13 @@ export interface MyStatsData {
   completed: number
   closeRate: number
   teamCloseRate: number | null
+  teamAvgRunning: number | null
+  teamAvgNewJobs: number | null
   outcomes: {
     won: number
     following: number
     lost: number
   }
   onTimeRate: number | null
+  overdue: number
 }

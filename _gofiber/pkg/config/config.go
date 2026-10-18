@@ -63,6 +63,7 @@ type LINEConfig struct {
 	ChannelSecret      string
 	ChannelAccessToken string
 	LoginChannelID     string
+	LiffID             string
 }
 
 type R2Config struct {
@@ -112,6 +113,7 @@ func Load() *Config {
 			ChannelSecret:      getEnv("LINE_CHANNEL_SECRET", ""),
 			ChannelAccessToken: getEnv("LINE_CHANNEL_ACCESS_TOKEN", ""),
 			LoginChannelID:     getEnv("LINE_LOGIN_CHANNEL_ID", ""),
+			LiffID:             getEnv("LINE_LIFF_ID", ""),
 		},
 		R2: R2Config{
 			AccountID:       getEnv("R2_ACCOUNT_ID", ""),

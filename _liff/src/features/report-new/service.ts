@@ -6,6 +6,7 @@ interface CreateSiteResponse {
   site: { siteCode: string; customerName: string }
   report: { id: string }
   messageSent: boolean
+  chatMessages?: unknown[]
 }
 
 interface DuplicateCheckResponse {

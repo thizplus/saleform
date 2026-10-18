@@ -17,6 +17,7 @@ interface FollowUpResponse {
   site: { siteCode: string }
   report: { id: string }
   messageSent: boolean
+  chatMessages?: unknown[]
 }
 
 export const followUpService = {
