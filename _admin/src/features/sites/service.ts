@@ -4,13 +4,19 @@ import { ADMIN_ROUTES } from '@/constants/api-routes'
 export interface SiteBrief {
   siteCode: string
   customerName: string
+  customerType: string
+  contractorName: string
+  decisionMaker: string
   phone: string
   status: string
   stage: string
+  amphoe: string
+  tambon: string
   nextFollowUpDate: string | null
-  isMine: boolean
+  lastReportAt: string | null
   ownerName: string
   reportCount: number
+  createdAt: string
 }
 
 export interface SiteListResponse {

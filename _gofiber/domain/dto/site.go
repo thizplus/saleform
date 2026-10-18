@@ -68,16 +68,23 @@ type SiteListResponse struct {
 }
 
 type SiteBrief struct {
-	SiteCode         string  `json:"siteCode"`
-	CustomerName     string  `json:"customerName"`
-	Phone            string  `json:"phone"`
-	Status           string  `json:"status"`
-	Stage            string  `json:"stage"`
-	NextFollowUpDate *string `json:"nextFollowUpDate"`
-	ThumbURL         string  `json:"thumbUrl"`
-	IsMine           bool    `json:"isMine"`
-	OwnerName        string  `json:"ownerName"`
-	ReportCount      int     `json:"reportCount"`
+	SiteCode         string     `json:"siteCode"`
+	CustomerName     string     `json:"customerName"`
+	CustomerType     string     `json:"customerType"`
+	ContractorName   string     `json:"contractorName"`
+	DecisionMaker    string     `json:"decisionMaker"`
+	Phone            string     `json:"phone"`
+	Status           string     `json:"status"`
+	Stage            string     `json:"stage"`
+	Amphoe           string     `json:"amphoe"`
+	Tambon           string     `json:"tambon"`
+	NextFollowUpDate *string    `json:"nextFollowUpDate"`
+	LastReportAt     *time.Time `json:"lastReportAt"`
+	ThumbURL         string     `json:"thumbUrl"`
+	IsMine           bool       `json:"isMine"`
+	OwnerName        string     `json:"ownerName"`
+	ReportCount      int        `json:"reportCount"`
+	CreatedAt        time.Time  `json:"createdAt"`
 }
 
 // Site detail
