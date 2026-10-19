@@ -66,6 +66,41 @@ export function SiteDetailSheet({ code, onClose }: SiteDetailSheetProps) {
                 <InfoRow label="เจ้าของงาน" value={site.ownerName} />
               </div>
 
+              {/* Contacts */}
+              {site.contacts && site.contacts.length > 0 && (
+                <>
+                  <Separator />
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">ผู้ติดต่อ ({site.contacts.length})</h4>
+                    <div className="space-y-2">
+                      {site.contacts.map((c) => (
+                        <div key={c.id} className="rounded-lg border p-2.5 space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">{c.name || 'ไม่ระบุชื่อ'}</span>
+                            {c.isPrimary && (
+                              <Badge variant="outline" className="text-[10px]">หลัก</Badge>
+                            )}
+                          </div>
+                          {c.phone && (
+                            <a href={`tel:${c.phone}`} className="text-xs text-primary underline">
+                              {formatPhoneDisplay(c.phone)}
+                            </a>
+                          )}
+                          <div className="flex gap-1.5 flex-wrap">
+                            {c.contactType && (
+                              <Badge variant="secondary" className="text-[10px]">{c.contactType}</Badge>
+                            )}
+                            {c.authority && (
+                              <Badge variant="secondary" className="text-[10px]">{c.authority}</Badge>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
               <Separator />
 
               {/* Location + Dates */}

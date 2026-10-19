@@ -236,12 +236,28 @@ func (s *siteServiceImpl) Create(ctx context.Context, repID uuid.UUID, req *dto.
 			return fmt.Errorf("create report: %w", err)
 		}
 
-		// Create contact
-		if req.Phone != "" {
+		// Create contacts (multi-contact support)
+		if len(req.Contacts) > 0 {
+			for i, c := range req.Contacts {
+				contact := &models.Contact{
+					BaseModel:   models.BaseModel{ID: uuid.New()},
+					SiteID:      siteID,
+					Name:        c.Name,
+					Phone:       normalizePhone(c.Phone),
+					ContactType: c.ContactType,
+					Authority:   c.Authority,
+					IsPrimary:   i == 0,
+				}
+				if err := s.contactRepo.Create(txCtx, contact); err != nil {
+					return fmt.Errorf("create contact: %w", err)
+				}
+			}
+		} else if req.Phone != "" {
+			// Backward compatible: รับ phone เดี่ยวแบบเดิม
 			contact := &models.Contact{
 				BaseModel: models.BaseModel{ID: uuid.New()},
-				Phone:     normalizePhone(req.Phone),
 				SiteID:    siteID,
+				Phone:     normalizePhone(req.Phone),
 				IsPrimary: true,
 			}
 			if err := s.contactRepo.Create(txCtx, contact); err != nil {
@@ -451,6 +467,20 @@ func (s *siteServiceImpl) GetByCode(ctx context.Context, code string, viewerRepI
 		allPhotos = append(allPhotos, rb.Photos...)
 	}
 
+	// Contacts
+	contacts, _ := s.contactRepo.GetBySiteID(ctx, site.ID)
+	contactBriefs := make([]dto.ContactBrief, 0, len(contacts))
+	for _, c := range contacts {
+		contactBriefs = append(contactBriefs, dto.ContactBrief{
+			ID:          c.ID.String(),
+			Name:        c.Name,
+			Phone:       c.Phone,
+			ContactType: c.ContactType,
+			Authority:   c.Authority,
+			IsPrimary:   c.IsPrimary,
+		})
+	}
+
 	return &dto.SiteDetailResponse{
 		SiteCode:          site.SiteCode,
 		CustomerName:      site.CustomerName,
@@ -476,6 +506,7 @@ func (s *siteServiceImpl) GetByCode(ctx context.Context, code string, viewerRepI
 		ClosedAt:          site.ClosedAt,
 		Reports:           reportBriefs,
 		Photos:            allPhotos,
+		Contacts:          contactBriefs,
 	}, nil
 }
 
@@ -763,7 +794,28 @@ func (s *siteServiceImpl) Update(ctx context.Context, code string, req *dto.Upda
 		site.Competitor = *req.Competitor
 	}
 
-	return s.siteRepo.Update(ctx, site)
+	if err := s.siteRepo.Update(ctx, site); err != nil {
+		return err
+	}
+
+	// Replace contacts ถ้าส่งมา
+	if req.Contacts != nil {
+		_ = s.contactRepo.DeleteBySiteID(ctx, site.ID)
+		for i, c := range req.Contacts {
+			contact := &models.Contact{
+				BaseModel:   models.BaseModel{ID: uuid.New()},
+				SiteID:      site.ID,
+				Name:        c.Name,
+				Phone:       normalizePhone(c.Phone),
+				ContactType: c.ContactType,
+				Authority:   c.Authority,
+				IsPrimary:   i == 0,
+			}
+			_ = s.contactRepo.Create(ctx, contact)
+		}
+	}
+
+	return nil
 }
 
 // getPhotoURLs ดึง public URLs ของรูปใน report

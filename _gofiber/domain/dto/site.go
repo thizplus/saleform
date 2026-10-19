@@ -18,10 +18,11 @@ type CreateSiteRequest struct {
 	Amphoe           string   `json:"amphoe"`
 	ExpectedOrderDate *string `json:"expectedOrderDate"` // YYYY-MM-DD
 	NextFollowUpDate  *string `json:"nextFollowUpDate"`  // YYYY-MM-DD
-	PhotoIDs         []string `json:"photoIds"`
-	ForceNew         bool     `json:"forceNew"` // skip duplicate check
-	GroupID          string   `json:"groupId"`  // LINE group ID for push message
-	IdempotencyKey   string   `json:"-"`        // จาก header, ไม่รับจาก body
+	PhotoIDs         []string       `json:"photoIds"`
+	Contacts         []ContactInput `json:"contacts"` // ผู้ติดต่อหลายคน
+	ForceNew         bool           `json:"forceNew"` // skip duplicate check
+	GroupID          string         `json:"groupId"`  // LINE group ID for push message
+	IdempotencyKey   string         `json:"-"`        // จาก header, ไม่รับจาก body
 }
 
 type CreateSiteResponse struct {
@@ -116,8 +117,9 @@ type SiteDetailResponse struct {
 	MapsURL          string     `json:"mapsUrl"`
 	CreatedAt        time.Time  `json:"createdAt"`
 	ClosedAt         *time.Time `json:"closedAt,omitempty"`
-	Reports          []ReportBrief `json:"reports"`
-	Photos           []PhotoBrief  `json:"photos"`
+	Reports          []ReportBrief  `json:"reports"`
+	Photos           []PhotoBrief   `json:"photos"`
+	Contacts         []ContactBrief `json:"contacts"`
 }
 
 type ReportBrief struct {
@@ -174,6 +176,23 @@ type StatsOutcomes struct {
 	Lost      int `json:"lost"`
 }
 
+// Contact DTO
+type ContactInput struct {
+	Name        string `json:"name"`
+	Phone       string `json:"phone"`
+	ContactType string `json:"contactType"` // ผู้มุ่งหวังใหม่, ลูกค้าเก่า, ไม่พบผู้มีอำนาจตัดสินใจ
+	Authority   string `json:"authority"`   // มีอำนาจตัดสินใจ, ไม่มีอำนาจ
+}
+
+type ContactBrief struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Phone       string `json:"phone"`
+	ContactType string `json:"contactType"`
+	Authority   string `json:"authority"`
+	IsPrimary   bool   `json:"isPrimary"`
+}
+
 // Update site (admin)
 type UpdateSiteRequest struct {
 	CustomerName    *string `json:"customerName"`
@@ -185,6 +204,7 @@ type UpdateSiteRequest struct {
 	Amphoe          *string `json:"amphoe"`
 	Stage           *string `json:"stage"`
 	Status          *string `json:"status"`
-	LostReason      *string `json:"lostReason"`
-	Competitor      *string `json:"competitor"`
+	LostReason      *string        `json:"lostReason"`
+	Competitor      *string        `json:"competitor"`
+	Contacts        []ContactInput `json:"contacts,omitempty"` // ถ้าส่งมา = replace ทั้งหมด
 }

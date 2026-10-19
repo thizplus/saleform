@@ -15,7 +15,8 @@ import { DuplicateDialog } from '../components/DuplicateDialog'
 import { UploadProgressSheet, type UploadStep } from '../components/UploadProgressSheet'
 import { useOptions, useCreateSite, useCheckDuplicate } from '../hooks'
 import { reportNewService } from '../service'
-import type { DuplicateMatch } from '../types'
+import { ContactListEditor } from '../components/ContactListEditor'
+import type { DuplicateMatch, ContactInput } from '../types'
 
 const DRAFT_KEY = 'liff-new-report-draft'
 const QUICK_PRODUCTS = ['เหล็กเส้น', 'เหล็กกล่อง', 'H-beam', 'เหล็กตัวซี', 'ไวร์เมช', 'เมทัลชีท']
@@ -32,6 +33,7 @@ interface FormData {
   contractorName: string
   contactType: string
   decisionMaker: string
+  contacts: ContactInput[]
   stage: string
   detail: string
   nextFollowUpDate: string
@@ -44,6 +46,7 @@ const defaultForm: FormData = {
   photos: [],
   phone: '', customerName: '', contractorName: '',
   contactType: '', decisionMaker: '',
+  contacts: [{ name: '', phone: '', contactType: '', authority: '' }],
   stage: '', detail: '',
   nextFollowUpDate: addDays(7),
   expectedOrder: '',
@@ -102,8 +105,8 @@ export function NewReportPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.lat, form.lng])
 
-  // ตรวจซ้ำเบอร์เมื่อครบ 10 หลัก
-  const digits = form.phone.replace(/\D/g, '')
+  // ตรวจซ้ำเบอร์เมื่อครบ 10 หลัก (ใช้เบอร์จาก contact แรก)
+  const digits = (form.contacts[0]?.phone?.replace(/\D/g, '') || form.phone.replace(/\D/g, ''))
   useEffect(() => {
     if (digits.length === 10) {
       dupCheck.mutateAsync({ phone: digits, customerName: form.customerName }).then((res) => {
@@ -135,7 +138,9 @@ export function NewReportPage() {
   }, [])
 
   // สิ่งที่ยังขาด
-  const contactOk = noContact || !!digits || !!form.customerName.trim() || !!form.contractorName.trim()
+  const primaryPhone = form.contacts[0]?.phone?.replace(/\D/g, '') || ''
+  const hasAnyContact = form.contacts.some((c) => c.name.trim() || c.phone.trim())
+  const contactOk = noContact || hasAnyContact || !!form.customerName.trim() || !!form.contractorName.trim()
   const missing: string[] = []
   if (!form.lat) missing.push('ตำแหน่ง')
   if (form.photos.length === 0) missing.push('รูป')
@@ -195,6 +200,9 @@ export function NewReportPage() {
       console.log('[LIFF Context]', JSON.stringify(liffCtx))
       console.log('[groupId sent]', groupId)
 
+      // กรอง contacts ที่มีข้อมูลจริง
+      const validContacts = form.contacts.filter((c) => c.name.trim() || c.phone.trim())
+
       const result = await createMutation.mutateAsync({
         phone: digits,
         customerName: form.customerName,
@@ -211,6 +219,7 @@ export function NewReportPage() {
         expectedOrderDate: form.expectedOrder,
         nextFollowUpDate: form.nextFollowUpDate,
         photoIds,
+        contacts: validContacts,
         forceNew,
         idempotencyKey: idempotencyKeyRef.current,
         groupId,
@@ -325,25 +334,7 @@ export function NewReportPage() {
             </p>
           ) : (
             <>
-              <div className="space-y-1">
-                <Label htmlFor="phone" className="text-xs text-muted-foreground">เบอร์โทร <span className="text-muted-foreground/60">(ไม่มีก็ส่งได้)</span></Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  inputMode="numeric"
-                  value={form.phone}
-                  onChange={(e) => update('phone', e.target.value)}
-                  placeholder="08X-XXX-XXXX"
-                  className="h-10 text-base num"
-                />
-                {phoneWarning && (
-                  <div className="rounded-lg bg-warning-soft px-3 py-1.5 text-xs text-warning-ink flex items-start gap-2">
-                    <span className="shrink-0">⚠</span>
-                    <span>เบอร์นี้มีงาน <span className="font-bold num">#{phoneWarning.siteCode}</span> ของ{phoneWarning.ownerName}</span>
-                  </div>
-                )}
-              </div>
-
+              {/* ชื่อลูกค้า / ช่าง / อำเภอ */}
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
                   <Label htmlFor="customerName" className="text-xs text-muted-foreground">ชื่อลูกค้า</Label>
@@ -355,16 +346,16 @@ export function NewReportPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-1">
-                  <Label htmlFor="amphoe" className="text-xs text-muted-foreground">อำเภอ</Label>
-                  <Input id="amphoe" value={form.amphoe} onChange={(e) => update('amphoe', e.target.value)} placeholder="อำเภอ" className="h-10 text-base" />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">ผู้ติดต่อคือ</Label>
-                  <ChipRow options={contactTypes} value={form.contactType} onChange={(v) => update('contactType', v)} />
-                </div>
+              <div className="space-y-1">
+                <Label htmlFor="amphoe" className="text-xs text-muted-foreground">อำเภอ</Label>
+                <Input id="amphoe" value={form.amphoe} onChange={(e) => update('amphoe', e.target.value)} placeholder="อำเภอ" className="h-10 text-base" />
               </div>
+
+              {/* รายชื่อผู้ติดต่อ (หลายคน) */}
+              <ContactListEditor
+                contacts={form.contacts}
+                onChange={(contacts) => update('contacts', contacts)}
+              />
             </>
           )}
         </section>

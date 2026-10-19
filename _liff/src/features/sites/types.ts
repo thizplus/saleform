@@ -17,6 +17,15 @@ export interface SiteBrief {
   lastReportAt?: string | null
 }
 
+export interface ContactBrief {
+  id: string
+  name: string
+  phone: string
+  contactType: string
+  authority: string
+  isPrimary: boolean
+}
+
 export interface SiteDetail {
   siteCode: string
   customerName: string
@@ -41,6 +50,7 @@ export interface SiteDetail {
   createdAt: string
   reports: ReportBrief[]
   photos: PhotoBrief[]
+  contacts: ContactBrief[]
 }
 
 export interface ReportBrief {

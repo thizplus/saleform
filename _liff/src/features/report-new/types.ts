@@ -1,3 +1,10 @@
+export interface ContactInput {
+  name: string
+  phone: string
+  contactType: string // ผู้มุ่งหวังใหม่, ลูกค้าเก่า, ไม่พบผู้มีอำนาจตัดสินใจ
+  authority: string   // มีอำนาจตัดสินใจ, ไม่มีอำนาจ
+}
+
 export interface CreateSiteForm {
   phone: string
   customerName: string
@@ -14,6 +21,7 @@ export interface CreateSiteForm {
   expectedOrderDate: string
   nextFollowUpDate: string
   photoIds: string[]
+  contacts: ContactInput[]
   forceNew: boolean
   idempotencyKey?: string
   groupId?: string

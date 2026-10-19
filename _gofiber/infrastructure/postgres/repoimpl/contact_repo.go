@@ -33,3 +33,11 @@ func (r *contactRepository) GetByPhone(ctx context.Context, phone string) ([]mod
 	err := postgres.GetDB(ctx, r.db).Where("phone = ?", phone).Find(&contacts).Error
 	return contacts, err
 }
+
+func (r *contactRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	return postgres.GetDB(ctx, r.db).Delete(&models.Contact{}, id).Error
+}
+
+func (r *contactRepository) DeleteBySiteID(ctx context.Context, siteID uuid.UUID) error {
+	return postgres.GetDB(ctx, r.db).Where("site_id = ?", siteID).Delete(&models.Contact{}).Error
+}
