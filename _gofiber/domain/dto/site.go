@@ -43,7 +43,8 @@ type CreateFollowUpRequest struct {
 	DecisionMaker    string   `json:"decisionMaker"`
 	PhotoIDs         []string `json:"photoIds"`
 	GroupID          string   `json:"groupId"`
-	NewPhone         string   `json:"newPhone"` // เพิ่ม contact ใหม่ให้งานเดิม (จากกรณี "อัปเดตงานเดิมแทน")
+	NewPhone         string         `json:"newPhone"` // backward compat
+	Contacts         []ContactInput `json:"contacts,omitempty"` // ถ้าส่งมา = replace contacts ทั้งหมด
 }
 
 type CreateFollowUpResponse struct {

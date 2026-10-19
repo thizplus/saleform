@@ -1,6 +1,13 @@
 import { apiClient } from '@/lib/api-client'
 import { LIFF_ROUTES } from '@/constants/api-routes'
 
+interface ContactInput {
+  name: string
+  phone: string
+  contactType: string
+  authority: string
+}
+
 interface CreateFollowUpParams {
   note: string
   status: string
@@ -12,6 +19,7 @@ interface CreateFollowUpParams {
   photoIds: string[]
   groupId?: string
   newPhone?: string
+  contacts?: ContactInput[]
 }
 
 interface FollowUpResponse {

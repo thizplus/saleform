@@ -663,8 +663,23 @@ func (s *siteServiceImpl) AddFollowUp(ctx context.Context, repID uuid.UUID, code
 				}
 			}
 		}
-		// เพิ่ม contact ใหม่ (จากกรณี "อัปเดตงานเดิมแทน" ที่มีเบอร์ใหม่)
-		if req.NewPhone != "" {
+		// Replace contacts ถ้าส่ง contacts array มา
+		if req.Contacts != nil {
+			_ = s.contactRepo.DeleteBySiteID(txCtx, site.ID)
+			for i, c := range req.Contacts {
+				contact := &models.Contact{
+					BaseModel:   models.BaseModel{ID: uuid.New()},
+					SiteID:      site.ID,
+					Name:        c.Name,
+					Phone:       normalizePhone(c.Phone),
+					ContactType: c.ContactType,
+					Authority:   c.Authority,
+					IsPrimary:   i == 0,
+				}
+				_ = s.contactRepo.Create(txCtx, contact)
+			}
+		} else if req.NewPhone != "" {
+			// Backward compat: เพิ่ม contact เดี่ยว
 			newPhone := normalizePhone(req.NewPhone)
 			if newPhone != "" && newPhone != site.Phone {
 				contact := &models.Contact{
@@ -673,17 +688,7 @@ func (s *siteServiceImpl) AddFollowUp(ctx context.Context, repID uuid.UUID, code
 					SiteID:    site.ID,
 					IsPrimary: false,
 				}
-				if err := s.contactRepo.Create(txCtx, contact); err != nil {
-					logger.WarnContext(txCtx, "Failed to add new contact", "error", err, "phone", newPhone)
-					// ไม่ fail ทั้ง transaction — contact เป็น optional
-				}
-				// อัปเดต phone หลักของ site ถ้ายังไม่มี
-				if site.Phone == "" {
-					site.Phone = newPhone
-					if err := s.siteRepo.Update(txCtx, site); err != nil {
-						return err
-					}
-				}
+				_ = s.contactRepo.Create(txCtx, contact)
 			}
 		}
 		return nil

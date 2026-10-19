@@ -9,10 +9,12 @@ import { Label } from '@/components/ui/label'
 import { getLiffContext, sendChatMessages } from '@/lib/liff-helpers'
 import { addDays } from '@/lib/thai-date'
 import { PhotoPicker } from '@/features/report-new/components/PhotoPicker'
+import { ContactListEditor } from '@/features/report-new/components/ContactListEditor'
 import { FollowUpDateChips } from '@/features/report-new/components/FollowUpDateChips'
 import { useOptions, useUploadPhotos } from '@/features/report-new/hooks'
 import { useSiteDetail } from '@/features/sites/hooks'
 import { followUpService } from '@/features/sites/components/followUpService'
+import type { ContactInput } from '@/features/report-new/types'
 
 type FollowUpStatus = 'following' | 'won' | 'lost' | 'cancelled'
 
@@ -45,7 +47,8 @@ export function UpdateSitePage() {
   const [wonValue, setWonValue] = useState('')
   const [lostReason, setLostReason] = useState('')
   const [competitor, setCompetitor] = useState('')
-  const [newPhone, setNewPhone] = useState('')
+  const [contacts, setContacts] = useState<ContactInput[]>([])
+  const [contactsLoaded, setContactsLoaded] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [kbOpen, setKbOpen] = useState(false)
 
@@ -59,6 +62,20 @@ export function UpdateSitePage() {
     document.addEventListener('focusout', onOut)
     return () => { clearTimeout(t); document.removeEventListener('focusin', onIn); document.removeEventListener('focusout', onOut) }
   }, [])
+
+  // Pre-fill contacts จาก site detail
+  useEffect(() => {
+    if (site?.contacts && !contactsLoaded) {
+      const mapped: ContactInput[] = site.contacts.map((c) => ({
+        name: c.name || '',
+        phone: c.phone || '',
+        contactType: c.contactType || '',
+        authority: c.authority || '',
+      }))
+      setContacts(mapped.length > 0 ? mapped : [{ name: '', phone: '', contactType: '', authority: '' }])
+      setContactsLoaded(true)
+    }
+  }, [site, contactsLoaded])
 
   const stages = options?.stages || ['เริ่มก่อสร้าง', 'กำลังสร้าง', 'ใกล้เสร็จ', 'รอตัดสินใจ', 'เสนอราคาแล้ว', 'อื่นๆ']
   const lostReasons = options?.lostReasons || ['ราคา', 'ช่างมีร้านประจำ', 'ส่งช้า', 'ของไม่พร้อม', 'อื่นๆ']
@@ -84,6 +101,9 @@ export function UpdateSitePage() {
       const liffCtx = getLiffContext()
       const groupId = liffCtx?.groupId || liffCtx?.roomId || ''
 
+      // กรอง contacts ที่มีข้อมูลจริง
+      const validContacts = contacts.filter((c) => c.name.trim() || c.phone.trim())
+
       const result = await followUpService.createFollowUp(code, {
         note,
         status,
@@ -94,7 +114,7 @@ export function UpdateSitePage() {
         decisionMaker: '',
         photoIds,
         groupId,
-        newPhone: newPhone.replace(/\D/g, '') || undefined,
+        contacts: validContacts.length > 0 ? validContacts : undefined,
       })
 
       let sent = result.messageSent
@@ -170,22 +190,11 @@ export function UpdateSitePage() {
           />
         </section>
 
-        {/* เบอร์โทร — แสดงเมื่องานยังไม่มีเบอร์ */}
-        {site && !site.phone && (
-          <section className="space-y-2">
-            <Label htmlFor="newPhone" className="text-sm font-bold">เบอร์โทรผู้ติดต่อ</Label>
-            <p className="text-xs text-muted-foreground">งานนี้ยังไม่มีเบอร์ เจอใครแล้วเพิ่มได้เลย</p>
-            <Input
-              id="newPhone"
-              type="tel"
-              inputMode="numeric"
-              value={newPhone}
-              onChange={(e) => setNewPhone(e.target.value)}
-              placeholder="08X-XXX-XXXX"
-              className="h-10 text-base num"
-            />
-          </section>
-        )}
+        {/* ผู้ติดต่อ — แสดง/แก้ไขได้ */}
+        <section className="space-y-2">
+          <Label className="text-sm font-bold">ผู้ติดต่อ</Label>
+          <ContactListEditor contacts={contacts} onChange={setContacts} />
+        </section>
 
         {/* รูปเพิ่มเติม */}
         <section className="space-y-2">
