@@ -1,13 +1,10 @@
 import { useNavigate } from 'react-router-dom'
+import { AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { StatusBadge } from '@/components/shared'
 import { formatPhone } from '@/lib/format-th'
 import {
   Drawer,
   DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerDescription,
   DrawerFooter,
 } from '@/components/ui/drawer'
 import type { DuplicateMatch } from '../types'
@@ -15,7 +12,6 @@ import type { DuplicateMatch } from '../types'
 interface DuplicateDialogProps {
   open: boolean
   matches: DuplicateMatch[]
-  /** ข้อมูลที่กรอกไว้ — จะพาไป L9 ได้ */
   pendingNote?: string
   pendingPhotos?: { file: File; preview: string }[]
   onForceNew: () => void
@@ -33,7 +29,6 @@ export function DuplicateDialog({
   const navigate = useNavigate()
 
   function handleUpdateInstead(match: DuplicateMatch) {
-    // พาข้อมูลที่กรอกไว้ไป UpdateSitePage (L9)
     navigate(`/sites/${match.siteCode}/update`, {
       state: {
         prefillNote: pendingNote || '',
@@ -46,56 +41,42 @@ export function DuplicateDialog({
   return (
     <Drawer open={open} onOpenChange={(o) => { if (!o) onClose() }} showSwipeHandle>
       <DrawerContent>
-        <DrawerHeader>
-          <DrawerTitle className="text-base font-bold">
-            พบงานที่อาจซ้ำ
-          </DrawerTitle>
-          <DrawerDescription>
-            มีงานที่คล้ายกันในระบบแล้ว ต้องการดำเนินการอย่างไร?
-          </DrawerDescription>
-        </DrawerHeader>
+        {/* Header — compact */}
+        <div className="px-4 pt-3 pb-2 flex items-start gap-2.5">
+          <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full bg-warning-soft">
+            <AlertTriangle className="size-4 text-warning-ink" />
+          </span>
+          <div>
+            <p className="text-base font-bold">พบงานที่อาจซ้ำ</p>
+            <p className="text-xs text-muted-foreground">
+              มี {matches.length} งานที่คล้ายกัน ต้องการดำเนินการอย่างไร?
+            </p>
+          </div>
+        </div>
 
-        <div className="px-4 py-3 space-y-3 overflow-y-auto max-h-[50vh]">
+        {/* Match list — compact cards */}
+        <div className="px-4 py-2 space-y-2 overflow-y-auto max-h-[50vh]">
           {matches.map((m) => (
-            <div key={m.siteCode} className="border rounded-xl p-3 space-y-2">
+            <div key={m.siteCode} className="rounded-xl border p-3 space-y-2">
               <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="font-bold text-sm truncate">{m.customerName}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="font-bold text-sm truncate">{m.customerName || 'ไม่มีชื่อ'}</p>
                   <p className="text-xs text-muted-foreground">
                     <span className="num">#{m.siteCode}</span>
                     {m.phone && <> · <span className="num">{formatPhone(m.phone)}</span></>}
+                    {' · '}
+                    {m.reason === 'phone' ? 'เบอร์ซ้ำ' : m.reason === 'name' ? 'ชื่อคล้าย' : m.distanceM != null ? `ห่าง ${m.distanceM} ม.` : 'ตำแหน่งใกล้'}
+                    {' · '}{m.isMine ? 'งานของฉัน' : `งานของ${m.ownerName}`}
                   </p>
                 </div>
-                <StatusBadge status={m.status} />
               </div>
 
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">
-                  เจ้าของ: {m.ownerName} ·{' '}
-                  {m.reason === 'phone' ? 'เบอร์ซ้ำ' : `ห่าง ${m.distanceM} ม.`}
-                </p>
-              </div>
-
-              {/* ปุ่มตามเจ้าของ */}
               {m.isMine ? (
-                <Button
-                  variant="default"
-                  size="sm"
-                  className="w-full"
-                  onClick={() => handleUpdateInstead(m)}
-                >
+                <Button size="sm" className="w-full" onClick={() => handleUpdateInstead(m)}>
                   อัปเดตงานนี้แทน
                 </Button>
               ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  onClick={() => {
-                    // TODO: B-06 แจ้งแอดมินว่าซ้ำ
-                    navigate(`/sites/${m.siteCode}`)
-                  }}
-                >
+                <Button variant="outline" size="sm" className="w-full" onClick={() => navigate(`/sites/${m.siteCode}`)}>
                   ดูงานของ {m.ownerName}
                 </Button>
               )}
@@ -103,10 +84,10 @@ export function DuplicateDialog({
           ))}
         </div>
 
-        <DrawerFooter>
-          <Button variant="outline" onClick={onForceNew} className="w-full">
+        <DrawerFooter className="pt-2">
+          <button type="button" onClick={onForceNew} className="w-full py-2 text-center text-sm font-bold underline underline-offset-4">
             ไม่ใช่ — สร้างเป็นงานใหม่
-          </Button>
+          </button>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>

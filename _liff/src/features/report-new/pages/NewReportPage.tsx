@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, MapPin, Check } from 'lucide-react'
+import { ArrowLeft, MapPin, Check, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,6 +18,7 @@ import { reportNewService } from '../service'
 import type { DuplicateMatch } from '../types'
 
 const DRAFT_KEY = 'liff-new-report-draft'
+const QUICK_PRODUCTS = ['เหล็กเส้น', 'เหล็กกล่อง', 'H-beam', 'เหล็กตัวซี', 'ไวร์เมช', 'เมทัลชีท']
 
 interface FormData {
   lat: number | null
@@ -73,13 +74,39 @@ export function NewReportPage() {
   const [draftSaved, setDraftSaved] = useState(false)
   const [uploadSteps, setUploadSteps] = useState<UploadStep[]>([])
   const [showProgress, setShowProgress] = useState(false)
+  const [noContact, setNoContact] = useState(false)
+  const [kbOpen, setKbOpen] = useState(false)
+  const [gpsDups, setGpsDups] = useState<DuplicateMatch[]>([])
+  const [gpsDupsDismissed, setGpsDupsDismissed] = useState(false)
   const idempotencyKeyRef = useRef(crypto.randomUUID())
+
+  // ซ่อน bottom bar เมื่อแป้นพิมพ์เปิด
+  useEffect(() => {
+    const typing = (el: EventTarget | null) =>
+      el instanceof HTMLTextAreaElement || (el instanceof HTMLInputElement && !['checkbox', 'radio', 'button', 'file'].includes(el.type))
+    const onIn = (e: FocusEvent) => { if (typing(e.target)) setKbOpen(true) }
+    let t: ReturnType<typeof setTimeout>
+    const onOut = () => { clearTimeout(t); t = setTimeout(() => setKbOpen(typing(document.activeElement)), 120) }
+    document.addEventListener('focusin', onIn)
+    document.addEventListener('focusout', onOut)
+    return () => { clearTimeout(t); document.removeEventListener('focusin', onIn); document.removeEventListener('focusout', onOut) }
+  }, [])
+
+  // ตรวจซ้ำ GPS ทันทีที่ได้ตำแหน่ง
+  useEffect(() => {
+    if (!form.lat || !form.lng) return
+    setGpsDupsDismissed(false)
+    dupCheck.mutateAsync({ lat: form.lat, lng: form.lng }).then((res) => {
+      setGpsDups(res.hasDuplicate ? res.matches : [])
+    }).catch(() => setGpsDups([]))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.lat, form.lng])
 
   // ตรวจซ้ำเบอร์เมื่อครบ 10 หลัก
   const digits = form.phone.replace(/\D/g, '')
   useEffect(() => {
     if (digits.length === 10) {
-      dupCheck.mutateAsync({ phone: digits }).then((res) => {
+      dupCheck.mutateAsync({ phone: digits, customerName: form.customerName }).then((res) => {
         if (res.hasDuplicate && res.matches.length > 0) {
           setPhoneWarning(res.matches[0])
         } else {
@@ -108,10 +135,11 @@ export function NewReportPage() {
   }, [])
 
   // สิ่งที่ยังขาด
+  const contactOk = noContact || !!digits || !!form.customerName.trim() || !!form.contractorName.trim()
   const missing: string[] = []
   if (!form.lat) missing.push('ตำแหน่ง')
   if (form.photos.length === 0) missing.push('รูป')
-  if (!form.phone && !form.customerName) missing.push('เบอร์หรือชื่อ')
+  if (!contactOk) missing.push('ผู้ติดต่อ')
   if (!form.nextFollowUpDate) missing.push('วันนัดตาม')
   const canSubmit = missing.length === 0
 
@@ -120,8 +148,8 @@ export function NewReportPage() {
     setSubmitting(true)
 
     try {
-      if (!forceNew && digits.length === 10) {
-        const dupResult = await dupCheck.mutateAsync({ phone: digits, lat: form.lat, lng: form.lng })
+      if (!forceNew) {
+        const dupResult = await dupCheck.mutateAsync({ phone: digits, lat: form.lat, lng: form.lng, customerName: form.customerName })
         if (dupResult.hasDuplicate) {
           setDuplicateMatches(dupResult.matches)
           setShowDuplicate(true)
@@ -253,6 +281,16 @@ export function NewReportPage() {
               </span>
             </div>
           )}
+
+          {/* Inline GPS duplicate warning */}
+          {gpsDups.length > 0 && !gpsDupsDismissed && (
+            <GpsDuplicateCard
+              matches={gpsDups}
+              pendingNote={form.detail}
+              pendingPhotos={form.photos}
+              onDismiss={() => setGpsDupsDismissed(true)}
+            />
+          )}
         </section>
 
         <section className="space-y-2">
@@ -268,46 +306,60 @@ export function NewReportPage() {
         <section className="space-y-3">
           <Label className="text-sm font-bold">ผู้ติดต่อ</Label>
 
-          <div className="space-y-1">
-            <Label htmlFor="phone" className="text-xs text-muted-foreground">เบอร์โทร *</Label>
-            <Input
-              id="phone"
-              type="tel"
-              inputMode="numeric"
-              value={form.phone}
-              onChange={(e) => update('phone', e.target.value)}
-              placeholder="08X-XXX-XXXX"
-              className="h-10 text-base num"
-            />
-            {phoneWarning && (
-              <div className="rounded-lg bg-warning-soft px-3 py-1.5 text-xs text-warning-ink flex items-start gap-2">
-                <span className="shrink-0">⚠</span>
-                <span>เบอร์นี้มีงาน <span className="font-bold num">#{phoneWarning.siteCode}</span> ของ{phoneWarning.ownerName}</span>
+          <Chip
+            label="ยังไม่เจอใครที่หน้างาน"
+            selected={noContact}
+            onClick={() => setNoContact((v) => !v)}
+          />
+
+          {noContact ? (
+            <p className="rounded-xl bg-muted/70 p-3 text-sm text-muted-foreground">
+              ระบบใช้ตำแหน่ง GPS ตรวจงานซ้ำแทน ครั้งหน้าที่มาเจอใครค่อยเพิ่มเบอร์ตอนอัปเดตงาน
+            </p>
+          ) : (
+            <>
+              <div className="space-y-1">
+                <Label htmlFor="phone" className="text-xs text-muted-foreground">เบอร์โทร <span className="text-muted-foreground/60">(ไม่มีก็ส่งได้)</span></Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  inputMode="numeric"
+                  value={form.phone}
+                  onChange={(e) => update('phone', e.target.value)}
+                  placeholder="08X-XXX-XXXX"
+                  className="h-10 text-base num"
+                />
+                {phoneWarning && (
+                  <div className="rounded-lg bg-warning-soft px-3 py-1.5 text-xs text-warning-ink flex items-start gap-2">
+                    <span className="shrink-0">⚠</span>
+                    <span>เบอร์นี้มีงาน <span className="font-bold num">#{phoneWarning.siteCode}</span> ของ{phoneWarning.ownerName}</span>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <Label htmlFor="customerName" className="text-xs text-muted-foreground">ชื่อลูกค้า</Label>
-              <Input id="customerName" value={form.customerName} onChange={(e) => update('customerName', e.target.value)} placeholder="ชื่อลูกค้า" className="h-10 text-base" />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="contractorName" className="text-xs text-muted-foreground">ชื่อช่าง</Label>
-              <Input id="contractorName" value={form.contractorName} onChange={(e) => update('contractorName', e.target.value)} placeholder="ชื่อช่าง" className="h-10 text-base" />
-            </div>
-          </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label htmlFor="customerName" className="text-xs text-muted-foreground">ชื่อลูกค้า</Label>
+                  <Input id="customerName" value={form.customerName} onChange={(e) => update('customerName', e.target.value)} placeholder="ชื่อลูกค้า" className="h-10 text-base" />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="contractorName" className="text-xs text-muted-foreground">ชื่อช่าง</Label>
+                  <Input id="contractorName" value={form.contractorName} onChange={(e) => update('contractorName', e.target.value)} placeholder="ชื่อช่าง" className="h-10 text-base" />
+                </div>
+              </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <Label htmlFor="amphoe" className="text-xs text-muted-foreground">อำเภอ</Label>
-              <Input id="amphoe" value={form.amphoe} onChange={(e) => update('amphoe', e.target.value)} placeholder="อำเภอ" className="h-10 text-base" />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">ผู้ติดต่อคือ</Label>
-              <ChipRow options={contactTypes} value={form.contactType} onChange={(v) => update('contactType', v)} />
-            </div>
-          </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label htmlFor="amphoe" className="text-xs text-muted-foreground">อำเภอ</Label>
+                  <Input id="amphoe" value={form.amphoe} onChange={(e) => update('amphoe', e.target.value)} placeholder="อำเภอ" className="h-10 text-base" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">ผู้ติดต่อคือ</Label>
+                  <ChipRow options={contactTypes} value={form.contactType} onChange={(v) => update('contactType', v)} />
+                </div>
+              </div>
+            </>
+          )}
         </section>
 
         {/* ===== รายละเอียด ===== */}
@@ -325,6 +377,12 @@ export function NewReportPage() {
 
           <div className="space-y-1">
             <Label htmlFor="detail" className="text-xs text-muted-foreground">หมายเหตุ</Label>
+            <div className="flex flex-wrap gap-1.5">
+              {QUICK_PRODUCTS.map((p) => (
+                <button key={p} type="button" onClick={() => update('detail', form.detail ? `${form.detail.trimEnd()} ${p}` : `สนใจ${p}`)}
+                  className="h-7 px-2.5 rounded-full bg-muted text-xs active:bg-muted-foreground/20">+ {p}</button>
+              ))}
+            </div>
             <Textarea
               id="detail"
               value={form.detail}
@@ -360,10 +418,12 @@ export function NewReportPage() {
         </section>
       </div>
 
-      {/* Sticky Action Bar */}
-      <div className="fixed bottom-0 inset-x-0 bg-background/95 backdrop-blur border-t px-4 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
-        {missing.length > 0 && (
-          <p className="text-xs text-muted-foreground mb-1.5">ขาด: {missing.join(', ')}</p>
+      {/* Sticky Action Bar — ซ่อนเมื่อแป้นพิมพ์เปิด */}
+      <div className={`fixed bottom-0 inset-x-0 bg-background/95 backdrop-blur border-t px-4 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] transition-transform duration-200 ${kbOpen ? 'translate-y-full' : ''}`}>
+        {missing.length > 0 ? (
+          <p className="text-xs mb-1.5"><span className="text-muted-foreground">ยังขาด</span> <b className="text-warning-ink">{missing.join(' · ')}</b></p>
+        ) : (
+          <p className="text-xs font-bold text-success-ink mb-1.5">ครบแล้ว พร้อมส่ง</p>
         )}
         <Button onClick={() => handleSubmit(false)} disabled={submitting || !canSubmit} size="xl" className="w-full">
           {submitting ? 'กำลังบันทึก...' : 'บันทึกและส่งเข้ากลุ่ม'}
@@ -405,6 +465,56 @@ function ChipRow({ options, value, onChange }: { options: string[]; value: strin
       {options.map((opt) => (
         <Chip key={opt} label={opt} selected={value === opt} onClick={() => onChange(value === opt ? '' : opt)} />
       ))}
+    </div>
+  )
+}
+
+/** Inline warning card — แสดงทันทีเมื่อ GPS พบงานใกล้เคียง */
+function GpsDuplicateCard({ matches, pendingNote, pendingPhotos, onDismiss }: {
+  matches: DuplicateMatch[]
+  pendingNote?: string
+  pendingPhotos?: { file: File; preview: string }[]
+  onDismiss: () => void
+}) {
+  const navigate = useNavigate()
+  return (
+    <div className="rounded-2xl border border-warning/40 bg-warning-soft/60 p-3 space-y-2.5">
+      <div className="flex items-start gap-2 text-sm">
+        <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning-ink" />
+        <div>
+          <b>อาจเป็นหน้างานเดิม</b>{' '}
+          <span className="text-muted-foreground">
+            พบงานที่ยังตามอยู่{matches.length > 1 ? ` ${matches.length} งาน` : ''}ใกล้ตรงนี้
+          </span>
+        </div>
+      </div>
+      {matches.slice(0, 3).map((m) => (
+        <div key={m.siteCode} className="rounded-xl bg-background p-2.5 space-y-2">
+          <div className="min-w-0">
+            <p className="text-sm font-bold truncate">{m.customerName || 'ไม่มีชื่อ'}</p>
+            <p className="text-xs text-muted-foreground">
+              <span className="num">#{m.siteCode}</span>
+              {m.reason === 'nearby' && m.distanceM != null && ` · ห่าง ${m.distanceM} ม.`}
+              {m.reason === 'phone' && ' · เบอร์เดียวกัน'}
+              {' · '}{m.isMine ? 'งานของฉัน' : `งานของ${m.ownerName}`}
+            </p>
+          </div>
+          {m.isMine ? (
+            <Button size="sm" className="w-full" onClick={() => navigate(`/sites/${m.siteCode}/update`, {
+              state: { prefillNote: pendingNote || '', prefillPhotos: pendingPhotos || [], fromDuplicate: true },
+            })}>
+              อัปเดตงานนี้แทน
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" className="w-full" onClick={() => navigate(`/sites/${m.siteCode}`)}>
+              ดูงานของ {m.ownerName}
+            </Button>
+          )}
+        </div>
+      ))}
+      <button type="button" onClick={onDismiss} className="w-full py-1 text-center text-sm font-bold underline underline-offset-4">
+        ไม่ใช่ — เป็นหน้างานใหม่
+      </button>
     </div>
   )
 }
