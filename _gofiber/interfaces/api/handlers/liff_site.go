@@ -68,6 +68,11 @@ func (h *LIFFSiteHandler) CreateSite(c *fiber.Ctx) error {
 		return utils.BadRequestResponse(c, "ต้องระบุอย่างน้อย 1 อย่าง: เบอร์โทร, ชื่อลูกค้า, ชื่อช่าง, หรือตำแหน่ง GPS")
 	}
 
+	// Idempotency check — ป้องกันกดส่งซ้ำ
+	if key := c.Get("Idempotency-Key"); key != "" {
+		req.IdempotencyKey = key
+	}
+
 	resp, err := h.siteService.Create(ctx, *repID, &req)
 	if err != nil {
 		// Check if it's a duplicate error
@@ -98,7 +103,8 @@ func (h *LIFFSiteHandler) CheckDuplicate(c *fiber.Ctx) error {
 		lngPtr = &lng
 	}
 
-	resp, err := h.siteService.CheckDuplicate(ctx, phone, latPtr, lngPtr, customerName)
+	repID := getRepID(c)
+	resp, err := h.siteService.CheckDuplicate(ctx, phone, latPtr, lngPtr, customerName, repID)
 	if err != nil {
 		return utils.InternalErrorResponse(c, "Failed to check duplicate")
 	}

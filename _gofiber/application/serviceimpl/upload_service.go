@@ -30,8 +30,8 @@ func NewUploadService(
 }
 
 func (s *uploadServiceImpl) UploadPhotos(ctx context.Context, repID uuid.UUID, files []*multipart.FileHeader) (*dto.UploadResponse, error) {
-	if len(files) > 3 {
-		return nil, fmt.Errorf("maximum 3 photos allowed")
+	if len(files) > 6 {
+		return nil, fmt.Errorf("maximum 6 photos allowed")
 	}
 
 	uploaded := make([]dto.UploadedFile, 0, len(files))

@@ -223,6 +223,13 @@ export function NewReportPage() {
       }
       if (sent) toast.success('ส่งเข้ากลุ่มแล้ว')
 
+      // เก็บ chatMessages ไว้ให้ retry ได้ถ้าส่งไม่สำเร็จ
+      if (!sent && result.chatMessages?.length) {
+        sessionStorage.setItem('pendingChatMessages', JSON.stringify(result.chatMessages))
+      } else {
+        sessionStorage.removeItem('pendingChatMessages')
+      }
+
       setUploadSteps((prev) => prev.map((s) =>
         s.label === 'บันทึกข้อมูล' || s.label === 'ส่งเข้ากลุ่ม' ? { ...s, status: 'done' } : s
       ))

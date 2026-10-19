@@ -25,13 +25,19 @@ func (r *adminUserRepository) Create(ctx context.Context, user *models.AdminUser
 func (r *adminUserRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.AdminUser, error) {
 	var user models.AdminUser
 	err := postgres.GetDB(ctx, r.db).First(&user, id).Error
-	return &user, err
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
 }
 
 func (r *adminUserRepository) GetByEmail(ctx context.Context, email string) (*models.AdminUser, error) {
 	var user models.AdminUser
 	err := postgres.GetDB(ctx, r.db).Where("email = ?", email).First(&user).Error
-	return &user, err
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
 }
 
 func (r *adminUserRepository) List(ctx context.Context) ([]models.AdminUser, error) {

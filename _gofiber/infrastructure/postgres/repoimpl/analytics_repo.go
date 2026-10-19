@@ -100,19 +100,24 @@ func (r *analyticsRepository) CountSitesByStatus(ctx context.Context, from, to t
 	return won, lost, int(following), cancelled, nil
 }
 
-func (r *analyticsRepository) CountOverdueAll(ctx context.Context) (int, error) {
-	now := time.Now()
-	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+func (r *analyticsRepository) CountOverdueAll(ctx context.Context, repID *uuid.UUID) (int, error) {
+	loc, _ := time.LoadLocation("Asia/Bangkok")
+	now := time.Now().In(loc)
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
+	db := postgres.GetDB(ctx, r.db).Table("sites").
+		Where("status = 'following' AND next_follow_up_date < ? AND deleted_at IS NULL", today)
+	if repID != nil {
+		db = db.Where("owner_rep_id = ?", *repID)
+	}
 	var count int64
-	err := postgres.GetDB(ctx, r.db).Table("sites").
-		Where("status = 'following' AND next_follow_up_date < ? AND deleted_at IS NULL", today).
-		Count(&count).Error
+	err := db.Count(&count).Error
 	return int(count), err
 }
 
 func (r *analyticsRepository) CountOverdueByRep(ctx context.Context, repID uuid.UUID) (int, error) {
-	now := time.Now()
-	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	loc, _ := time.LoadLocation("Asia/Bangkok")
+	now := time.Now().In(loc)
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
 	var count int64
 	err := postgres.GetDB(ctx, r.db).Table("sites").
 		Where("owner_rep_id = ? AND status = 'following' AND next_follow_up_date < ? AND deleted_at IS NULL", repID, today).
@@ -248,27 +253,28 @@ func (r *analyticsRepository) WonTrend(ctx context.Context, from, to time.Time, 
 }
 
 func (r *analyticsRepository) SiteCountsByArea(ctx context.Context, from, to time.Time, repID *uuid.UUID, level string) ([]repositories.AreaRow, error) {
-	// ใช้ report-based visits ในช่วง + site status ปัจจุบัน + closed_at สำหรับ won/lost
+	// visits = จำนวน reports ในช่วง (LEFT JOIN), won/lost ตาม closed_at, following = สถานะปัจจุบัน
 	db := postgres.GetDB(ctx, r.db).
-		Table("sites").
-		Where("deleted_at IS NULL AND amphoe != ''")
+		Table("sites s").
+		Joins("LEFT JOIN site_reports sr ON sr.site_id = s.id AND sr.report_date >= ? AND sr.report_date < ?", from, to).
+		Where("s.deleted_at IS NULL AND s.amphoe != ''")
 	if repID != nil {
-		db = db.Where("owner_rep_id = ?", *repID)
+		db = db.Where("s.owner_rep_id = ?", *repID)
 	}
 
-	groupCol := "amphoe"
-	selectCols := "amphoe, '' as tambon"
+	groupCol := "s.amphoe"
+	selectCols := "s.amphoe, '' as tambon"
 	if level == "tambon" {
-		groupCol = "amphoe, tambon"
-		selectCols = "amphoe, tambon"
+		groupCol = "s.amphoe, s.tambon"
+		selectCols = "s.amphoe, s.tambon"
 	}
 
 	var rows []repositories.AreaRow
 	err := db.Select(selectCols+`,
-		count(*) as visits,
-		count(*) filter (where status = 'won' AND closed_at >= ? AND closed_at < ?) as won,
-		count(*) filter (where status = 'lost' AND closed_at >= ? AND closed_at < ?) as lost,
-		count(*) filter (where status = 'following') as following`, from, to, from, to).
+		count(DISTINCT sr.id) as visits,
+		count(DISTINCT s.id) filter (where s.status = 'won' AND s.closed_at >= ? AND s.closed_at < ?) as won,
+		count(DISTINCT s.id) filter (where s.status = 'lost' AND s.closed_at >= ? AND s.closed_at < ?) as lost,
+		count(DISTINCT s.id) filter (where s.status = 'following') as following`, from, to, from, to).
 		Group(groupCol).Order("visits DESC").Scan(&rows).Error
 	return rows, err
 }
@@ -316,7 +322,7 @@ func (r *analyticsRepository) ActivityByDate(ctx context.Context, from, to time.
 	}
 
 	var rows []repositories.ActivityRow
-	err := db.Select("to_char(report_date, 'YYYY-MM-DD') as date, count(*) as count").
+	err := db.Select("to_char(report_date AT TIME ZONE 'Asia/Bangkok', 'YYYY-MM-DD') as date, count(*) as count").
 		Group("date").Order("date").Scan(&rows).Error
 	return rows, err
 }
@@ -435,12 +441,16 @@ func dateTrunc(bucket string) string {
 }
 
 func dateTruncField(bucket, field string) string {
+	// ใช้ AT TIME ZONE 'Asia/Bangkok' เพื่อจัดกลุ่มตามเวลาไทย
+	tzField := field + " AT TIME ZONE 'Asia/Bangkok'"
 	switch bucket {
+	case "week":
+		return "to_char(date_trunc('week', " + tzField + "), 'YYYY-MM-DD')"
 	case "month":
-		return "to_char(" + field + ", 'YYYY-MM-01')"
+		return "to_char(" + tzField + ", 'YYYY-MM-01')"
 	case "year":
-		return "to_char(" + field + ", 'YYYY-01-01')"
+		return "to_char(" + tzField + ", 'YYYY-01-01')"
 	default: // day
-		return "to_char(" + field + ", 'YYYY-MM-DD')"
+		return "to_char(" + tzField + ", 'YYYY-MM-DD')"
 	}
 }

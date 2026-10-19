@@ -15,7 +15,7 @@ type AnalyticsRepository interface {
 	// Summary counts
 	CountReports(ctx context.Context, from, to time.Time, repID *uuid.UUID, amphoe string) (visits int, newSites int, followUps int, err error)
 	CountSitesByStatus(ctx context.Context, from, to time.Time, repID *uuid.UUID, amphoe string) (won int, lost int, following int, cancelled int, err error)
-	CountOverdueAll(ctx context.Context) (int, error)
+	CountOverdueAll(ctx context.Context, repID *uuid.UUID) (int, error)
 	CountOverdueByRep(ctx context.Context, repID uuid.UUID) (int, error)
 
 	// By-rep breakdown

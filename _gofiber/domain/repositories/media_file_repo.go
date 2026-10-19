@@ -13,4 +13,5 @@ type MediaFileRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*models.MediaFile, error)
 	GetByReportID(ctx context.Context, reportID uuid.UUID) ([]models.MediaFile, error)
 	UpdateReportID(ctx context.Context, ids []uuid.UUID, reportID uuid.UUID) error
+	UpdateReportIDByOwner(ctx context.Context, ids []uuid.UUID, reportID uuid.UUID, ownerRepID uuid.UUID) error
 }

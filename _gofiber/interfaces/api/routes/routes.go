@@ -23,6 +23,8 @@ type Handlers struct {
 	AdminAnalytics *handlers.AdminAnalyticsHandler
 	AdminUser      *handlers.AdminUserHandler
 	AdminExport    *handlers.AdminExportHandler
+	// Status checker for auth middleware
+	StatusChecker *middleware.StatusChecker
 }
 
 func Setup(app *fiber.App, cfg *config.Config, h Handlers) {
@@ -40,7 +42,7 @@ func Setup(app *fiber.App, cfg *config.Config, h Handlers) {
 	v1.Post("/liff/auth", h.LIFFAuth.Auth)
 
 	// LIFF routes
-	liff := v1.Group("/liff", middleware.AuthMiddleware(cfg.JWT, "sales"))
+	liff := v1.Group("/liff", middleware.AuthMiddleware(cfg.JWT, "sales", h.StatusChecker))
 	liff.Get("/options", h.LIFFOptions.GetOptions)
 	liff.Get("/me/stats", h.LIFFSite.GetMyStats)
 	liff.Get("/sites", h.LIFFSite.ListSites)
@@ -56,7 +58,7 @@ func Setup(app *fiber.App, cfg *config.Config, h Handlers) {
 	v1.Post("/admin/auth", h.AdminAuth.Login)
 
 	// Admin routes
-	admin := v1.Group("/admin", middleware.AuthMiddleware(cfg.JWT, "admin"))
+	admin := v1.Group("/admin", middleware.AuthMiddleware(cfg.JWT, "admin", h.StatusChecker))
 	admin.Get("/sites", h.AdminSite.ListSites)
 	admin.Get("/sites/:code", h.AdminSite.GetSite)
 	admin.Patch("/sites/:code", h.AdminSite.UpdateSite)

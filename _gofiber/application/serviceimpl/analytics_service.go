@@ -43,7 +43,7 @@ func (s *analyticsServiceImpl) Summary(ctx context.Context, filter *dto.Analytic
 		return nil, err
 	}
 
-	overdue, _ := s.analyticsRepo.CountOverdueAll(ctx)
+	overdue, _ := s.analyticsRepo.CountOverdueAll(ctx, repID)
 	avgDays, _ := s.analyticsRepo.AvgDaysToWin(ctx, from, to, repID, filter.Amphoe)
 
 	winRate := calcWinRate(won, lost)

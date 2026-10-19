@@ -47,6 +47,7 @@ func main() {
 		AdminAnalytics: container.AdminAnalyticsHandler,
 		AdminUser:      container.AdminUserHandler,
 		AdminExport:    container.AdminExportHandler,
+		StatusChecker:  container.StatusChecker,
 	})
 
 	// Graceful shutdown

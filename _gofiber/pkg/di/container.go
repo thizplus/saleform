@@ -13,6 +13,7 @@ import (
 	"line-sales-api/infrastructure/line"
 	"line-sales-api/infrastructure/storage"
 	"line-sales-api/interfaces/api/handlers"
+	"line-sales-api/interfaces/api/middleware"
 	"line-sales-api/pkg/config"
 
 	"github.com/google/uuid"
@@ -48,6 +49,7 @@ type Container struct {
 	AdminAnalyticsHandler *handlers.AdminAnalyticsHandler
 	AdminUserHandler      *handlers.AdminUserHandler
 	AdminExportHandler    *handlers.AdminExportHandler
+	StatusChecker         *middleware.StatusChecker
 }
 
 func NewContainer(cfg *config.Config) *Container {
@@ -104,6 +106,10 @@ func NewContainer(cfg *config.Config) *Container {
 	c.AdminAnalyticsHandler = handlers.NewAdminAnalyticsHandler(analyticsService)
 	c.AdminUserHandler = handlers.NewAdminUserHandler(repos.adminUser)
 	c.AdminExportHandler = handlers.NewAdminExportHandler(c.SiteService)
+	c.StatusChecker = &middleware.StatusChecker{
+		SalesRepRepo: repos.salesRep,
+		AdminRepo:    repos.adminUser,
+	}
 
 	// Seed default admin (dev only)
 	if cfg.App.Env == "development" {

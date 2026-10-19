@@ -22,6 +22,11 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('token')
     }
+    // Extract Thai error message จาก backend response
+    const backendMsg = error.response?.data?.error?.message
+    if (backendMsg) {
+      return Promise.reject(new Error(backendMsg))
+    }
     return Promise.reject(error)
   }
 )

@@ -25,7 +25,8 @@ type Site struct {
 	Status          string    `gorm:"not null;default:'following';index"` // following, won, lost, cancelled
 	LostReason      string
 	Competitor      string
-	ExpectedOrderDate *time.Time
+	ExpectedOrderDate  *time.Time
+	ExpectedOrderText  string
 	NextFollowUpDate  *time.Time `gorm:"index"`
 	ClosedAt        *time.Time `gorm:"index"` // วันปิดงาน (won/lost/cancelled)
 	// Owner

@@ -40,3 +40,10 @@ func (r *mediaFileRepository) UpdateReportID(ctx context.Context, ids []uuid.UUI
 		Where("id IN ?", ids).
 		Update("report_id", reportID).Error
 }
+
+func (r *mediaFileRepository) UpdateReportIDByOwner(ctx context.Context, ids []uuid.UUID, reportID uuid.UUID, ownerRepID uuid.UUID) error {
+	return postgres.GetDB(ctx, r.db).
+		Model(&models.MediaFile{}).
+		Where("id IN ? AND rep_id = ?", ids, ownerRepID).
+		Update("report_id", reportID).Error
+}

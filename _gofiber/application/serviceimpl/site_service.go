@@ -125,9 +125,18 @@ func (s *siteServiceImpl) photoURL(key string) string {
 }
 
 func (s *siteServiceImpl) Create(ctx context.Context, repID uuid.UUID, req *dto.CreateSiteRequest) (*dto.CreateSiteResponse, error) {
+	// Idempotency check — ป้องกันกดส่งซ้ำ
+	if req.IdempotencyKey != "" {
+		existing, err := s.reportRepo.GetByIdempotencyKey(ctx, req.IdempotencyKey)
+		if err == nil && existing != nil {
+			logger.InfoContext(ctx, "Duplicate request (idempotency)", "key", req.IdempotencyKey)
+			return nil, errors.New("รายงานนี้ถูกส่งไปแล้ว")
+		}
+	}
+
 	// Duplicate check (unless forceNew)
 	if !req.ForceNew {
-		dupResp, err := s.CheckDuplicate(ctx, req.Phone, req.Latitude, req.Longitude, req.CustomerName)
+		dupResp, err := s.CheckDuplicate(ctx, req.Phone, req.Latitude, req.Longitude, req.CustomerName, &repID)
 		if err == nil && dupResp.HasDuplicate {
 			return nil, &DuplicateError{Matches: dupResp.Matches}
 		}
@@ -147,9 +156,13 @@ func (s *siteServiceImpl) Create(ctx context.Context, repID uuid.UUID, req *dto.
 	reportID := uuid.New()
 
 	var expectedDate *time.Time
+	var expectedOrderText string
 	if req.ExpectedOrderDate != nil {
 		if t, err := time.Parse("2006-01-02", *req.ExpectedOrderDate); err == nil {
 			expectedDate = &t
+		} else {
+			// ข้อความเช่น "ภายในเดือน", "ภายใน 2 สัปดาห์" — เก็บเป็น text
+			expectedOrderText = *req.ExpectedOrderDate
 		}
 	}
 	var followUpDate *time.Time
@@ -186,12 +199,18 @@ func (s *siteServiceImpl) Create(ctx context.Context, repID uuid.UUID, req *dto.
 		Amphoe:            req.Amphoe,
 		Stage:             firstNonEmpty(req.Stage, "new"),
 		Status:            "following",
-		ExpectedOrderDate: expectedDate,
-		NextFollowUpDate:  followUpDate,
+		ExpectedOrderDate:  expectedDate,
+		ExpectedOrderText:  expectedOrderText,
+		NextFollowUpDate:   followUpDate,
 		OwnerRepID:        repID,
 		GroupID:           resolvedGroupID,
 		ReportCount:       1,
 		LastReportAt:      &now,
+	}
+
+	var idempotencyKeyPtr *string
+	if req.IdempotencyKey != "" {
+		idempotencyKeyPtr = &req.IdempotencyKey
 	}
 
 	report := &models.SiteReport{
@@ -205,6 +224,7 @@ func (s *siteServiceImpl) Create(ctx context.Context, repID uuid.UUID, req *dto.
 		NextFollowUpDate: followUpDate,
 		ReportDate:       now,
 		Source:           "liff",
+		IdempotencyKey:   idempotencyKeyPtr,
 	}
 
 	err = s.txManager.WithTx(ctx, func(txCtx context.Context) error {
@@ -229,7 +249,7 @@ func (s *siteServiceImpl) Create(ctx context.Context, repID uuid.UUID, req *dto.
 			}
 		}
 
-		// Link photos to report
+		// Link photos to report (เช็ค ownership)
 		if len(req.PhotoIDs) > 0 {
 			photoUUIDs := make([]uuid.UUID, 0, len(req.PhotoIDs))
 			for _, id := range req.PhotoIDs {
@@ -238,7 +258,7 @@ func (s *siteServiceImpl) Create(ctx context.Context, repID uuid.UUID, req *dto.
 				}
 			}
 			if len(photoUUIDs) > 0 {
-				if err := s.mediaRepo.UpdateReportID(txCtx, photoUUIDs, reportID); err != nil {
+				if err := s.mediaRepo.UpdateReportIDByOwner(txCtx, photoUUIDs, reportID, repID); err != nil {
 					return fmt.Errorf("link photos: %w", err)
 				}
 			}
@@ -299,9 +319,30 @@ func (s *siteServiceImpl) Create(ctx context.Context, repID uuid.UUID, req *dto.
 	}, nil
 }
 
-func (s *siteServiceImpl) CheckDuplicate(ctx context.Context, phone string, lat, lng *float64, customerName string) (*dto.DuplicateCheckResponse, error) {
+func (s *siteServiceImpl) CheckDuplicate(ctx context.Context, phone string, lat, lng *float64, customerName string, callerRepID *uuid.UUID) (*dto.DuplicateCheckResponse, error) {
 	resp := &dto.DuplicateCheckResponse{}
 	matched := make(map[string]bool) // track siteCode เพื่อไม่ให้ซ้ำ
+
+	// helper สร้าง match + set isMine
+	addMatch := func(site models.Site, reason string, distM *int) {
+		owner, _ := s.salesRepRepo.GetByID(ctx, site.OwnerRepID)
+		ownerName := ""
+		if owner != nil {
+			ownerName = owner.DisplayName
+		}
+		isMine := callerRepID != nil && site.OwnerRepID == *callerRepID
+		resp.Matches = append(resp.Matches, dto.DuplicateMatch{
+			SiteCode:     site.SiteCode,
+			CustomerName: site.CustomerName,
+			Phone:        site.Phone,
+			Reason:       reason,
+			DistanceM:    distM,
+			OwnerName:    ownerName,
+			Status:       site.Status,
+			IsMine:       isMine,
+		})
+		matched[site.SiteCode] = true
+	}
 
 	// Check by phone
 	if phone != "" {
@@ -309,20 +350,7 @@ func (s *siteServiceImpl) CheckDuplicate(ctx context.Context, phone string, lat,
 		if err == nil {
 			for _, site := range sites {
 				if site.Status == "following" {
-					owner, _ := s.salesRepRepo.GetByID(ctx, site.OwnerRepID)
-					ownerName := ""
-					if owner != nil {
-						ownerName = owner.DisplayName
-					}
-					resp.Matches = append(resp.Matches, dto.DuplicateMatch{
-						SiteCode:     site.SiteCode,
-						CustomerName: site.CustomerName,
-						Phone:        site.Phone,
-						Reason:       "phone",
-						OwnerName:    ownerName,
-						Status:       site.Status,
-					})
-					matched[site.SiteCode] = true
+					addMatch(site, "phone", nil)
 				}
 			}
 		}
@@ -338,21 +366,7 @@ func (s *siteServiceImpl) CheckDuplicate(ctx context.Context, phone string, lat,
 				}
 				dist := haversineDistance(*lat, *lng, *site.Latitude, *site.Longitude)
 				distInt := int(math.Round(dist))
-				owner, _ := s.salesRepRepo.GetByID(ctx, site.OwnerRepID)
-				ownerName := ""
-				if owner != nil {
-					ownerName = owner.DisplayName
-				}
-				resp.Matches = append(resp.Matches, dto.DuplicateMatch{
-					SiteCode:     site.SiteCode,
-					CustomerName: site.CustomerName,
-					Phone:        site.Phone,
-					Reason:       "nearby",
-					DistanceM:    &distInt,
-					OwnerName:    ownerName,
-					Status:       site.Status,
-				})
-				matched[site.SiteCode] = true
+				addMatch(site, "nearby", &distInt)
 			}
 		}
 	}
@@ -365,20 +379,7 @@ func (s *siteServiceImpl) CheckDuplicate(ctx context.Context, phone string, lat,
 				if matched[site.SiteCode] {
 					continue
 				}
-				owner, _ := s.salesRepRepo.GetByID(ctx, site.OwnerRepID)
-				ownerName := ""
-				if owner != nil {
-					ownerName = owner.DisplayName
-				}
-				resp.Matches = append(resp.Matches, dto.DuplicateMatch{
-					SiteCode:     site.SiteCode,
-					CustomerName: site.CustomerName,
-					Phone:        site.Phone,
-					Reason:       "name",
-					OwnerName:    ownerName,
-					Status:       site.Status,
-				})
-				matched[site.SiteCode] = true
+				addMatch(site, "name", nil)
 			}
 		}
 	}
@@ -626,7 +627,7 @@ func (s *siteServiceImpl) AddFollowUp(ctx context.Context, repID uuid.UUID, code
 				}
 			}
 			if len(photoUUIDs) > 0 {
-				if err := s.mediaRepo.UpdateReportID(txCtx, photoUUIDs, reportID); err != nil {
+				if err := s.mediaRepo.UpdateReportIDByOwner(txCtx, photoUUIDs, reportID, repID); err != nil {
 					return err
 				}
 			}
@@ -744,6 +745,16 @@ func (s *siteServiceImpl) Update(ctx context.Context, code string, req *dto.Upda
 	}
 	if req.Status != nil {
 		site.Status = *req.Status
+		// Set closed_at เมื่อเปลี่ยนเป็น won/lost/cancelled
+		if *req.Status == "won" || *req.Status == "lost" || *req.Status == "cancelled" {
+			if site.ClosedAt == nil {
+				now := time.Now()
+				site.ClosedAt = &now
+			}
+		} else if *req.Status == "following" {
+			// เปิดงานกลับมาตามต่อ — ลบ closed_at
+			site.ClosedAt = nil
+		}
 	}
 	if req.LostReason != nil {
 		site.LostReason = *req.LostReason
@@ -872,7 +883,8 @@ func (s *siteServiceImpl) GetMyStats(ctx context.Context, repID uuid.UUID, perio
 }
 
 func periodToSince(period string) time.Time {
-	now := time.Now().UTC()
+	loc, _ := time.LoadLocation("Asia/Bangkok")
+	now := time.Now().In(loc)
 	switch period {
 	case "week":
 		// จันทร์ของสัปดาห์นี้
@@ -880,11 +892,11 @@ func periodToSince(period string) time.Time {
 		if weekday == 0 {
 			weekday = 7
 		}
-		return time.Date(now.Year(), now.Month(), now.Day()-(weekday-1), 0, 0, 0, 0, time.UTC)
+		return time.Date(now.Year(), now.Month(), now.Day()-(weekday-1), 0, 0, 0, 0, loc)
 	case "year":
-		return time.Date(now.Year(), 1, 1, 0, 0, 0, 0, time.UTC)
+		return time.Date(now.Year(), 1, 1, 0, 0, 0, 0, loc)
 	default: // month
-		return time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
+		return time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, loc)
 	}
 }
 

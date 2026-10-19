@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { reportNewService } from './service'
 import type { CreateSiteForm } from './types'
 import { siteKeys } from '@/features/sites'
@@ -25,10 +25,11 @@ export function useUploadPhotos() {
 }
 
 export function useCreateSite() {
+  const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (data: CreateSiteForm) => reportNewService.createSite(data),
-    meta: {
-      invalidates: [siteKeys.all],
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: siteKeys.all })
     },
   })
 }

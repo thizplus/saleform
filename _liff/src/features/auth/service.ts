@@ -28,9 +28,9 @@ export const authService = {
     return res.data.data
   },
 
-  /** ลงทะเบียนเซลล์ใหม่ */
+  /** ลงทะเบียนเซลล์ใหม่ — ใช้ /liff/auth ตัวเดียวกัน (backend รองรับ nickname+area) */
   async register(params: RegisterParams): Promise<LIFFAuthResponse> {
-    const res = await apiClient.post<{ data: LIFFAuthResponse }>(AUTH_ROUTES.REGISTER, params)
+    const res = await apiClient.post<{ data: LIFFAuthResponse }>(AUTH_ROUTES.LIFF_AUTH, params)
     return res.data.data
   },
 

@@ -3,11 +3,13 @@ package middleware
 import (
 	"strings"
 
+	"line-sales-api/domain/repositories"
 	"line-sales-api/pkg/config"
 	"line-sales-api/pkg/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 type JWTClaims struct {
@@ -16,8 +18,14 @@ type JWTClaims struct {
 	jwt.RegisteredClaims
 }
 
+// StatusChecker ตรวจสอบว่า user ยัง active อยู่หรือไม่
+type StatusChecker struct {
+	SalesRepRepo repositories.SalesRepRepository
+	AdminRepo    repositories.AdminUserRepository
+}
+
 // AuthMiddleware validates JWT and sets claims in context
-func AuthMiddleware(cfg config.JWTConfig, requiredRole string) fiber.Handler {
+func AuthMiddleware(cfg config.JWTConfig, requiredRole string, checker ...*StatusChecker) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		authHeader := c.Get("Authorization")
 		if authHeader == "" {
@@ -52,6 +60,32 @@ func AuthMiddleware(cfg config.JWTConfig, requiredRole string) fiber.Handler {
 			}
 			if !allowed {
 				return utils.ForbiddenResponse(c, "Insufficient permissions")
+			}
+		}
+
+		// DB status check — ตรวจว่า user ยัง active อยู่
+		if len(checker) > 0 && checker[0] != nil {
+			sc := checker[0]
+			uid, parseErr := uuid.Parse(claims.UserID)
+			if parseErr != nil {
+				return utils.UnauthorizedResponse(c, "Invalid user ID")
+			}
+
+			switch claims.Role {
+			case "sales":
+				if sc.SalesRepRepo != nil {
+					rep, err := sc.SalesRepRepo.GetByID(c.UserContext(), uid)
+					if err != nil || rep == nil || rep.Status != "active" {
+						return utils.UnauthorizedResponse(c, "บัญชีถูกปิดใช้งาน")
+					}
+				}
+			case "admin", "viewer":
+				if sc.AdminRepo != nil {
+					user, err := sc.AdminRepo.GetByID(c.UserContext(), uid)
+					if err != nil || user == nil || !user.IsActive {
+						return utils.UnauthorizedResponse(c, "บัญชีถูกปิดใช้งาน")
+					}
+				}
 			}
 		}
 

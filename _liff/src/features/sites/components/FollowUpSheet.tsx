@@ -97,7 +97,13 @@ export function FollowUpSheet({
       if (!sent && result.chatMessages?.length) {
         sent = await sendChatMessages(result.chatMessages)
       }
-      if (sent) toast.success('ส่งเข้ากลุ่มแล้ว')
+      if (sent) {
+        toast.success('ส่งเข้ากลุ่มแล้ว')
+        sessionStorage.removeItem('pendingChatMessages')
+      } else if (result.chatMessages?.length) {
+        sessionStorage.setItem('pendingChatMessages', JSON.stringify(result.chatMessages))
+        toast.warning('บันทึกแล้ว แต่ส่งเข้ากลุ่มไม่ได้ — กดส่งซ้ำได้')
+      }
 
       // Invalidate queries
       queryClient.invalidateQueries({ queryKey: siteKeys.detail(siteCode) })

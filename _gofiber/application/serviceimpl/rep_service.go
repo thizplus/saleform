@@ -34,6 +34,7 @@ func (s *repServiceImpl) List(ctx context.Context) ([]dto.RepResponse, error) {
 			Nickname:    r.Nickname,
 			Area:        r.Area,
 			Status:      r.Status,
+			CreatedAt:   r.CreatedAt,
 		})
 	}
 	return result, nil

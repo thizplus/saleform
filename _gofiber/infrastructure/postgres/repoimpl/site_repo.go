@@ -51,8 +51,9 @@ func (r *siteRepository) Update(ctx context.Context, site *models.Site) error {
 
 func (r *siteRepository) List(ctx context.Context, filter repositories.SiteFilter) ([]models.Site, int64, error) {
 	db := postgres.GetDB(ctx, r.db).Model(&models.Site{})
-	now := time.Now().UTC()
-	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+	loc, _ := time.LoadLocation("Asia/Bangkok")
+	now := time.Now().In(loc)
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
 
 	// Tab filters
 	switch filter.Tab {
@@ -95,52 +96,75 @@ func (r *siteRepository) List(ctx context.Context, filter repositories.SiteFilte
 }
 
 func (r *siteRepository) CountByRepAndStatus(ctx context.Context, repID uuid.UUID, since time.Time) (map[string]int, error) {
+	result := make(map[string]int)
+
+	// won/lost/cancelled: นับตาม closed_at (ตรงกับ admin analytics)
 	type row struct {
 		Status string
 		Count  int
 	}
-	var rows []row
+	var closedRows []row
 	err := postgres.GetDB(ctx, r.db).
 		Model(&models.Site{}).
 		Select("status, count(*) as count").
-		Where("owner_rep_id = ? AND created_at >= ?", repID, since).
+		Where("owner_rep_id = ? AND closed_at >= ? AND status IN ('won','lost','cancelled')", repID, since).
 		Group("status").
-		Scan(&rows).Error
+		Scan(&closedRows).Error
 	if err != nil {
 		return nil, err
 	}
-	result := make(map[string]int)
-	for _, r := range rows {
+	for _, r := range closedRows {
 		result[r.Status] = r.Count
 	}
+
+	// following: นับจากสถานะปัจจุบัน (ไม่ขึ้นกับช่วงเวลา)
+	var followCount int64
+	postgres.GetDB(ctx, r.db).
+		Model(&models.Site{}).
+		Where("owner_rep_id = ? AND status = 'following'", repID).
+		Count(&followCount)
+	result["following"] = int(followCount)
+
 	return result, nil
 }
 
 func (r *siteRepository) CountByStatus(ctx context.Context, since time.Time) (map[string]int, error) {
+	result := make(map[string]int)
+
+	// won/lost/cancelled: นับตาม closed_at
 	type row struct {
 		Status string
 		Count  int
 	}
-	var rows []row
+	var closedRows []row
 	err := postgres.GetDB(ctx, r.db).
 		Model(&models.Site{}).
 		Select("status, count(*) as count").
-		Where("created_at >= ?", since).
+		Where("closed_at >= ? AND status IN ('won','lost','cancelled')", since).
 		Group("status").
-		Scan(&rows).Error
+		Scan(&closedRows).Error
 	if err != nil {
 		return nil, err
 	}
-	result := make(map[string]int)
-	for _, r := range rows {
+	for _, r := range closedRows {
 		result[r.Status] = r.Count
 	}
+
+	// following: นับจากสถานะปัจจุบัน
+	var followCount int64
+	postgres.GetDB(ctx, r.db).
+		Model(&models.Site{}).
+		Where("status = 'following'").
+		Count(&followCount)
+	result["following"] = int(followCount)
+
 	return result, nil
 }
 
 func (r *siteRepository) CountOverdue(ctx context.Context, repID uuid.UUID) (int, error) {
-	now := time.Now().UTC()
-	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+	loc, _ := time.LoadLocation("Asia/Bangkok")
+	now := time.Now().In(loc)
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
 	var count int64
 	err := postgres.GetDB(ctx, r.db).
 		Model(&models.Site{}).

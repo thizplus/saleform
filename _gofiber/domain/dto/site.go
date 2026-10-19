@@ -21,6 +21,7 @@ type CreateSiteRequest struct {
 	PhotoIDs         []string `json:"photoIds"`
 	ForceNew         bool     `json:"forceNew"` // skip duplicate check
 	GroupID          string   `json:"groupId"`  // LINE group ID for push message
+	IdempotencyKey   string   `json:"-"`        // จาก header, ไม่รับจาก body
 }
 
 type CreateSiteResponse struct {
