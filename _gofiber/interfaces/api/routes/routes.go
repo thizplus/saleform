@@ -93,4 +93,6 @@ func Setup(app *fiber.App, cfg *config.Config, h Handlers) {
 
 	// Check-ins
 	admin.Get("/check-ins", h.AdminCheckIn.ListByDate)
+	admin.Get("/check-ins/summary", h.AdminCheckIn.TeamSummary)
+	admin.Get("/check-ins/summary/:repId", h.AdminCheckIn.RepSummary)
 }

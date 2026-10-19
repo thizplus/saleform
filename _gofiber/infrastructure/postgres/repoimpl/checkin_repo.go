@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"line-sales-api/domain/models"
+	"line-sales-api/domain/repositories"
 	"line-sales-api/infrastructure/postgres"
 
 	"github.com/google/uuid"
@@ -62,4 +63,29 @@ func (r *checkInRepository) ListByRep(ctx context.Context, repID uuid.UUID, from
 		Order("check_in_date DESC").
 		Find(&checkIns).Error
 	return checkIns, err
+}
+
+func (r *checkInRepository) SummaryByRep(ctx context.Context, repID uuid.UUID, from, to time.Time) (int, int, error) {
+	type result struct {
+		TotalKM int
+		Days    int
+	}
+	var res result
+	err := postgres.GetDB(ctx, r.db).
+		Table("daily_check_ins").
+		Select("COALESCE(SUM(daily_km), 0) as total_km, COUNT(*) as days").
+		Where("rep_id = ? AND check_in_date >= ? AND check_in_date <= ? AND deleted_at IS NULL", repID, from, to).
+		Scan(&res).Error
+	return res.TotalKM, res.Days, err
+}
+
+func (r *checkInRepository) SummaryAllReps(ctx context.Context, from, to time.Time) ([]repositories.RepCheckInSummaryRow, error) {
+	var rows []repositories.RepCheckInSummaryRow
+	err := postgres.GetDB(ctx, r.db).
+		Table("daily_check_ins").
+		Select("rep_id, COALESCE(SUM(daily_km), 0) as total_km, COUNT(*) as days").
+		Where("check_in_date >= ? AND check_in_date <= ? AND deleted_at IS NULL", from, to).
+		Group("rep_id").
+		Scan(&rows).Error
+	return rows, err
 }

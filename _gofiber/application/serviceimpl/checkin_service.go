@@ -3,6 +3,7 @@ package serviceimpl
 import (
 	"context"
 	"errors"
+	"math"
 	"time"
 
 	"line-sales-api/domain/dto"
@@ -150,4 +151,86 @@ func (s *checkInServiceImpl) ListByDate(ctx context.Context, date time.Time) ([]
 	}
 
 	return rows, nil
+}
+
+func (s *checkInServiceImpl) RepSummary(ctx context.Context, repID uuid.UUID, from, to time.Time) (*dto.CheckInSummaryResponse, error) {
+	totalKM, days, err := s.checkInRepo.SummaryByRep(ctx, repID, from, to)
+	if err != nil {
+		return nil, err
+	}
+
+	rep, _ := s.repRepo.GetByID(ctx, repID)
+	repName, pictureURL := "", ""
+	if rep != nil {
+		repName = rep.DisplayName
+		if rep.Nickname != "" {
+			repName = rep.Nickname
+		}
+		pictureURL = rep.PictureURL
+	}
+
+	var avgKM float64
+	if days > 0 {
+		avgKM = float64(totalKM) / float64(days)
+		avgKM = math.Round(avgKM*10) / 10
+	}
+
+	entries, _ := s.checkInRepo.ListByRep(ctx, repID, from, to)
+	entryBriefs := make([]dto.CheckInEntryBrief, 0, len(entries))
+	for _, e := range entries {
+		entryBriefs = append(entryBriefs, dto.CheckInEntryBrief{
+			Date:         e.CheckInDate.Format("2006-01-02"),
+			Mileage:      e.Mileage,
+			DailyKM:      e.DailyKM,
+			LicensePlate: e.LicensePlate,
+		})
+	}
+
+	return &dto.CheckInSummaryResponse{
+		RepID:       repID.String(),
+		RepName:     repName,
+		PictureURL:  pictureURL,
+		Period:      from.Format("2006-01-02") + "~" + to.Format("2006-01-02"),
+		TotalKM:     totalKM,
+		Days:        days,
+		AvgKMPerDay: avgKM,
+		Entries:     entryBriefs,
+	}, nil
+}
+
+func (s *checkInServiceImpl) TeamSummary(ctx context.Context, from, to time.Time) (*dto.TeamCheckInSummary, error) {
+	rows, err := s.checkInRepo.SummaryAllReps(ctx, from, to)
+	if err != nil {
+		return nil, err
+	}
+
+	reps := make([]dto.CheckInSummaryResponse, 0, len(rows))
+	for _, r := range rows {
+		rep, _ := s.repRepo.GetByID(ctx, r.RepID)
+		repName, pictureURL := "", ""
+		if rep != nil {
+			repName = rep.DisplayName
+			if rep.Nickname != "" {
+				repName = rep.Nickname
+			}
+			pictureURL = rep.PictureURL
+		}
+		var avgKM float64
+		if r.Days > 0 {
+			avgKM = math.Round(float64(r.TotalKM)/float64(r.Days)*10) / 10
+		}
+		reps = append(reps, dto.CheckInSummaryResponse{
+			RepID:       r.RepID.String(),
+			RepName:     repName,
+			PictureURL:  pictureURL,
+			TotalKM:     r.TotalKM,
+			Days:        r.Days,
+			AvgKMPerDay: avgKM,
+		})
+	}
+
+	return &dto.TeamCheckInSummary{
+		Period: from.Format("2006-01-02") + "~" + to.Format("2006-01-02"),
+		Reps:   reps,
+	}, nil
 }

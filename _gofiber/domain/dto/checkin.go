@@ -25,6 +25,30 @@ type CheckInStatusResponse struct {
 	LastMileage  int             `json:"lastMileage"`  // ไมล์ล่าสุด
 }
 
+// Summary
+type CheckInSummaryResponse struct {
+	RepID      string               `json:"repId"`
+	RepName    string               `json:"repName"`
+	PictureURL string               `json:"pictureUrl"`
+	Period     string               `json:"period"`
+	TotalKM    int                  `json:"totalKm"`
+	Days       int                  `json:"checkInDays"`
+	AvgKMPerDay float64             `json:"avgKmPerDay"`
+	Entries    []CheckInEntryBrief  `json:"entries,omitempty"`
+}
+
+type CheckInEntryBrief struct {
+	Date         string `json:"date"`
+	Mileage      int    `json:"mileage"`
+	DailyKM      *int   `json:"dailyKm"`
+	LicensePlate string `json:"licensePlate"`
+}
+
+type TeamCheckInSummary struct {
+	Period  string                    `json:"period"`
+	Reps    []CheckInSummaryResponse  `json:"reps"`
+}
+
 // Admin
 type AdminCheckInRow struct {
 	ID           string    `json:"id"`

@@ -15,4 +15,12 @@ type CheckInRepository interface {
 	GetLatestByRep(ctx context.Context, repID uuid.UUID) (*models.DailyCheckIn, error)
 	ListByDate(ctx context.Context, date time.Time) ([]models.DailyCheckIn, error)
 	ListByRep(ctx context.Context, repID uuid.UUID, from, to time.Time) ([]models.DailyCheckIn, error)
+	SummaryByRep(ctx context.Context, repID uuid.UUID, from, to time.Time) (totalKM int, days int, err error)
+	SummaryAllReps(ctx context.Context, from, to time.Time) ([]RepCheckInSummaryRow, error)
+}
+
+type RepCheckInSummaryRow struct {
+	RepID   uuid.UUID
+	TotalKM int
+	Days    int
 }

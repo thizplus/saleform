@@ -23,4 +23,8 @@ export const ADMIN_ROUTES = {
   ANALYTICS_LOST_REASONS: `${API_BASE}/admin/analytics/lost-reasons`,
   ANALYTICS_ACTIVITY: `${API_BASE}/admin/analytics/activity`,
   ANALYTICS_RECENT: `${API_BASE}/admin/analytics/recent-activity`,
+  // Check-ins
+  CHECK_INS: `${API_BASE}/admin/check-ins`,
+  CHECK_INS_SUMMARY: `${API_BASE}/admin/check-ins/summary`,
+  CHECK_INS_REP: (repId: string) => `${API_BASE}/admin/check-ins/summary/${repId}`,
 } as const
