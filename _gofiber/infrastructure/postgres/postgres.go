@@ -46,6 +46,7 @@ func AutoMigrate(db *gorm.DB) {
 		&models.SiteCodeCounter{},
 		&models.ReviewItem{},
 		&models.AppConfig{},
+		&models.DailyCheckIn{},
 	)
 	if err != nil {
 		slog.Error("Failed to auto migrate", "error", err)

@@ -20,6 +20,7 @@ type repositorySet struct {
 	reviewItem      repositories.ReviewItemRepository
 	appConfig       repositories.AppConfigRepository
 	analytics       repositories.AnalyticsRepository
+	checkIn         repositories.CheckInRepository
 }
 
 func newRepositories(db *gorm.DB) *repositorySet {
@@ -36,5 +37,6 @@ func newRepositories(db *gorm.DB) *repositorySet {
 		reviewItem:      repoimpl.NewReviewItemRepository(db),
 		appConfig:       repoimpl.NewAppConfigRepository(db),
 		analytics:       repoimpl.NewAnalyticsRepository(db),
+		checkIn:         repoimpl.NewCheckInRepository(db),
 	}
 }

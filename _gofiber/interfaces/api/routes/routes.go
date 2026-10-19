@@ -23,6 +23,8 @@ type Handlers struct {
 	AdminAnalytics *handlers.AdminAnalyticsHandler
 	AdminUser      *handlers.AdminUserHandler
 	AdminExport    *handlers.AdminExportHandler
+	AdminCheckIn   *handlers.AdminCheckInHandler
+	LIFFCheckIn    *handlers.LIFFCheckInHandler
 	// Status checker for auth middleware
 	StatusChecker *middleware.StatusChecker
 }
@@ -53,6 +55,8 @@ func Setup(app *fiber.App, cfg *config.Config, h Handlers) {
 	if h.LIFFUpload != nil {
 		liff.Post("/uploads", h.LIFFUpload.Upload)
 	}
+	liff.Get("/check-in/status", h.LIFFCheckIn.GetStatus)
+	liff.Post("/check-in", h.LIFFCheckIn.CheckIn)
 
 	// Admin auth
 	v1.Post("/admin/auth", h.AdminAuth.Login)
@@ -86,4 +90,7 @@ func Setup(app *fiber.App, cfg *config.Config, h Handlers) {
 
 	// Export
 	admin.Get("/export/sites", h.AdminExport.ExportSites)
+
+	// Check-ins
+	admin.Get("/check-ins", h.AdminCheckIn.ListByDate)
 }

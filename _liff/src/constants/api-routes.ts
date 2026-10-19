@@ -14,4 +14,6 @@ export const LIFF_ROUTES = {
   SITE_FOLLOW_UP: (code: string) => `${API_BASE}/liff/sites/${code}/follow-ups`,
   CHECK_DUPLICATE: `${API_BASE}/liff/sites/check-duplicate`,
   UPLOADS: `${API_BASE}/liff/uploads`,
+  CHECK_IN: `${API_BASE}/liff/check-in`,
+  CHECK_IN_STATUS: `${API_BASE}/liff/check-in/status`,
 } as const

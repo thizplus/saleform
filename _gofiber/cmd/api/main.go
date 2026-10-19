@@ -47,6 +47,8 @@ func main() {
 		AdminAnalytics: container.AdminAnalyticsHandler,
 		AdminUser:      container.AdminUserHandler,
 		AdminExport:    container.AdminExportHandler,
+		AdminCheckIn:   container.AdminCheckInHandler,
+		LIFFCheckIn:    container.LIFFCheckInHandler,
 		StatusChecker:  container.StatusChecker,
 	})
 
