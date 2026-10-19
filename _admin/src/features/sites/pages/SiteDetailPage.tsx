@@ -9,6 +9,7 @@ import {
   MapPin,
   Calendar,
   User,
+  Users,
   FileText,
   Pencil,
   ExternalLink,
@@ -158,6 +159,35 @@ export function SiteDetailPage() {
               </a>
             )}
           </div>
+
+          {/* Contacts */}
+          {site.contacts?.length > 0 && (
+            <div className="border rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Users className="size-4 text-muted-foreground" />
+                <h3 className="text-sm font-bold">ผู้ติดต่อ ({site.contacts.length})</h3>
+              </div>
+              <div className="space-y-2">
+                {site.contacts.map((c: { id: string; name: string; phone: string; contactType: string; authority: string; isPrimary: boolean }) => (
+                  <div key={c.id} className="flex items-center justify-between rounded-lg border px-3 py-2">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-medium">{c.name || 'ไม่ระบุชื่อ'}</span>
+                        {c.isPrimary && <Badge variant="outline" className="text-[10px] px-1">หลัก</Badge>}
+                      </div>
+                      {c.phone && (
+                        <a href={`tel:${c.phone}`} className="text-xs text-primary hover:underline num">{formatPhone(c.phone)}</a>
+                      )}
+                    </div>
+                    <div className="flex gap-1 shrink-0">
+                      {c.contactType && <Badge variant="secondary" className="text-[10px]">{c.contactType}</Badge>}
+                      {c.authority && <Badge variant="secondary" className="text-[10px]">{c.authority}</Badge>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Photo Gallery */}
           <div className="border rounded-lg p-4">

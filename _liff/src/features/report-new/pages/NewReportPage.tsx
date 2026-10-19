@@ -318,6 +318,25 @@ export function NewReportPage() {
           />
         </section>
 
+        {/* ===== ข้อมูลหน้างาน ===== */}
+        <section className="space-y-3">
+          <Label className="text-sm font-bold">ข้อมูลหน้างาน</Label>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label htmlFor="customerName" className="text-xs text-muted-foreground">ชื่อลูกค้า</Label>
+              <Input id="customerName" value={form.customerName} onChange={(e) => update('customerName', e.target.value)} placeholder="ชื่อลูกค้า" className="h-10 text-base" />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="contractorName" className="text-xs text-muted-foreground">ชื่อช่าง</Label>
+              <Input id="contractorName" value={form.contractorName} onChange={(e) => update('contractorName', e.target.value)} placeholder="ชื่อช่าง" className="h-10 text-base" />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="amphoe" className="text-xs text-muted-foreground">อำเภอ</Label>
+            <Input id="amphoe" value={form.amphoe} onChange={(e) => update('amphoe', e.target.value)} placeholder="อำเภอ" className="h-10 text-base" />
+          </div>
+        </section>
+
         {/* ===== ผู้ติดต่อ ===== */}
         <section className="space-y-3">
           <Label className="text-sm font-bold">ผู้ติดต่อ</Label>
@@ -333,30 +352,10 @@ export function NewReportPage() {
               ระบบใช้ตำแหน่ง GPS ตรวจงานซ้ำแทน ครั้งหน้าที่มาเจอใครค่อยเพิ่มเบอร์ตอนอัปเดตงาน
             </p>
           ) : (
-            <>
-              {/* ชื่อลูกค้า / ช่าง / อำเภอ */}
-              <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-1">
-                  <Label htmlFor="customerName" className="text-xs text-muted-foreground">ชื่อลูกค้า</Label>
-                  <Input id="customerName" value={form.customerName} onChange={(e) => update('customerName', e.target.value)} placeholder="ชื่อลูกค้า" className="h-10 text-base" />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="contractorName" className="text-xs text-muted-foreground">ชื่อช่าง</Label>
-                  <Input id="contractorName" value={form.contractorName} onChange={(e) => update('contractorName', e.target.value)} placeholder="ชื่อช่าง" className="h-10 text-base" />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <Label htmlFor="amphoe" className="text-xs text-muted-foreground">อำเภอ</Label>
-                <Input id="amphoe" value={form.amphoe} onChange={(e) => update('amphoe', e.target.value)} placeholder="อำเภอ" className="h-10 text-base" />
-              </div>
-
-              {/* รายชื่อผู้ติดต่อ (หลายคน) */}
-              <ContactListEditor
-                contacts={form.contacts}
-                onChange={(contacts) => update('contacts', contacts)}
-              />
-            </>
+            <ContactListEditor
+              contacts={form.contacts}
+              onChange={(contacts) => update('contacts', contacts)}
+            />
           )}
         </section>
 
