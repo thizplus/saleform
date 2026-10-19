@@ -169,8 +169,8 @@ export function SiteDetailPage() {
               </div>
               <div className="space-y-2">
                 {site.contacts.map((c: { id: string; name: string; phone: string; contactType: string; authority: string; isPrimary: boolean }) => (
-                  <div key={c.id} className="flex items-center justify-between rounded-lg border px-3 py-2">
-                    <div className="min-w-0">
+                  <div key={c.id} className="rounded-lg border px-3 py-2.5 space-y-1.5">
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5">
                         <span className="text-sm font-medium">{c.name || 'ไม่ระบุชื่อ'}</span>
                         {c.isPrimary && <Badge variant="outline" className="text-[10px] px-1">หลัก</Badge>}
@@ -179,9 +179,15 @@ export function SiteDetailPage() {
                         <a href={`tel:${c.phone}`} className="text-xs text-primary hover:underline num">{formatPhone(c.phone)}</a>
                       )}
                     </div>
-                    <div className="flex gap-1 shrink-0">
-                      {c.contactType && <Badge variant="secondary" className="text-[10px]">{c.contactType}</Badge>}
-                      {c.authority && <Badge variant="secondary" className="text-[10px]">{c.authority}</Badge>}
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                      <div>
+                        <span className="text-muted-foreground">ประเภท: </span>
+                        <span className="font-medium">{c.contactType || 'ไม่ระบุ'}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">สิทธิ์: </span>
+                        <span className="font-medium">{c.authority || 'ไม่ระบุ'}</span>
+                      </div>
                     </div>
                   </div>
                 ))}

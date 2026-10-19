@@ -74,7 +74,7 @@ export function SiteDetailSheet({ code, onClose }: SiteDetailSheetProps) {
                     <h4 className="text-sm font-medium mb-2">ผู้ติดต่อ ({site.contacts.length})</h4>
                     <div className="space-y-2">
                       {site.contacts.map((c) => (
-                        <div key={c.id} className="rounded-lg border p-2.5 space-y-1">
+                        <div key={c.id} className="rounded-lg border p-2.5 space-y-1.5">
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-medium">{c.name || 'ไม่ระบุชื่อ'}</span>
                             {c.isPrimary && (
@@ -86,13 +86,15 @@ export function SiteDetailSheet({ code, onClose }: SiteDetailSheetProps) {
                               {formatPhoneDisplay(c.phone)}
                             </a>
                           )}
-                          <div className="flex gap-1.5 flex-wrap">
-                            {c.contactType && (
-                              <Badge variant="secondary" className="text-[10px]">{c.contactType}</Badge>
-                            )}
-                            {c.authority && (
-                              <Badge variant="secondary" className="text-[10px]">{c.authority}</Badge>
-                            )}
+                          <div className="grid grid-cols-2 gap-1 text-xs">
+                            <div>
+                              <span className="text-muted-foreground">ประเภท: </span>
+                              <span className="font-medium">{c.contactType || 'ไม่ระบุ'}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">สิทธิ์: </span>
+                              <span className="font-medium">{c.authority || 'ไม่ระบุ'}</span>
+                            </div>
                           </div>
                         </div>
                       ))}
