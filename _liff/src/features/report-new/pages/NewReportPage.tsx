@@ -321,15 +321,9 @@ export function NewReportPage() {
         {/* ===== ข้อมูลหน้างาน ===== */}
         <section className="space-y-3">
           <Label className="text-sm font-bold">ข้อมูลหน้างาน</Label>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <Label htmlFor="customerName" className="text-xs text-muted-foreground">ชื่อลูกค้า</Label>
-              <Input id="customerName" value={form.customerName} onChange={(e) => update('customerName', e.target.value)} placeholder="ชื่อลูกค้า" className="h-10 text-base" />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="contractorName" className="text-xs text-muted-foreground">ชื่อช่าง</Label>
-              <Input id="contractorName" value={form.contractorName} onChange={(e) => update('contractorName', e.target.value)} placeholder="ชื่อช่าง" className="h-10 text-base" />
-            </div>
+          <div className="space-y-1">
+            <Label htmlFor="customerName" className="text-xs text-muted-foreground">ชื่องาน / ชื่อโปรเจค</Label>
+            <Input id="customerName" value={form.customerName} onChange={(e) => update('customerName', e.target.value)} placeholder="เช่น บ้านคุณสมชาย, โปรเจคหมู่บ้าน..." className="h-10 text-base" />
           </div>
           <div className="space-y-1">
             <Label htmlFor="amphoe" className="text-xs text-muted-foreground">อำเภอ</Label>
