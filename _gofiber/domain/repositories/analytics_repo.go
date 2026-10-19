@@ -7,6 +7,8 @@ import (
 	"github.com/google/uuid"
 )
 
+// time is used in row types below
+
 // AnalyticsRepository รวม query สำหรับ analytics ทั้งหมด
 // แยกจาก SiteRepository เพื่อไม่ให้บวม
 type AnalyticsRepository interface {
@@ -22,7 +24,9 @@ type AnalyticsRepository interface {
 
 	// Trend (time-series)
 	ReportTrend(ctx context.Context, from, to time.Time, bucket string, repID *uuid.UUID) ([]TrendRow, error)
+	ReportTrendDetailed(ctx context.Context, from, to time.Time, bucket string, repID *uuid.UUID, amphoe string) ([]DetailedTrendRow, error)
 	WonTrend(ctx context.Context, from, to time.Time, bucket string, repID *uuid.UUID) ([]TrendRow, error)
+	LostTrend(ctx context.Context, from, to time.Time, bucket string, repID *uuid.UUID) ([]TrendRow, error)
 
 	// By-area
 	SiteCountsByArea(ctx context.Context, from, to time.Time, repID *uuid.UUID, level string) ([]AreaRow, error)
@@ -31,8 +35,19 @@ type AnalyticsRepository interface {
 	LostReasonCounts(ctx context.Context, from, to time.Time, repID *uuid.UUID, amphoe string) ([]ReasonRow, error)
 	CompetitorCounts(ctx context.Context, from, to time.Time, repID *uuid.UUID, amphoe string) ([]ReasonRow, error)
 
+	// Avg days to win
+	AvgDaysToWin(ctx context.Context, from, to time.Time, repID *uuid.UUID, amphoe string) (*float64, error)
+
 	// Activity heatmap
 	ActivityByDate(ctx context.Context, from, to time.Time, repID *uuid.UUID) ([]ActivityRow, error)
+
+	// Recent activity (latest reports)
+	RecentReports(ctx context.Context, from, to time.Time, repID *uuid.UUID, amphoe string, limit int) ([]RecentReportRow, error)
+
+	// Lost sites list
+	LostSites(ctx context.Context, from, to time.Time, repID *uuid.UUID, amphoe string) ([]LostSiteRow, error)
+	// Lost by stage
+	LostByStage(ctx context.Context, from, to time.Time, repID *uuid.UUID, amphoe string) ([]ReasonRow, error)
 }
 
 // Row types สำหรับ SQL results
@@ -55,6 +70,13 @@ type TrendRow struct {
 	Value  int
 }
 
+type DetailedTrendRow struct {
+	Bucket    string
+	Visits    int
+	NewSites  int
+	FollowUps int
+}
+
 type AreaRow struct {
 	Amphoe    string
 	Tambon    string
@@ -72,4 +94,26 @@ type ReasonRow struct {
 type ActivityRow struct {
 	Date  string
 	Count int
+}
+
+type RecentReportRow struct {
+	ID         string
+	SiteCode   string
+	RepName    string
+	ReportType string
+	Note       string
+	Status     string
+	ReportDate time.Time
+}
+
+type LostSiteRow struct {
+	SiteCode     string
+	CustomerName string
+	Amphoe       string
+	RepID        string
+	RepName      string
+	ClosedAt     time.Time
+	LostReason   string
+	Competitor   string
+	Stage        string
 }

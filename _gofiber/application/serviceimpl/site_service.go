@@ -127,7 +127,7 @@ func (s *siteServiceImpl) photoURL(key string) string {
 func (s *siteServiceImpl) Create(ctx context.Context, repID uuid.UUID, req *dto.CreateSiteRequest) (*dto.CreateSiteResponse, error) {
 	// Duplicate check (unless forceNew)
 	if !req.ForceNew {
-		dupResp, err := s.CheckDuplicate(ctx, req.Phone, req.Latitude, req.Longitude)
+		dupResp, err := s.CheckDuplicate(ctx, req.Phone, req.Latitude, req.Longitude, req.CustomerName)
 		if err == nil && dupResp.HasDuplicate {
 			return nil, &DuplicateError{Matches: dupResp.Matches}
 		}
@@ -161,10 +161,20 @@ func (s *siteServiceImpl) Create(ctx context.Context, repID uuid.UUID, req *dto.
 
 	resolvedGroupID := s.resolveGroupID(ctx, req.GroupID, repID)
 
+	// ถ้าไม่มีชื่อ ใช้ชื่อช่างแทน หรือ "ไม่ระบุชื่อ"
+	customerName := req.CustomerName
+	if customerName == "" {
+		if req.ContractorName != "" {
+			customerName = "ช่าง" + req.ContractorName
+		} else {
+			customerName = "ไม่ระบุชื่อ"
+		}
+	}
+
 	site := &models.Site{
 		BaseModel:         models.BaseModel{ID: siteID},
 		SiteCode:          siteCode,
-		CustomerName:      req.CustomerName,
+		CustomerName:      customerName,
 		CustomerType:      req.CustomerType,
 		ContractorName:    req.ContractorName,
 		DecisionMaker:     req.DecisionMaker,
@@ -172,6 +182,8 @@ func (s *siteServiceImpl) Create(ctx context.Context, repID uuid.UUID, req *dto.
 		Latitude:          req.Latitude,
 		Longitude:         req.Longitude,
 		Address:           req.Address,
+		Tambon:            req.Tambon,
+		Amphoe:            req.Amphoe,
 		Stage:             firstNonEmpty(req.Stage, "new"),
 		Status:            "following",
 		ExpectedOrderDate: expectedDate,
@@ -287,8 +299,9 @@ func (s *siteServiceImpl) Create(ctx context.Context, repID uuid.UUID, req *dto.
 	}, nil
 }
 
-func (s *siteServiceImpl) CheckDuplicate(ctx context.Context, phone string, lat, lng *float64) (*dto.DuplicateCheckResponse, error) {
+func (s *siteServiceImpl) CheckDuplicate(ctx context.Context, phone string, lat, lng *float64, customerName string) (*dto.DuplicateCheckResponse, error) {
 	resp := &dto.DuplicateCheckResponse{}
+	matched := make(map[string]bool) // track siteCode เพื่อไม่ให้ซ้ำ
 
 	// Check by phone
 	if phone != "" {
@@ -309,29 +322,20 @@ func (s *siteServiceImpl) CheckDuplicate(ctx context.Context, phone string, lat,
 						OwnerName:    ownerName,
 						Status:       site.Status,
 					})
+					matched[site.SiteCode] = true
 				}
 			}
 		}
 	}
-	// Note: IsMine จะถูก set ใน handler (ที่รู้ repID ของคน request)
 
-	// Check by location (150m radius)
+	// Check by location (300m radius)
 	if lat != nil && lng != nil {
-		nearbySites, err := s.siteRepo.FindNearby(ctx, *lat, *lng, 150)
+		nearbySites, err := s.siteRepo.FindNearby(ctx, *lat, *lng, 300)
 		if err == nil {
 			for _, site := range nearbySites {
-				// Avoid duplicates from phone match
-				already := false
-				for _, m := range resp.Matches {
-					if m.SiteCode == site.SiteCode {
-						already = true
-						break
-					}
-				}
-				if already {
+				if matched[site.SiteCode] {
 					continue
 				}
-
 				dist := haversineDistance(*lat, *lng, *site.Latitude, *site.Longitude)
 				distInt := int(math.Round(dist))
 				owner, _ := s.salesRepRepo.GetByID(ctx, site.OwnerRepID)
@@ -348,6 +352,33 @@ func (s *siteServiceImpl) CheckDuplicate(ctx context.Context, phone string, lat,
 					OwnerName:    ownerName,
 					Status:       site.Status,
 				})
+				matched[site.SiteCode] = true
+			}
+		}
+	}
+
+	// Check by customer name (fuzzy match, threshold 0.3)
+	if customerName != "" {
+		nameSites, err := s.siteRepo.FindByNameSimilar(ctx, customerName, 0.3)
+		if err == nil {
+			for _, site := range nameSites {
+				if matched[site.SiteCode] {
+					continue
+				}
+				owner, _ := s.salesRepRepo.GetByID(ctx, site.OwnerRepID)
+				ownerName := ""
+				if owner != nil {
+					ownerName = owner.DisplayName
+				}
+				resp.Matches = append(resp.Matches, dto.DuplicateMatch{
+					SiteCode:     site.SiteCode,
+					CustomerName: site.CustomerName,
+					Phone:        site.Phone,
+					Reason:       "name",
+					OwnerName:    ownerName,
+					Status:       site.Status,
+				})
+				matched[site.SiteCode] = true
 			}
 		}
 	}
@@ -441,6 +472,7 @@ func (s *siteServiceImpl) GetByCode(ctx context.Context, code string, viewerRepI
 		CanEdit:           canEdit,
 		MapsURL:           mapsURL,
 		CreatedAt:         site.CreatedAt,
+		ClosedAt:          site.ClosedAt,
 		Reports:           reportBriefs,
 		Photos:            allPhotos,
 	}, nil
@@ -564,6 +596,9 @@ func (s *siteServiceImpl) AddFollowUp(ctx context.Context, repID uuid.UUID, code
 
 	// Update site
 	site.Status = req.Status
+	if req.Status == "won" || req.Status == "lost" || req.Status == "cancelled" {
+		site.ClosedAt = &now
+	}
 	if req.Stage != "" {
 		site.Stage = req.Stage
 	}
@@ -591,7 +626,32 @@ func (s *siteServiceImpl) AddFollowUp(ctx context.Context, repID uuid.UUID, code
 				}
 			}
 			if len(photoUUIDs) > 0 {
-				return s.mediaRepo.UpdateReportID(txCtx, photoUUIDs, reportID)
+				if err := s.mediaRepo.UpdateReportID(txCtx, photoUUIDs, reportID); err != nil {
+					return err
+				}
+			}
+		}
+		// เพิ่ม contact ใหม่ (จากกรณี "อัปเดตงานเดิมแทน" ที่มีเบอร์ใหม่)
+		if req.NewPhone != "" {
+			newPhone := normalizePhone(req.NewPhone)
+			if newPhone != "" && newPhone != site.Phone {
+				contact := &models.Contact{
+					BaseModel: models.BaseModel{ID: uuid.New()},
+					Phone:     newPhone,
+					SiteID:    site.ID,
+					IsPrimary: false,
+				}
+				if err := s.contactRepo.Create(txCtx, contact); err != nil {
+					logger.WarnContext(txCtx, "Failed to add new contact", "error", err, "phone", newPhone)
+					// ไม่ fail ทั้ง transaction — contact เป็น optional
+				}
+				// อัปเดต phone หลักของ site ถ้ายังไม่มี
+				if site.Phone == "" {
+					site.Phone = newPhone
+					if err := s.siteRepo.Update(txCtx, site); err != nil {
+						return err
+					}
+				}
 			}
 		}
 		return nil

@@ -17,6 +17,7 @@ type SiteRepository interface {
 	Update(ctx context.Context, site *models.Site) error
 	List(ctx context.Context, filter SiteFilter) ([]models.Site, int64, error)
 	FindNearby(ctx context.Context, lat, lng float64, radiusMeters float64) ([]models.Site, error)
+	FindByNameSimilar(ctx context.Context, name string, threshold float64) ([]models.Site, error)
 	CountByRepAndStatus(ctx context.Context, repID uuid.UUID, since time.Time) (map[string]int, error)
 	CountByStatus(ctx context.Context, since time.Time) (map[string]int, error)
 	CountOverdue(ctx context.Context, repID uuid.UUID) (int, error)

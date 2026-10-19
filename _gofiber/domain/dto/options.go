@@ -6,4 +6,5 @@ type OptionsResponse struct {
 	Stages         []string `json:"stages"`
 	LostReasons    []string `json:"lostReasons"`
 	Competitors    []string `json:"competitors"`
+	Amphoes        []string `json:"amphoes"`
 }

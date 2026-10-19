@@ -23,9 +23,6 @@ export function RegisterPage({ onSuccess }: RegisterPageProps) {
   const [phone, setPhone] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  // TODO: เปลี่ยนเป็น multi-select อำเภอจาก config (ตอนนี้ใส่ text ก่อน)
-  const [areaText, setAreaText] = useState('')
-
   async function handleSubmit() {
     if (!nickname.trim()) {
       toast.error('กรุณากรอกชื่อเล่น')
@@ -40,14 +37,10 @@ export function RegisterPage({ onSuccess }: RegisterPageProps) {
         return
       }
 
-      const areas = areaText.trim()
-        ? areaText.split(',').map((a) => a.trim()).filter(Boolean)
-        : []
-
       const data = await authService.register({
         idToken,
         nickname: nickname.trim(),
-        areas,
+        areas: [],
         phone: phone.replace(/\D/g, ''),
       })
 
@@ -87,18 +80,6 @@ export function RegisterPage({ onSuccess }: RegisterPageProps) {
               placeholder="เช่น บอม"
               className="h-12 text-base"
             />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="area">พื้นที่ที่ดูแล</Label>
-            <Input
-              id="area"
-              value={areaText}
-              onChange={(e) => setAreaText(e.target.value)}
-              placeholder="เช่น อ.เมือง, อ.โนนสูง"
-              className="h-12 text-base"
-            />
-            <p className="text-xs text-muted-foreground">คั่นด้วยเครื่องหมาย ,</p>
           </div>
 
           <div className="space-y-1.5">

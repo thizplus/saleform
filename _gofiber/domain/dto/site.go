@@ -4,8 +4,8 @@ import "time"
 
 // Create Site (new report)
 type CreateSiteRequest struct {
-	Phone            string   `json:"phone" validate:"required"`
-	CustomerName     string   `json:"customerName" validate:"required"`
+	Phone            string   `json:"phone"`
+	CustomerName     string   `json:"customerName"`
 	CustomerType     string   `json:"customerType"`
 	ContractorName   string   `json:"contractorName"`
 	DecisionMaker    string   `json:"decisionMaker"`
@@ -14,6 +14,8 @@ type CreateSiteRequest struct {
 	Latitude         *float64 `json:"lat"`
 	Longitude        *float64 `json:"lng"`
 	Address          string   `json:"address"`
+	Tambon           string   `json:"tambon"`
+	Amphoe           string   `json:"amphoe"`
 	ExpectedOrderDate *string `json:"expectedOrderDate"` // YYYY-MM-DD
 	NextFollowUpDate  *string `json:"nextFollowUpDate"`  // YYYY-MM-DD
 	PhotoIDs         []string `json:"photoIds"`
@@ -39,6 +41,7 @@ type CreateFollowUpRequest struct {
 	DecisionMaker    string   `json:"decisionMaker"`
 	PhotoIDs         []string `json:"photoIds"`
 	GroupID          string   `json:"groupId"`
+	NewPhone         string   `json:"newPhone"` // เพิ่ม contact ใหม่ให้งานเดิม (จากกรณี "อัปเดตงานเดิมแทน")
 }
 
 type CreateFollowUpResponse struct {
@@ -85,6 +88,7 @@ type SiteBrief struct {
 	OwnerName        string     `json:"ownerName"`
 	ReportCount      int        `json:"reportCount"`
 	CreatedAt        time.Time  `json:"createdAt"`
+	ClosedAt         *time.Time `json:"closedAt,omitempty"`
 }
 
 // Site detail
@@ -105,11 +109,12 @@ type SiteDetailResponse struct {
 	Competitor       string    `json:"competitor"`
 	ExpectedOrderDate *string  `json:"expectedOrderDate"`
 	NextFollowUpDate  *string  `json:"nextFollowUpDate"`
-	OwnerName        string    `json:"ownerName"`
-	OwnerID          string    `json:"ownerId"`
-	CanEdit          bool      `json:"canEdit"`
-	MapsURL          string    `json:"mapsUrl"`
-	CreatedAt        time.Time `json:"createdAt"`
+	OwnerName        string     `json:"ownerName"`
+	OwnerID          string     `json:"ownerId"`
+	CanEdit          bool       `json:"canEdit"`
+	MapsURL          string     `json:"mapsUrl"`
+	CreatedAt        time.Time  `json:"createdAt"`
+	ClosedAt         *time.Time `json:"closedAt,omitempty"`
 	Reports          []ReportBrief `json:"reports"`
 	Photos           []PhotoBrief  `json:"photos"`
 }

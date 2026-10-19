@@ -30,6 +30,9 @@ func Connect(cfg config.DBConfig) *gorm.DB {
 }
 
 func AutoMigrate(db *gorm.DB) {
+	// Enable pg_trgm for fuzzy name matching in duplicate check
+	db.Exec("CREATE EXTENSION IF NOT EXISTS pg_trgm")
+
 	// ลำดับสำคัญ: table ที่ถูกอ้าง FK ต้องสร้างก่อน
 	err := db.AutoMigrate(
 		&models.AdminUser{},

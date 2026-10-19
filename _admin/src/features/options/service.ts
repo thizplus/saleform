@@ -7,6 +7,7 @@ export interface DropdownOptions {
   stages: string[]
   lostReasons: string[]
   competitors: string[]
+  amphoes: string[]
 }
 
 export const optionsService = {

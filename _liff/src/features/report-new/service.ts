@@ -24,11 +24,12 @@ export const reportNewService = {
     return res.data.data
   },
 
-  async checkDuplicate(phone: string, lat?: number | null, lng?: number | null): Promise<DuplicateCheckResponse> {
+  async checkDuplicate(phone: string, lat?: number | null, lng?: number | null, customerName?: string): Promise<DuplicateCheckResponse> {
     const params: Record<string, string | number> = {}
     if (phone) params.phone = phone
     if (lat) params.lat = lat
     if (lng) params.lng = lng
+    if (customerName) params.name = customerName
 
     const res = await apiClient.get<{ data: DuplicateCheckResponse }>(LIFF_ROUTES.CHECK_DUPLICATE, { params })
     return res.data.data

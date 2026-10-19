@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Phone, RefreshCw, BarChart3, Search } from 'lucide-react'
+import { Plus, Phone, PenLine, RefreshCw, BarChart3, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { StatusBadge } from '@/components/shared'
@@ -166,7 +166,7 @@ export function HomePage() {
   )
 }
 
-/** การ์ดงาน compact — text-based + ปุ่ม action เรียงเป็นแถว */
+/** การ์ดงาน compact — 1 แถวข้อมูล + ปุ่มชิดขวา */
 function SiteCard({
   site,
   onTap,
@@ -180,40 +180,43 @@ function SiteCard({
     site.amphoe && `อ.${site.amphoe}`,
     site.phone && formatPhone(site.phone),
     site.reportCount > 0 && `ตาม ${site.reportCount} ครั้ง`,
-    site.nextFollowUpDate && `นัด ${formatThaiDate(site.nextFollowUpDate)}`,
   ].filter(Boolean).join(' · ')
 
   return (
     <div
-      className="border rounded-xl p-3 space-y-2 active:bg-muted/50 transition-colors"
+      className="border rounded-xl px-3 py-2.5 flex items-center gap-2.5 active:bg-muted/50 transition-colors"
       onClick={onTap}
     >
-      {/* แถว 1: ชื่อ + สถานะ */}
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 flex-1">
-          <p className="text-[15px] font-bold leading-tight truncate">{site.customerName || 'ไม่ระบุชื่อ'}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            <span className="num font-bold text-foreground/70">#{site.siteCode}</span>
-            {info && <> · {info}</>}
-          </p>
+      {/* ข้อมูล */}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1.5">
+          <p className="text-sm font-bold truncate">{site.customerName || 'ไม่ระบุชื่อ'}</p>
+          <StatusBadge status={site.status} nextFollowUpDate={site.nextFollowUpDate} className="shrink-0" />
         </div>
-        <StatusBadge status={site.status} nextFollowUpDate={site.nextFollowUpDate} className="shrink-0 mt-0.5" />
+        <p className="text-xs text-muted-foreground mt-0.5 truncate">
+          <span className="num font-bold text-foreground/70">#{site.siteCode}</span>
+          {info && <> · {info}</>}
+        </p>
       </div>
 
-      {/* แถว 2: ปุ่ม action */}
-      <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+      {/* ปุ่มขวา */}
+      <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
         {site.phone && (
           <a
             href={`tel:${site.phone}`}
-            className="h-8 px-3 rounded-lg border text-xs font-bold flex items-center gap-1.5 hover:bg-muted transition-colors"
+            className="size-8 grid place-items-center rounded-lg border hover:bg-muted transition-colors"
+            aria-label="โทร"
           >
             <Phone className="size-3.5" />
-            โทร
           </a>
         )}
-        <Button variant="default" size="sm" className="h-8 flex-1 text-xs" onClick={onUpdate}>
-          อัปเดต
-        </Button>
+        <button
+          onClick={onUpdate}
+          className="size-8 grid place-items-center rounded-lg border hover:bg-muted transition-colors"
+          aria-label="อัปเดต"
+        >
+          <PenLine className="size-3.5" />
+        </button>
       </div>
     </div>
   )

@@ -3,12 +3,14 @@ import { useAuthStore } from '@/stores/auth'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { LoginPage } from '@/features/auth'
 import { SitesPage, SiteDetailPage } from '@/features/sites'
+import { FollowUpsPage } from '@/features/followups'
+import { DashboardPage } from '@/features/dashboard'
+import { PerformancePage } from '@/features/performance'
+import { AreasPage } from '@/features/areas'
+import { LostPage } from '@/features/lost'
 import { RepsPage } from '@/features/reps'
 import { OptionsPage } from '@/features/options'
-import { FollowUpsPage } from '@/features/followups'
 import { UsersPage } from '@/features/users'
-import { DashboardPage } from '@/features/dashboard'
-import { ReportsPage } from '@/features/reports'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
@@ -28,7 +30,10 @@ export function AppRoutes() {
         }
       >
         <Route path="/" element={<DashboardPage />} />
-        <Route path="/reports" element={<ReportsPage />} />
+        <Route path="/performance" element={<PerformancePage />} />
+        <Route path="/performance/:repId" element={<PerformancePage />} />
+        <Route path="/areas" element={<AreasPage />} />
+        <Route path="/lost" element={<LostPage />} />
         <Route path="/sites" element={<SitesPage />} />
         <Route path="/sites/:code" element={<SiteDetailPage />} />
         <Route path="/follow-ups" element={<FollowUpsPage />} />

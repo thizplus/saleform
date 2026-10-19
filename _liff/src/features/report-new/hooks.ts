@@ -13,8 +13,8 @@ export function useOptions() {
 
 export function useCheckDuplicate() {
   return useMutation({
-    mutationFn: ({ phone, lat, lng }: { phone: string; lat?: number | null; lng?: number | null }) =>
-      reportNewService.checkDuplicate(phone, lat, lng),
+    mutationFn: ({ phone, lat, lng, customerName }: { phone: string; lat?: number | null; lng?: number | null; customerName?: string }) =>
+      reportNewService.checkDuplicate(phone, lat, lng, customerName),
   })
 }
 

@@ -12,4 +12,5 @@ type AnalyticsService interface {
 	ByArea(ctx context.Context, filter *dto.AnalyticsFilter, level string) ([]dto.AreaAnalytics, error)
 	LostReasons(ctx context.Context, filter *dto.AnalyticsFilter) (*dto.LostReasonsResponse, error)
 	Activity(ctx context.Context, filter *dto.AnalyticsFilter) ([]dto.ActivityPoint, error)
+	RecentActivity(ctx context.Context, filter *dto.AnalyticsFilter, limit int) ([]dto.RecentActivityItem, error)
 }

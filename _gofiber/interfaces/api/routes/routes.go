@@ -75,6 +75,7 @@ func Setup(app *fiber.App, cfg *config.Config, h Handlers) {
 	analytics.Get("/by-area", h.AdminAnalytics.ByArea)
 	analytics.Get("/lost-reasons", h.AdminAnalytics.LostReasons)
 	analytics.Get("/activity", h.AdminAnalytics.Activity)
+	analytics.Get("/recent-activity", h.AdminAnalytics.RecentActivity)
 
 	// Users
 	admin.Get("/users", h.AdminUser.ListUsers)

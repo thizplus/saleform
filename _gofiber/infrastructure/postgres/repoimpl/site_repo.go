@@ -161,3 +161,13 @@ func (r *siteRepository) FindNearby(ctx context.Context, lat, lng float64, radiu
 		Find(&sites).Error
 	return sites, err
 }
+
+func (r *siteRepository) FindByNameSimilar(ctx context.Context, name string, threshold float64) ([]models.Site, error) {
+	var sites []models.Site
+	// pg_trgm similarity — strip "คุณ" prefix for better matching
+	err := postgres.GetDB(ctx, r.db).
+		Where("status = 'following'").
+		Where("similarity(regexp_replace(customer_name, '^คุณ\\s*', '', 'g'), regexp_replace(?, '^คุณ\\s*', '', 'g')) > ?", name, threshold).
+		Find(&sites).Error
+	return sites, err
+}

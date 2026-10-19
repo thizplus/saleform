@@ -107,3 +107,19 @@ func (h *AdminAnalyticsHandler) Activity(c *fiber.Ctx) error {
 	}
 	return utils.SuccessResponse(c, data)
 }
+
+func (h *AdminAnalyticsHandler) RecentActivity(c *fiber.Ctx) error {
+	ctx := c.UserContext()
+	var filter dto.AnalyticsFilter
+	if err := c.QueryParser(&filter); err != nil {
+		return utils.BadRequestResponse(c, "Invalid query params")
+	}
+	limit := c.QueryInt("limit", 12)
+
+	data, err := h.analyticsService.RecentActivity(ctx, &filter, limit)
+	if err != nil {
+		logger.ErrorContext(ctx, "Analytics recent-activity failed", "error", err)
+		return utils.InternalErrorResponse(c, "Failed to get recent activity")
+	}
+	return utils.SuccessResponse(c, data)
+}

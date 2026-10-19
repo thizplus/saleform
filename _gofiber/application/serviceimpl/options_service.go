@@ -22,6 +22,7 @@ var defaultOptions = dto.OptionsResponse{
 	Stages:         []string{"เริ่มก่อสร้าง", "กำลังสร้าง", "ใกล้เสร็จ", "รอตัดสินใจ", "เสนอราคาแล้ว", "อื่นๆ"},
 	LostReasons:    []string{"ราคาสูง", "ส่งช้า", "ใช้คู่แข่ง", "เปลี่ยนใจ", "อื่นๆ"},
 	Competitors:    []string{},
+	Amphoes:        []string{},
 }
 
 func (s *optionsServiceImpl) GetOptions(ctx context.Context) (*dto.OptionsResponse, error) {
@@ -44,6 +45,9 @@ func (s *optionsServiceImpl) GetOptions(ctx context.Context) (*dto.OptionsRespon
 			}
 			if len(dbOpts.Competitors) > 0 {
 				resp.Competitors = dbOpts.Competitors
+			}
+			if len(dbOpts.Amphoes) > 0 {
+				resp.Amphoes = dbOpts.Amphoes
 			}
 		}
 	}

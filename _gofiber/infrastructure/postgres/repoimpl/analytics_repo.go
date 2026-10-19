@@ -52,39 +52,52 @@ func (r *analyticsRepository) CountReports(ctx context.Context, from, to time.Ti
 }
 
 func (r *analyticsRepository) CountSitesByStatus(ctx context.Context, from, to time.Time, repID *uuid.UUID, amphoe string) (int, int, int, int, error) {
-	db := postgres.GetDB(ctx, r.db).
+	// จบได้/จบที่อื่น/ยกเลิก: นับตาม closed_at (วันปิดงาน)
+	closedDB := postgres.GetDB(ctx, r.db).
 		Table("sites").
-		Where("created_at >= ? AND created_at < ? AND deleted_at IS NULL", from, to)
+		Where("closed_at >= ? AND closed_at < ? AND deleted_at IS NULL", from, to)
 	if repID != nil {
-		db = db.Where("owner_rep_id = ?", *repID)
+		closedDB = closedDB.Where("owner_rep_id = ?", *repID)
 	}
 	if amphoe != "" {
-		db = db.Where("amphoe = ?", amphoe)
+		closedDB = closedDB.Where("amphoe = ?", amphoe)
 	}
 
 	type row struct {
 		Status string
 		Count  int
 	}
-	var rows []row
-	err := db.Select("status, count(*) as count").Group("status").Scan(&rows).Error
+	var closedRows []row
+	err := closedDB.Select("status, count(*) as count").Group("status").Scan(&closedRows).Error
 	if err != nil {
 		return 0, 0, 0, 0, err
 	}
-	var won, lost, following, cancelled int
-	for _, r := range rows {
+	var won, lost, cancelled int
+	for _, r := range closedRows {
 		switch r.Status {
 		case "won":
 			won = r.Count
 		case "lost":
 			lost = r.Count
-		case "following":
-			following = r.Count
 		case "cancelled":
 			cancelled = r.Count
 		}
 	}
-	return won, lost, following, cancelled, nil
+
+	// ตามต่อ: นับจากสถานะปัจจุบัน (ไม่ขึ้นกับช่วงเวลา)
+	followDB := postgres.GetDB(ctx, r.db).
+		Table("sites").
+		Where("status = 'following' AND deleted_at IS NULL")
+	if repID != nil {
+		followDB = followDB.Where("owner_rep_id = ?", *repID)
+	}
+	if amphoe != "" {
+		followDB = followDB.Where("amphoe = ?", amphoe)
+	}
+	var following int64
+	followDB.Count(&following)
+
+	return won, lost, int(following), cancelled, nil
 }
 
 func (r *analyticsRepository) CountOverdueAll(ctx context.Context) (int, error) {
@@ -148,11 +161,12 @@ func (r *analyticsRepository) ReportCountsByRep(ctx context.Context, from, to ti
 }
 
 func (r *analyticsRepository) SiteCountsByRep(ctx context.Context, from, to time.Time, amphoe string) ([]repositories.RepSiteRow, error) {
-	db := postgres.GetDB(ctx, r.db).
+	// จบได้/จบที่อื่น: ใช้ closed_at
+	closedDB := postgres.GetDB(ctx, r.db).
 		Table("sites").
-		Where("created_at >= ? AND created_at < ? AND deleted_at IS NULL", from, to)
+		Where("closed_at >= ? AND closed_at < ? AND deleted_at IS NULL", from, to)
 	if amphoe != "" {
-		db = db.Where("amphoe = ?", amphoe)
+		closedDB = closedDB.Where("amphoe = ?", amphoe)
 	}
 
 	type raw struct {
@@ -160,14 +174,14 @@ func (r *analyticsRepository) SiteCountsByRep(ctx context.Context, from, to time
 		Status     string
 		Count      int
 	}
-	var rows []raw
-	err := db.Select("owner_rep_id, status, count(*) as count").Group("owner_rep_id, status").Scan(&rows).Error
+	var closedRows []raw
+	err := closedDB.Select("owner_rep_id, status, count(*) as count").Group("owner_rep_id, status").Scan(&closedRows).Error
 	if err != nil {
 		return nil, err
 	}
 
 	repMap := make(map[uuid.UUID]*repositories.RepSiteRow)
-	for _, r := range rows {
+	for _, r := range closedRows {
 		if _, ok := repMap[r.OwnerRepID]; !ok {
 			repMap[r.OwnerRepID] = &repositories.RepSiteRow{RepID: r.OwnerRepID}
 		}
@@ -177,9 +191,23 @@ func (r *analyticsRepository) SiteCountsByRep(ctx context.Context, from, to time
 			rs.Won = r.Count
 		case "lost":
 			rs.Lost = r.Count
-		case "following":
-			rs.Following = r.Count
 		}
+	}
+
+	// ตามต่อ: สถานะปัจจุบัน
+	followDB := postgres.GetDB(ctx, r.db).
+		Table("sites").
+		Where("status = 'following' AND deleted_at IS NULL")
+	if amphoe != "" {
+		followDB = followDB.Where("amphoe = ?", amphoe)
+	}
+	var followRows []raw
+	followDB.Select("owner_rep_id, 'following' as status, count(*) as count").Group("owner_rep_id").Scan(&followRows)
+	for _, r := range followRows {
+		if _, ok := repMap[r.OwnerRepID]; !ok {
+			repMap[r.OwnerRepID] = &repositories.RepSiteRow{RepID: r.OwnerRepID}
+		}
+		repMap[r.OwnerRepID].Following = r.Count
 	}
 
 	result := make([]repositories.RepSiteRow, 0, len(repMap))
@@ -205,10 +233,10 @@ func (r *analyticsRepository) ReportTrend(ctx context.Context, from, to time.Tim
 }
 
 func (r *analyticsRepository) WonTrend(ctx context.Context, from, to time.Time, bucket string, repID *uuid.UUID) ([]repositories.TrendRow, error) {
-	truncFn := dateTrunc(bucket)
+	truncFn := dateTruncField(bucket, "closed_at")
 	db := postgres.GetDB(ctx, r.db).
 		Table("sites").
-		Where("created_at >= ? AND created_at < ? AND status = 'won' AND deleted_at IS NULL", from, to)
+		Where("closed_at >= ? AND closed_at < ? AND status = 'won' AND deleted_at IS NULL", from, to)
 	if repID != nil {
 		db = db.Where("owner_rep_id = ?", *repID)
 	}
@@ -220,9 +248,10 @@ func (r *analyticsRepository) WonTrend(ctx context.Context, from, to time.Time, 
 }
 
 func (r *analyticsRepository) SiteCountsByArea(ctx context.Context, from, to time.Time, repID *uuid.UUID, level string) ([]repositories.AreaRow, error) {
+	// ใช้ report-based visits ในช่วง + site status ปัจจุบัน + closed_at สำหรับ won/lost
 	db := postgres.GetDB(ctx, r.db).
 		Table("sites").
-		Where("created_at >= ? AND created_at < ? AND deleted_at IS NULL", from, to)
+		Where("deleted_at IS NULL AND amphoe != ''")
 	if repID != nil {
 		db = db.Where("owner_rep_id = ?", *repID)
 	}
@@ -237,9 +266,9 @@ func (r *analyticsRepository) SiteCountsByArea(ctx context.Context, from, to tim
 	var rows []repositories.AreaRow
 	err := db.Select(selectCols+`,
 		count(*) as visits,
-		count(*) filter (where status = 'won') as won,
-		count(*) filter (where status = 'lost') as lost,
-		count(*) filter (where status = 'following') as following`).
+		count(*) filter (where status = 'won' AND closed_at >= ? AND closed_at < ?) as won,
+		count(*) filter (where status = 'lost' AND closed_at >= ? AND closed_at < ?) as lost,
+		count(*) filter (where status = 'following') as following`, from, to, from, to).
 		Group(groupCol).Order("visits DESC").Scan(&rows).Error
 	return rows, err
 }
@@ -247,7 +276,7 @@ func (r *analyticsRepository) SiteCountsByArea(ctx context.Context, from, to tim
 func (r *analyticsRepository) LostReasonCounts(ctx context.Context, from, to time.Time, repID *uuid.UUID, amphoe string) ([]repositories.ReasonRow, error) {
 	db := postgres.GetDB(ctx, r.db).
 		Table("sites").
-		Where("status = 'lost' AND lost_reason != '' AND created_at >= ? AND created_at < ? AND deleted_at IS NULL", from, to)
+		Where("status = 'lost' AND lost_reason != '' AND closed_at >= ? AND closed_at < ? AND deleted_at IS NULL", from, to)
 	if repID != nil {
 		db = db.Where("owner_rep_id = ?", *repID)
 	}
@@ -264,7 +293,7 @@ func (r *analyticsRepository) LostReasonCounts(ctx context.Context, from, to tim
 func (r *analyticsRepository) CompetitorCounts(ctx context.Context, from, to time.Time, repID *uuid.UUID, amphoe string) ([]repositories.ReasonRow, error) {
 	db := postgres.GetDB(ctx, r.db).
 		Table("sites").
-		Where("status = 'lost' AND competitor != '' AND created_at >= ? AND created_at < ? AND deleted_at IS NULL", from, to)
+		Where("status = 'lost' AND competitor != '' AND closed_at >= ? AND closed_at < ? AND deleted_at IS NULL", from, to)
 	if repID != nil {
 		db = db.Where("owner_rep_id = ?", *repID)
 	}
@@ -292,13 +321,126 @@ func (r *analyticsRepository) ActivityByDate(ctx context.Context, from, to time.
 	return rows, err
 }
 
+func (r *analyticsRepository) ReportTrendDetailed(ctx context.Context, from, to time.Time, bucket string, repID *uuid.UUID, amphoe string) ([]repositories.DetailedTrendRow, error) {
+	truncFn := dateTrunc(bucket)
+	db := postgres.GetDB(ctx, r.db).
+		Table("site_reports").
+		Where("report_date >= ? AND report_date < ?", from, to)
+	if repID != nil {
+		db = db.Where("rep_id = ?", *repID)
+	}
+	if amphoe != "" {
+		db = db.Joins("JOIN sites ON sites.id = site_reports.site_id").Where("sites.amphoe = ?", amphoe)
+	}
+
+	var rows []repositories.DetailedTrendRow
+	err := db.Select(truncFn+` as bucket,
+		count(*) as visits,
+		count(*) filter (where report_type = 'new') as new_sites,
+		count(*) filter (where report_type = 'follow_up') as follow_ups`).
+		Group("bucket").Order("bucket").Scan(&rows).Error
+	return rows, err
+}
+
+func (r *analyticsRepository) LostTrend(ctx context.Context, from, to time.Time, bucket string, repID *uuid.UUID) ([]repositories.TrendRow, error) {
+	truncFn := dateTruncField(bucket, "closed_at")
+	db := postgres.GetDB(ctx, r.db).
+		Table("sites").
+		Where("closed_at >= ? AND closed_at < ? AND status = 'lost' AND deleted_at IS NULL", from, to)
+	if repID != nil {
+		db = db.Where("owner_rep_id = ?", *repID)
+	}
+
+	var rows []repositories.TrendRow
+	err := db.Select(truncFn+" as bucket, count(*) as value").
+		Group("bucket").Order("bucket").Scan(&rows).Error
+	return rows, err
+}
+
+func (r *analyticsRepository) AvgDaysToWin(ctx context.Context, from, to time.Time, repID *uuid.UUID, amphoe string) (*float64, error) {
+	db := postgres.GetDB(ctx, r.db).
+		Table("sites").
+		Where("status = 'won' AND closed_at >= ? AND closed_at < ? AND closed_at IS NOT NULL AND deleted_at IS NULL", from, to)
+	if repID != nil {
+		db = db.Where("owner_rep_id = ?", *repID)
+	}
+	if amphoe != "" {
+		db = db.Where("amphoe = ?", amphoe)
+	}
+
+	var result *float64
+	err := db.Select("round(avg(extract(epoch from (closed_at - created_at)) / 86400)::numeric, 1)").Scan(&result).Error
+	if err != nil || result == nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (r *analyticsRepository) RecentReports(ctx context.Context, from, to time.Time, repID *uuid.UUID, amphoe string, limit int) ([]repositories.RecentReportRow, error) {
+	db := postgres.GetDB(ctx, r.db).
+		Table("site_reports sr").
+		Joins("JOIN sites s ON s.id = sr.site_id").
+		Joins("JOIN sales_reps rp ON rp.id = sr.rep_id").
+		Where("sr.report_date >= ? AND sr.report_date < ?", from, to)
+	if repID != nil {
+		db = db.Where("sr.rep_id = ?", *repID)
+	}
+	if amphoe != "" {
+		db = db.Where("s.amphoe = ?", amphoe)
+	}
+
+	var rows []repositories.RecentReportRow
+	err := db.Select("sr.id, s.site_code, rp.nickname as rep_name, sr.report_type, sr.note, sr.status, sr.report_date").
+		Order("sr.report_date DESC").Limit(limit).Scan(&rows).Error
+	return rows, err
+}
+
+func (r *analyticsRepository) LostSites(ctx context.Context, from, to time.Time, repID *uuid.UUID, amphoe string) ([]repositories.LostSiteRow, error) {
+	db := postgres.GetDB(ctx, r.db).
+		Table("sites s").
+		Joins("JOIN sales_reps rp ON rp.id = s.owner_rep_id").
+		Where("s.status = 'lost' AND s.closed_at >= ? AND s.closed_at < ? AND s.deleted_at IS NULL", from, to)
+	if repID != nil {
+		db = db.Where("s.owner_rep_id = ?", *repID)
+	}
+	if amphoe != "" {
+		db = db.Where("s.amphoe = ?", amphoe)
+	}
+
+	var rows []repositories.LostSiteRow
+	err := db.Select("s.site_code, s.customer_name, s.amphoe, s.owner_rep_id as rep_id, rp.nickname as rep_name, s.closed_at, s.lost_reason, s.competitor, s.stage").
+		Order("s.closed_at DESC").Scan(&rows).Error
+	return rows, err
+}
+
+func (r *analyticsRepository) LostByStage(ctx context.Context, from, to time.Time, repID *uuid.UUID, amphoe string) ([]repositories.ReasonRow, error) {
+	db := postgres.GetDB(ctx, r.db).
+		Table("sites").
+		Where("status = 'lost' AND closed_at >= ? AND closed_at < ? AND deleted_at IS NULL", from, to)
+	if repID != nil {
+		db = db.Where("owner_rep_id = ?", *repID)
+	}
+	if amphoe != "" {
+		db = db.Where("amphoe = ?", amphoe)
+	}
+
+	var rows []repositories.ReasonRow
+	err := db.Select("stage as name, count(*) as count").
+		Group("stage").Order("count DESC").Scan(&rows).Error
+	return rows, err
+}
+
 func dateTrunc(bucket string) string {
+	return dateTruncField(bucket, "report_date")
+}
+
+func dateTruncField(bucket, field string) string {
 	switch bucket {
 	case "month":
-		return "to_char(report_date, 'YYYY-MM-01')"
+		return "to_char(" + field + ", 'YYYY-MM-01')"
 	case "year":
-		return "to_char(report_date, 'YYYY-01-01')"
+		return "to_char(" + field + ", 'YYYY-01-01')"
 	default: // day
-		return "to_char(report_date, 'YYYY-MM-DD')"
+		return "to_char(" + field + ", 'YYYY-MM-DD')"
 	}
 }

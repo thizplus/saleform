@@ -27,6 +27,7 @@ type Site struct {
 	Competitor      string
 	ExpectedOrderDate *time.Time
 	NextFollowUpDate  *time.Time `gorm:"index"`
+	ClosedAt        *time.Time `gorm:"index"` // วันปิดงาน (won/lost/cancelled)
 	// Owner
 	OwnerRepID      uuid.UUID `gorm:"type:uuid;index;not null"`
 	GroupID         string    `gorm:"index"` // LINE group where site was created

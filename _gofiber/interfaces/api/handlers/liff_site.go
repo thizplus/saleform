@@ -61,8 +61,11 @@ func (h *LIFFSiteHandler) CreateSite(c *fiber.Ctx) error {
 	if err := c.BodyParser(&req); err != nil {
 		return utils.BadRequestResponse(c, "Invalid request body")
 	}
-	if err := utils.ValidateStruct(&req); err != nil {
-		return utils.ValidationErrorResponse(c, utils.GetValidationErrors(err))
+
+	// Custom validation: ต้องมีอย่างน้อย 1 ตัวระบุ (phone, customerName, contractorName, หรือ GPS)
+	hasIdentifier := req.Phone != "" || req.CustomerName != "" || req.ContractorName != "" || (req.Latitude != nil && req.Longitude != nil)
+	if !hasIdentifier {
+		return utils.BadRequestResponse(c, "ต้องระบุอย่างน้อย 1 อย่าง: เบอร์โทร, ชื่อลูกค้า, ชื่อช่าง, หรือตำแหน่ง GPS")
 	}
 
 	resp, err := h.siteService.Create(ctx, *repID, &req)
@@ -85,6 +88,7 @@ func (h *LIFFSiteHandler) CheckDuplicate(c *fiber.Ctx) error {
 	phone := c.Query("phone")
 	lat := c.QueryFloat("lat", 0)
 	lng := c.QueryFloat("lng", 0)
+	customerName := c.Query("name")
 
 	var latPtr, lngPtr *float64
 	if lat != 0 {
@@ -94,7 +98,7 @@ func (h *LIFFSiteHandler) CheckDuplicate(c *fiber.Ctx) error {
 		lngPtr = &lng
 	}
 
-	resp, err := h.siteService.CheckDuplicate(ctx, phone, latPtr, lngPtr)
+	resp, err := h.siteService.CheckDuplicate(ctx, phone, latPtr, lngPtr, customerName)
 	if err != nil {
 		return utils.InternalErrorResponse(c, "Failed to check duplicate")
 	}

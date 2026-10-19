@@ -11,6 +11,7 @@ interface CreateFollowUpParams {
   decisionMaker: string
   photoIds: string[]
   groupId?: string
+  newPhone?: string
 }
 
 interface FollowUpResponse {

@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { ArrowLeft, CircleCheck, CircleX, CalendarClock, Ban } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { getLiffContext, sendChatMessages } from '@/lib/liff-helpers'
@@ -21,6 +22,8 @@ const STATUS_OPTIONS: { value: FollowUpStatus; label: string; icon: typeof Circl
   { value: 'lost', label: 'จบที่อื่น', icon: CircleX, activeClass: 'bg-danger text-white border-danger' },
   { value: 'cancelled', label: 'ยกเลิก', icon: Ban, activeClass: 'bg-muted-foreground text-white border-muted-foreground' },
 ]
+
+const QUICK_NOTES = ['โทรตามแล้ว', 'เข้าหน้างาน', 'ส่งใบเสนอราคาแล้ว', 'ลูกค้ายังเทียบราคา', 'ช่างไม่อยู่', 'รอเจ้าของตัดสินใจ']
 
 /** L9 — อัปเดตงาน (Follow-up) — หน้าเต็ม */
 export function UpdateSitePage() {
@@ -42,7 +45,20 @@ export function UpdateSitePage() {
   const [wonValue, setWonValue] = useState('')
   const [lostReason, setLostReason] = useState('')
   const [competitor, setCompetitor] = useState('')
+  const [newPhone, setNewPhone] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [kbOpen, setKbOpen] = useState(false)
+
+  useEffect(() => {
+    const typing = (el: EventTarget | null) =>
+      el instanceof HTMLTextAreaElement || (el instanceof HTMLInputElement && !['checkbox', 'radio', 'button', 'file'].includes(el.type))
+    const onIn = (e: FocusEvent) => { if (typing(e.target)) setKbOpen(true) }
+    let t: ReturnType<typeof setTimeout>
+    const onOut = () => { clearTimeout(t); t = setTimeout(() => setKbOpen(typing(document.activeElement)), 120) }
+    document.addEventListener('focusin', onIn)
+    document.addEventListener('focusout', onOut)
+    return () => { clearTimeout(t); document.removeEventListener('focusin', onIn); document.removeEventListener('focusout', onOut) }
+  }, [])
 
   const stages = options?.stages || ['เริ่มก่อสร้าง', 'กำลังสร้าง', 'ใกล้เสร็จ', 'รอตัดสินใจ', 'เสนอราคาแล้ว', 'อื่นๆ']
   const lostReasons = options?.lostReasons || ['ราคา', 'ช่างมีร้านประจำ', 'ส่งช้า', 'ของไม่พร้อม', 'อื่นๆ']
@@ -78,6 +94,7 @@ export function UpdateSitePage() {
         decisionMaker: '',
         photoIds,
         groupId,
+        newPhone: newPhone.replace(/\D/g, '') || undefined,
       })
 
       let sent = result.messageSent
@@ -137,6 +154,12 @@ export function UpdateSitePage() {
         {/* ความคืบหน้า */}
         <section className="space-y-2">
           <Label htmlFor="note" className="text-sm font-bold">ความคืบหน้า *</Label>
+          <div className="flex flex-wrap gap-1.5">
+            {QUICK_NOTES.map((q) => (
+              <button key={q} type="button" onClick={() => setNote((n) => n ? `${n.trimEnd()} ${q}` : q)}
+                className="h-7 px-2.5 rounded-full bg-muted text-xs active:bg-muted-foreground/20">+ {q}</button>
+            ))}
+          </div>
           <Textarea
             id="note"
             value={note}
@@ -146,6 +169,23 @@ export function UpdateSitePage() {
             className="text-base"
           />
         </section>
+
+        {/* เบอร์โทร — แสดงเมื่องานยังไม่มีเบอร์ */}
+        {site && !site.phone && (
+          <section className="space-y-2">
+            <Label htmlFor="newPhone" className="text-sm font-bold">เบอร์โทรผู้ติดต่อ</Label>
+            <p className="text-xs text-muted-foreground">งานนี้ยังไม่มีเบอร์ เจอใครแล้วเพิ่มได้เลย</p>
+            <Input
+              id="newPhone"
+              type="tel"
+              inputMode="numeric"
+              value={newPhone}
+              onChange={(e) => setNewPhone(e.target.value)}
+              placeholder="08X-XXX-XXXX"
+              className="h-10 text-base num"
+            />
+          </section>
+        )}
 
         {/* รูปเพิ่มเติม */}
         <section className="space-y-2">
@@ -247,8 +287,8 @@ export function UpdateSitePage() {
         )}
       </div>
 
-      {/* Sticky submit */}
-      <div className="fixed bottom-0 inset-x-0 bg-background border-t px-4 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
+      {/* Sticky submit — ซ่อนเมื่อแป้นพิมพ์เปิด */}
+      <div className={`fixed bottom-0 inset-x-0 bg-background/95 backdrop-blur border-t px-4 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] transition-transform duration-200 ${kbOpen ? 'translate-y-full' : ''}`}>
         <Button
           onClick={handleSubmit}
           disabled={submitting || !canSubmit}

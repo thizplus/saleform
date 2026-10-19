@@ -54,6 +54,12 @@
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-ring: var(--sidebar-ring);
 
+    /* ผลลัพธ์งาน (ใช้ในกราฟ) */
+    --color-won: var(--won);
+    --color-lost: var(--lost);
+    --color-open: var(--open);
+    --color-cancel: var(--cancel);
+
     /* chart */
     --color-chart-1: var(--chart-1);
     --color-chart-2: var(--chart-2);
@@ -103,6 +109,12 @@
     --danger-soft: #fee2e2;
     --danger-ink: #b91c1c;
 
+    /* ผลลัพธ์งาน: จบได้ / จบที่อื่น / ตามต่อ / ยกเลิก */
+    --won: #16a34a;
+    --lost: #dc2626;
+    --open: #737373;
+    --cancel: #d4d4d4;
+
     /* chart */
     --chart-1: #0a0a0a;
     --chart-2: #737373;
@@ -121,12 +133,64 @@
     --sidebar-ring: #0a0a0a;
 }
 
+.dark {
+    --background: #0a0a0a;
+    --foreground: #fafafa;
+    --card: #141414;
+    --card-foreground: #fafafa;
+    --popover: #171717;
+    --popover-foreground: #fafafa;
+    --primary: #fafafa;
+    --primary-foreground: #0a0a0a;
+    --secondary: #262626;
+    --secondary-foreground: #fafafa;
+    --muted: #262626;
+    --muted-foreground: #a3a3a3;
+    --accent: #262626;
+    --accent-foreground: #fafafa;
+    --destructive: #f87171;
+    --border: #262626;
+    --input: #2e2e2e;
+    --ring: #d4d4d4;
+
+    --success: #22c55e;
+    --success-soft: #14532d66;
+    --success-ink: #4ade80;
+    --warning: #f59e0b;
+    --warning-soft: #78350f66;
+    --warning-ink: #fbbf24;
+    --danger: #ef4444;
+    --danger-soft: #7f1d1d66;
+    --danger-ink: #f87171;
+
+    --won: #22c55e;
+    --lost: #ef4444;
+    --open: #8a8a8a;
+    --cancel: #404040;
+
+    --chart-1: #fafafa;
+    --chart-2: #a3a3a3;
+    --chart-3: #737373;
+    --chart-4: #404040;
+    --chart-5: #262626;
+
+    --sidebar: #0f0f0f;
+    --sidebar-foreground: #fafafa;
+    --sidebar-primary: #fafafa;
+    --sidebar-primary-foreground: #0a0a0a;
+    --sidebar-accent: #1f1f1f;
+    --sidebar-accent-foreground: #fafafa;
+    --sidebar-border: #262626;
+    --sidebar-ring: #d4d4d4;
+}
+
 @layer base {
     * {
         @apply border-border outline-ring/50;
     }
     body {
         @apply bg-background text-foreground;
+        background-color: var(--background);
         -webkit-font-smoothing: antialiased;
     }
     html {
