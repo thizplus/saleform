@@ -112,11 +112,14 @@ export function SiteDetailPage() {
         {/* ข้อมูลลูกค้า */}
         <div className="px-4 pt-4 space-y-1">
           <h2 className="text-lg font-bold">{site.customerName || 'ไม่ระบุชื่อ'}</h2>
-          {site.address && (
-            <p className="text-sm text-muted-foreground">{site.address}</p>
-          )}
-          {site.amphoe && (
-            <p className="text-sm text-muted-foreground">อ.{site.amphoe}</p>
+          {(site.tambon || site.amphoe || site.province) && (
+            <p className="text-sm text-muted-foreground">
+              {[
+                site.tambon && `ต.${site.tambon}`,
+                site.amphoe && `อ.${site.amphoe}`,
+                site.province && `จ.${site.province}`,
+              ].filter(Boolean).join(' ')}
+            </p>
           )}
         </div>
 
@@ -150,9 +153,6 @@ export function SiteDetailPage() {
             <InfoRow icon={User} label="เจ้าของงาน" value={site.ownerName} />
             {site.contractorName && (
               <InfoRow icon={User} label="ช่าง" value={site.contractorName} />
-            )}
-            {site.decisionMaker && (
-              <InfoRow icon={User} label="ผู้ตัดสินใจ" value={site.decisionMaker} />
             )}
             {site.stage && (
               <InfoRow icon={Clock} label="ขั้นตอน" value={site.stage} />
@@ -205,7 +205,8 @@ export function SiteDetailPage() {
                     )}
                   </div>
                   <div className="flex gap-3 text-xs text-muted-foreground">
-                    {c.contactType && <span>{c.contactType}</span>}
+                    {c.role && <span>{c.role}</span>}
+                    {c.contactType && <span>· {c.contactType}</span>}
                     {c.authority && <span>· {c.authority}</span>}
                   </div>
                 </div>

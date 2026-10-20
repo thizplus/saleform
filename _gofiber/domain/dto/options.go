@@ -2,7 +2,6 @@ package dto
 
 type OptionsResponse struct {
 	CustomerTypes  []string `json:"customerTypes"`
-	DecisionMakers []string `json:"decisionMakers"`
 	Stages         []string `json:"stages"`
 	LostReasons    []string `json:"lostReasons"`
 	Competitors    []string `json:"competitors"`

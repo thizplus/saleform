@@ -4,10 +4,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { ContactInput } from '../types'
 
-const CONTACT_TYPES = ['ผู้มุ่งหวังใหม่', 'ลูกค้าเก่า', 'ไม่พบผู้มีอำนาจตัดสินใจ']
-const AUTHORITY_OPTIONS = ['มีอำนาจตัดสินใจ', 'ไม่มีอำนาจ']
+const CONTACT_TYPES = ['ผู้มุ่งหวังใหม่', 'ลูกค้าเก่า', 'ไม่แน่ใจ']
+const AUTHORITY_OPTIONS = ['มีอำนาจตัดสินใจ', 'ไม่มีอำนาจ', 'ไม่แน่ใจ']
+const ROLE_OPTIONS = ['เจ้าของ', 'ช่าง', 'ไม่แน่ใจ']
 
-const emptyContact: ContactInput = { name: '', phone: '', contactType: '', authority: '' }
+const emptyContact: ContactInput = { name: '', phone: '', contactType: '', authority: '', role: '' }
 
 interface ContactListEditorProps {
   contacts: ContactInput[]
@@ -111,6 +112,26 @@ function ContactCard({
               }`}
             >
               {t}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-1">
+        <Label className="text-xs text-muted-foreground">บทบาท</Label>
+        <div className="flex gap-1.5 flex-wrap">
+          {ROLE_OPTIONS.map((r) => (
+            <button
+              key={r}
+              type="button"
+              onClick={() => onChange('role', contact.role === r ? '' : r)}
+              className={`h-7 px-2.5 rounded-full text-xs font-medium border transition-colors ${
+                contact.role === r
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-background text-foreground border-input'
+              }`}
+            >
+              {r}
             </button>
           ))}
         </div>

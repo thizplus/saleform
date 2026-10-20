@@ -9,6 +9,7 @@ type Contact struct {
 	Name        string    // ชื่อผู้ติดต่อ
 	Phone       string    `gorm:"index"` // normalized: 0812345678
 	ContactType string    // ผู้มุ่งหวังใหม่, ลูกค้าเก่า, ไม่พบผู้มีอำนาจตัดสินใจ
-	Authority   string    // มีอำนาจตัดสินใจ, ไม่มีอำนาจ
+	Authority   string    // มีอำนาจตัดสินใจ, ไม่มีอำนาจ, ไม่แน่ใจ
+	Role        string    // เจ้าของ, ช่าง, ไม่แน่ใจ
 	IsPrimary   bool      `gorm:"not null;default:false"`
 }

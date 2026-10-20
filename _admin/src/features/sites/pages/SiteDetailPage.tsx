@@ -135,9 +135,10 @@ export function SiteDetailPage() {
               <InfoRow icon={Phone} label="โทร" value={site.phone ? formatPhone(site.phone) : '-'} href={site.phone ? `tel:${site.phone}` : undefined} />
               <InfoRow icon={User} label="ประเภทลูกค้า" value={site.customerType || '-'} />
               <InfoRow icon={User} label="ช่าง" value={site.contractorName || '-'} />
-              <InfoRow icon={User} label="ผู้ตัดสินใจ" value={site.decisionMaker || '-'} />
-              <InfoRow icon={MapPin} label="ที่อยู่" value={site.address || '-'} />
+              <InfoRow icon={MapPin} label="ตำบล" value={site.tambon || '-'} />
               <InfoRow icon={MapPin} label="อำเภอ" value={site.amphoe || '-'} />
+              <InfoRow icon={MapPin} label="จังหวัด" value={site.province || '-'} />
+              {site.postcode && <InfoRow icon={MapPin} label="รหัสไปรษณีย์" value={site.postcode} />}
               <InfoRow icon={FileText} label="ขั้นตอน" value={site.stage || '-'} />
               <InfoRow icon={Calendar} label="นัดติดตาม" value={site.nextFollowUpDate ? `${formatThaiDate(site.nextFollowUpDate)} (${formatRelativeDay(site.nextFollowUpDate)})` : '-'} />
               {site.status === 'lost' && (
@@ -371,7 +372,7 @@ function TimelineItem({ report, isLast, allPhotos, onPhotoClick }: {
 }
 
 function EditDialog({ site, open, onOpenChange, onSave, isPending }: {
-  site: { customerName: string; customerType: string; contractorName: string; decisionMaker: string; phone: string; address: string; amphoe: string; stage: string; status: string; lostReason: string; competitor: string }
+  site: { customerName: string; customerType: string; contractorName: string; phone: string; amphoe: string; stage: string; status: string; lostReason: string; competitor: string }
   open: boolean
   onOpenChange: (open: boolean) => void
   onSave: (data: Record<string, unknown>) => void
@@ -381,9 +382,7 @@ function EditDialog({ site, open, onOpenChange, onSave, isPending }: {
     customerName: site.customerName,
     customerType: site.customerType,
     contractorName: site.contractorName,
-    decisionMaker: site.decisionMaker,
     phone: site.phone,
-    address: site.address,
     amphoe: site.amphoe,
     stage: site.stage,
     status: site.status,
@@ -417,10 +416,6 @@ function EditDialog({ site, open, onOpenChange, onSave, isPending }: {
               <Input value={form.contractorName} onChange={(e) => set('contractorName', e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>ผู้ตัดสินใจ</Label>
-              <Input value={form.decisionMaker} onChange={(e) => set('decisionMaker', e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
               <Label>โทร</Label>
               <Input value={form.phone} onChange={(e) => set('phone', e.target.value)} />
             </div>
@@ -428,10 +423,6 @@ function EditDialog({ site, open, onOpenChange, onSave, isPending }: {
               <Label>อำเภอ</Label>
               <Input value={form.amphoe} onChange={(e) => set('amphoe', e.target.value)} />
             </div>
-          </div>
-          <div className="space-y-1.5">
-            <Label>ที่อยู่</Label>
-            <Input value={form.address} onChange={(e) => set('address', e.target.value)} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">

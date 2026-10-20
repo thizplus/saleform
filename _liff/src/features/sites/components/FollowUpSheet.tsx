@@ -24,7 +24,6 @@ interface FollowUpSheetProps {
   siteCode: string
   siteName: string
   currentStage: string
-  currentDecisionMaker: string
   onClose: () => void
   onSuccess: () => void
 }
@@ -33,7 +32,6 @@ export function FollowUpSheet({
   siteCode,
   siteName,
   currentStage,
-  currentDecisionMaker,
   onClose,
   onSuccess,
 }: FollowUpSheetProps) {
@@ -47,7 +45,6 @@ export function FollowUpSheet({
   const [lostReason, setLostReason] = useState('')
   const [competitor, setCompetitor] = useState('')
   const [stage, setStage] = useState(currentStage)
-  const [decisionMaker, setDecisionMaker] = useState(currentDecisionMaker)
   const [photos, setPhotos] = useState<{ file: File; preview: string }[]>([])
   const [submitting, setSubmitting] = useState(false)
 
@@ -89,7 +86,6 @@ export function FollowUpSheet({
         lostReason: status === 'lost' ? lostReason : '',
         competitor: status === 'lost' ? competitor : '',
         stage,
-        decisionMaker,
         photoIds,
       })
 
@@ -237,27 +233,6 @@ export function FollowUpSheet({
                   }`}
                 >
                   {s}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Decision Maker (editable) */}
-          <div className="space-y-1">
-            <Label>ผู้ตัดสินใจ</Label>
-            <div className="flex gap-2 flex-wrap">
-              {(options?.decisionMakers || ['เจ้าของ', 'ผู้รับเหมา', 'วิศวกร']).map((d) => (
-                <button
-                  key={d}
-                  type="button"
-                  onClick={() => setDecisionMaker(d)}
-                  className={`px-3 py-1 text-sm rounded-full border transition-colors ${
-                    decisionMaker === d
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : 'bg-background text-foreground border-input hover:bg-muted'
-                  }`}
-                >
-                  {d}
                 </button>
               ))}
             </div>

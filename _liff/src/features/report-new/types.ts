@@ -1,8 +1,9 @@
 export interface ContactInput {
   name: string
   phone: string
-  contactType: string // ผู้มุ่งหวังใหม่, ลูกค้าเก่า, ไม่พบผู้มีอำนาจตัดสินใจ
-  authority: string   // มีอำนาจตัดสินใจ, ไม่มีอำนาจ
+  contactType: string // ผู้มุ่งหวังใหม่, ลูกค้าเก่า, ไม่แน่ใจ
+  authority: string   // มีอำนาจตัดสินใจ, ไม่มีอำนาจ, ไม่แน่ใจ
+  role: string        // เจ้าของ, ช่าง, ไม่แน่ใจ
 }
 
 export interface CreateSiteForm {
@@ -29,7 +30,6 @@ export interface CreateSiteForm {
 
 export interface OptionsData {
   customerTypes: string[]
-  decisionMakers: string[]
   stages: string[]
   lostReasons: string[]
   competitors: string[]

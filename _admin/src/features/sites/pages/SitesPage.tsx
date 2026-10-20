@@ -99,11 +99,6 @@ const columns = [
     cell: (info) => info.getValue() || '-',
     size: 100,
   }),
-  columnHelper.accessor('decisionMaker', {
-    header: 'ผู้ตัดสินใจ',
-    cell: (info) => info.getValue() || '-',
-    size: 100,
-  }),
   columnHelper.accessor('stage', {
     header: 'ขั้นตอน',
     cell: (info) => (

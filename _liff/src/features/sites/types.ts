@@ -23,6 +23,7 @@ export interface ContactBrief {
   phone: string
   contactType: string
   authority: string
+  role: string
   isPrimary: boolean
 }
 
@@ -31,12 +32,13 @@ export interface SiteDetail {
   customerName: string
   customerType: string
   contractorName: string
-  decisionMaker: string
   phone: string
   lat: number | null
   lng: number | null
-  address: string
+  tambon: string
   amphoe: string
+  province: string
+  postcode: string
   stage: string
   status: string
   lostReason: string

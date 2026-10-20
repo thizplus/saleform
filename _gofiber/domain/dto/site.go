@@ -8,14 +8,14 @@ type CreateSiteRequest struct {
 	CustomerName     string   `json:"customerName"`
 	CustomerType     string   `json:"customerType"`
 	ContractorName   string   `json:"contractorName"`
-	DecisionMaker    string   `json:"decisionMaker"`
 	Stage            string   `json:"stage"`
 	Detail           string   `json:"detail"`
 	Latitude         *float64 `json:"lat"`
 	Longitude        *float64 `json:"lng"`
-	Address          string   `json:"address"`
 	Tambon           string   `json:"tambon"`
 	Amphoe           string   `json:"amphoe"`
+	Province         string   `json:"province"`
+	Postcode         string   `json:"postcode"`
 	ExpectedOrderDate *string `json:"expectedOrderDate"` // YYYY-MM-DD
 	NextFollowUpDate  *string `json:"nextFollowUpDate"`  // YYYY-MM-DD
 	PhotoIDs         []string       `json:"photoIds"`
@@ -40,7 +40,6 @@ type CreateFollowUpRequest struct {
 	LostReason       string   `json:"lostReason"`       // required if status=lost
 	Competitor       string   `json:"competitor"`
 	Stage            string   `json:"stage"`
-	DecisionMaker    string   `json:"decisionMaker"`
 	PhotoIDs         []string `json:"photoIds"`
 	GroupID          string   `json:"groupId"`
 	NewPhone         string         `json:"newPhone"` // backward compat
@@ -78,12 +77,13 @@ type SiteBrief struct {
 	CustomerName     string     `json:"customerName"`
 	CustomerType     string     `json:"customerType"`
 	ContractorName   string     `json:"contractorName"`
-	DecisionMaker    string     `json:"decisionMaker"`
 	Phone            string     `json:"phone"`
 	Status           string     `json:"status"`
 	Stage            string     `json:"stage"`
 	Amphoe           string     `json:"amphoe"`
 	Tambon           string     `json:"tambon"`
+	Province         string     `json:"province"`
+	Postcode         string     `json:"postcode"`
 	NextFollowUpDate *string    `json:"nextFollowUpDate"`
 	LastReportAt     *time.Time `json:"lastReportAt"`
 	ThumbURL         string     `json:"thumbUrl"`
@@ -100,12 +100,13 @@ type SiteDetailResponse struct {
 	CustomerName     string    `json:"customerName"`
 	CustomerType     string    `json:"customerType"`
 	ContractorName   string    `json:"contractorName"`
-	DecisionMaker    string    `json:"decisionMaker"`
 	Phone            string    `json:"phone"`
 	Latitude         *float64  `json:"lat"`
 	Longitude        *float64  `json:"lng"`
-	Address          string    `json:"address"`
+	Tambon           string    `json:"tambon"`
 	Amphoe           string    `json:"amphoe"`
+	Province         string    `json:"province"`
+	Postcode         string    `json:"postcode"`
 	Stage            string    `json:"stage"`
 	Status           string    `json:"status"`
 	LostReason       string    `json:"lostReason"`
@@ -181,8 +182,9 @@ type StatsOutcomes struct {
 type ContactInput struct {
 	Name        string `json:"name"`
 	Phone       string `json:"phone"`
-	ContactType string `json:"contactType"` // ผู้มุ่งหวังใหม่, ลูกค้าเก่า, ไม่พบผู้มีอำนาจตัดสินใจ
-	Authority   string `json:"authority"`   // มีอำนาจตัดสินใจ, ไม่มีอำนาจ
+	ContactType string `json:"contactType"` // ผู้มุ่งหวังใหม่, ลูกค้าเก่า, ไม่แน่ใจ
+	Authority   string `json:"authority"`   // มีอำนาจตัดสินใจ, ไม่มีอำนาจ, ไม่แน่ใจ
+	Role        string `json:"role"`        // เจ้าของ, ช่าง, ไม่แน่ใจ
 }
 
 type ContactBrief struct {
@@ -191,6 +193,7 @@ type ContactBrief struct {
 	Phone       string `json:"phone"`
 	ContactType string `json:"contactType"`
 	Authority   string `json:"authority"`
+	Role        string `json:"role"`
 	IsPrimary   bool   `json:"isPrimary"`
 }
 
@@ -199,9 +202,7 @@ type UpdateSiteRequest struct {
 	CustomerName    *string `json:"customerName"`
 	CustomerType    *string `json:"customerType"`
 	ContractorName  *string `json:"contractorName"`
-	DecisionMaker   *string `json:"decisionMaker"`
 	Phone           *string `json:"phone"`
-	Address         *string `json:"address"`
 	Amphoe          *string `json:"amphoe"`
 	Stage           *string `json:"stage"`
 	Status          *string `json:"status"`

@@ -41,8 +41,9 @@ func BuildNewSiteMessages(site *models.Site, report *models.SiteReport, repName 
 		lines = append(lines, fmt.Sprintf("📅 นัดติดตาม: %s", formatThaiDateShort(site.NextFollowUpDate)))
 	}
 
-	if site.Address != "" {
-		lines = append(lines, fmt.Sprintf("📍 %s", site.Address))
+	addr := composeAddress(site.Tambon, site.Amphoe, site.Province)
+	if addr != "" {
+		lines = append(lines, fmt.Sprintf("📍 %s", addr))
 	}
 
 	messages = append(messages, map[string]any{
@@ -61,14 +62,14 @@ func BuildNewSiteMessages(site *models.Site, report *models.SiteReport, repName 
 		if len(title) > 100 {
 			title = title[:100]
 		}
-		addr := site.Address
-		if addr == "" {
-			addr = fmt.Sprintf("%.5f, %.5f", *site.Latitude, *site.Longitude)
+		locAddr := composeAddress(site.Tambon, site.Amphoe, site.Province)
+		if locAddr == "" {
+			locAddr = fmt.Sprintf("%.5f, %.5f", *site.Latitude, *site.Longitude)
 		}
 		messages = append(messages, map[string]any{
 			"type":      "location",
 			"title":     title,
-			"address":   addr,
+			"address":   locAddr,
 			"latitude":  *site.Latitude,
 			"longitude": *site.Longitude,
 		})
@@ -185,6 +186,67 @@ func buildImageFlexCarousel(siteCode string, photoURLs []string, liffID string) 
 		"altText": fmt.Sprintf("รูปภาพ #%s (%d รูป)", siteCode, len(urls)),
 		"contents": contents,
 	}
+}
+
+// BuildCheckInMessages สร้างข้อความเช็คอินส่งเข้ากลุ่ม LINE
+func BuildCheckInMessages(repName, licensePlate string, mileage int, dailyKM *int, selfieURL string) []map[string]any {
+	var messages []map[string]any
+
+	var lines []string
+	lines = append(lines, "📍 เช็คอิน")
+	lines = append(lines, fmt.Sprintf("👤 %s", repName))
+	lines = append(lines, "─────────────")
+	lines = append(lines, fmt.Sprintf("🚗 ทะเบียน: %s", licensePlate))
+	lines = append(lines, fmt.Sprintf("🔢 ไมล์: %s", formatNumber(mileage)))
+	if dailyKM != nil {
+		lines = append(lines, fmt.Sprintf("📏 วิ่งวันนี้: %s กม.", formatNumber(*dailyKM)))
+	}
+
+	messages = append(messages, map[string]any{
+		"type": "text",
+		"text": strings.Join(lines, "\n"),
+	})
+
+	// รูปเซลฟี่
+	if selfieURL != "" {
+		messages = append(messages, map[string]any{
+			"type":               "image",
+			"originalContentUrl": selfieURL,
+			"previewImageUrl":    selfieURL,
+		})
+	}
+
+	return messages
+}
+
+func formatNumber(n int) string {
+	s := fmt.Sprintf("%d", n)
+	if len(s) <= 3 {
+		return s
+	}
+	var result []byte
+	for i, c := range s {
+		if i > 0 && (len(s)-i)%3 == 0 {
+			result = append(result, ',')
+		}
+		result = append(result, byte(c))
+	}
+	return string(result)
+}
+
+// composeAddress สร้างที่อยู่จาก tambon/amphoe/province
+func composeAddress(tambon, amphoe, province string) string {
+	var parts []string
+	if tambon != "" {
+		parts = append(parts, "ต."+tambon)
+	}
+	if amphoe != "" {
+		parts = append(parts, "อ."+amphoe)
+	}
+	if province != "" {
+		parts = append(parts, "จ."+province)
+	}
+	return strings.Join(parts, " ")
 }
 
 // formatThaiDateShort formats as DD/MM/YYYY+543 (Buddhist year)

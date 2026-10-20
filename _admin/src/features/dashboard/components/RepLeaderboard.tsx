@@ -6,10 +6,11 @@ import type { RepAnalytics } from '@/features/analytics'
 
 interface Props {
   rows: RepAnalytics[]
+  checkInMap?: Map<string, { totalKm: number; checkInDays: number }>
 }
 
 /** ตารางผลงานเซลล์แบบย่อ — ใช้ใน Dashboard */
-export function RepLeaderboard({ rows }: Props) {
+export function RepLeaderboard({ rows, checkInMap }: Props) {
   const navigate = useNavigate()
   const maxVisits = Math.max(...rows.map(r => r.visits), 1)
 
@@ -22,6 +23,7 @@ export function RepLeaderboard({ rows }: Props) {
           <TableHead className="text-right">ใหม่</TableHead>
           <TableHead className="min-w-36">ผลลัพธ์ <OutcomeLegend className="mt-1 hidden font-normal 2xl:flex" /></TableHead>
           <TableHead className="text-right">ปิดได้</TableHead>
+          <TableHead className="text-right">ระยะทาง</TableHead>
           <TableHead className="pr-4 text-right">เลยกำหนด</TableHead>
         </TableRow>
       </TableHeader>
@@ -48,6 +50,9 @@ export function RepLeaderboard({ rows }: Props) {
             <TableCell className="num text-right">{n(r.newSites)}</TableCell>
             <TableCell><OutcomeBar won={r.won} open={r.following} lost={r.lost} cancelled={r.cancelled} /></TableCell>
             <TableCell className="num text-right font-bold">{pct(r.winRate)}</TableCell>
+            <TableCell className="num text-right text-xs">
+              {checkInMap?.get(r.repId)?.totalKm ? `${n(checkInMap.get(r.repId)!.totalKm)}` : <span className="text-muted-foreground">-</span>}
+            </TableCell>
             <TableCell className="pr-4 text-right">
               {r.overdue > 0 ? <span className="num font-bold text-warning-ink">{r.overdue}</span> : <span className="text-muted-foreground">–</span>}
             </TableCell>

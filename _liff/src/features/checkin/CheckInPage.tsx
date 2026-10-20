@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { reportNewService } from '@/features/report-new/service'
 import { useOptions } from '@/features/report-new/hooks'
+import { sendChatMessages } from '@/lib/liff-helpers'
 import { useCheckInStatus, useCheckIn } from './hooks'
 
 interface CheckInPageProps {
@@ -59,11 +60,16 @@ export function CheckInPage({ onDone }: CheckInPageProps) {
         selfieKey = uploadResult.files[0].id
       }
 
-      await checkInMutation.mutateAsync({
+      const result = await checkInMutation.mutateAsync({
         licensePlate: plate.trim(),
         mileage: parseInt(mileage, 10),
         selfieKey,
       })
+
+      // ส่งข้อมูลเช็คอินเข้ากลุ่ม LINE
+      if (result.chatMessages?.length) {
+        await sendChatMessages(result.chatMessages)
+      }
 
       toast.success('เช็คอินสำเร็จ!')
       onDone()

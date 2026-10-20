@@ -111,7 +111,6 @@ export function UpdateSitePage() {
         lostReason: status === 'lost' ? lostReason : '',
         competitor: status === 'lost' ? competitor : '',
         stage,
-        decisionMaker: '',
         photoIds,
         groupId,
         contacts: validContacts.length > 0 ? validContacts : undefined,

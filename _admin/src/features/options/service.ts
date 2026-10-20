@@ -3,7 +3,6 @@ import { ADMIN_ROUTES } from '@/constants/api-routes'
 
 export interface DropdownOptions {
   customerTypes: string[]
-  decisionMakers: string[]
   stages: string[]
   lostReasons: string[]
   competitors: string[]

@@ -3,6 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Empty, OutcomeLegend, PageHeader, Panel } from '@/components/shared'
 import { FilterBar } from '@/components/shared/filter-bar'
 import { useByRep, useByArea, useReps } from '@/features/analytics'
+import { useTeamSummary } from '@/features/checkins/hooks'
 import { RepCompareChart } from '../components/RepCompareChart'
 import { RepTable } from '../components/RepTable'
 
@@ -10,6 +11,18 @@ export function PerformancePage() {
   const { data: reps } = useReps()
   const { data: repRows, isLoading } = useByRep()
   const { data: areas } = useByArea()
+  const { data: teamCheckIn } = useTeamSummary('month')
+
+  // สร้าง map repId → check-in summary
+  const checkInMap = React.useMemo(() => {
+    const map = new Map<string, { totalKm: number; checkInDays: number; avgKmPerDay: number }>()
+    if (teamCheckIn?.reps) {
+      for (const r of teamCheckIn.reps) {
+        map.set(r.repId, { totalKm: r.totalKm, checkInDays: r.checkInDays, avgKmPerDay: r.avgKmPerDay })
+      }
+    }
+    return map
+  }, [teamCheckIn])
 
   const repItems = React.useMemo(
     () => (reps ?? []).filter((r) => r.status === 'active').map((r) => ({ value: r.id, label: r.nickname })),
@@ -49,7 +62,7 @@ export function PerformancePage() {
             contentClassName="px-0"
             action={<OutcomeLegend withCancel />}
           >
-            <RepTable rows={rows} />
+            <RepTable rows={rows} checkInMap={checkInMap} />
           </Panel>
         </>
       )}

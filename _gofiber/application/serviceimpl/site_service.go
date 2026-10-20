@@ -190,13 +190,13 @@ func (s *siteServiceImpl) Create(ctx context.Context, repID uuid.UUID, req *dto.
 		CustomerName:      customerName,
 		CustomerType:      req.CustomerType,
 		ContractorName:    req.ContractorName,
-		DecisionMaker:     req.DecisionMaker,
 		Phone:             normalizePhone(req.Phone),
 		Latitude:          req.Latitude,
 		Longitude:         req.Longitude,
-		Address:           req.Address,
 		Tambon:            req.Tambon,
 		Amphoe:            req.Amphoe,
+		Province:          req.Province,
+		Postcode:          req.Postcode,
 		Stage:             firstNonEmpty(req.Stage, "new"),
 		Status:            "following",
 		ExpectedOrderDate:  expectedDate,
@@ -309,12 +309,14 @@ func (s *siteServiceImpl) Create(ctx context.Context, repID uuid.UUID, req *dto.
 			CustomerName:   site.CustomerName,
 			CustomerType:   site.CustomerType,
 			ContractorName: site.ContractorName,
-			DecisionMaker:  site.DecisionMaker,
+
 			Phone:          site.Phone,
 			Status:         site.Status,
 			Stage:          site.Stage,
 			Amphoe:         site.Amphoe,
 			Tambon:         site.Tambon,
+			Province:       site.Province,
+			Postcode:       site.Postcode,
 			ReportCount:    site.ReportCount,
 			LastReportAt:   site.LastReportAt,
 			IsMine:         true,
@@ -477,6 +479,7 @@ func (s *siteServiceImpl) GetByCode(ctx context.Context, code string, viewerRepI
 			Phone:       c.Phone,
 			ContactType: c.ContactType,
 			Authority:   c.Authority,
+			Role:        c.Role,
 			IsPrimary:   c.IsPrimary,
 		})
 	}
@@ -486,12 +489,14 @@ func (s *siteServiceImpl) GetByCode(ctx context.Context, code string, viewerRepI
 		CustomerName:      site.CustomerName,
 		CustomerType:      site.CustomerType,
 		ContractorName:    site.ContractorName,
-		DecisionMaker:     site.DecisionMaker,
+
 		Phone:             site.Phone,
 		Latitude:          site.Latitude,
 		Longitude:         site.Longitude,
-		Address:           site.Address,
+		Tambon:            site.Tambon,
 		Amphoe:            site.Amphoe,
+		Province:          site.Province,
+		Postcode:          site.Postcode,
 		Stage:             site.Stage,
 		Status:            site.Status,
 		LostReason:        site.LostReason,
@@ -559,12 +564,13 @@ func (s *siteServiceImpl) List(ctx context.Context, repID *uuid.UUID, filter *dt
 			CustomerName:     site.CustomerName,
 			CustomerType:     site.CustomerType,
 			ContractorName:   site.ContractorName,
-			DecisionMaker:    site.DecisionMaker,
 			Phone:            site.Phone,
 			Status:           site.Status,
 			Stage:            site.Stage,
 			Amphoe:           site.Amphoe,
 			Tambon:           site.Tambon,
+			Province:         site.Province,
+			Postcode:         site.Postcode,
 			NextFollowUpDate: followUpStr,
 			LastReportAt:     site.LastReportAt,
 			IsMine:           isMine,
@@ -620,7 +626,7 @@ func (s *siteServiceImpl) AddFollowUp(ctx context.Context, repID uuid.UUID, code
 		Status:           req.Status,
 		LostReason:       req.LostReason,
 		Competitor:       req.Competitor,
-		DecisionMaker:    firstNonEmpty(req.DecisionMaker, site.DecisionMaker),
+
 		NextFollowUpDate: followUpDate,
 		ReportDate:       now,
 		Source:           "liff",
@@ -633,9 +639,6 @@ func (s *siteServiceImpl) AddFollowUp(ctx context.Context, repID uuid.UUID, code
 	}
 	if req.Stage != "" {
 		site.Stage = req.Stage
-	}
-	if req.DecisionMaker != "" {
-		site.DecisionMaker = req.DecisionMaker
 	}
 	site.LostReason = req.LostReason
 	site.Competitor = req.Competitor
@@ -722,12 +725,13 @@ func (s *siteServiceImpl) AddFollowUp(ctx context.Context, repID uuid.UUID, code
 			CustomerName:     site.CustomerName,
 			CustomerType:     site.CustomerType,
 			ContractorName:   site.ContractorName,
-			DecisionMaker:    site.DecisionMaker,
 			Phone:            site.Phone,
 			Status:           site.Status,
 			Stage:            site.Stage,
 			Amphoe:           site.Amphoe,
 			Tambon:           site.Tambon,
+			Province:         site.Province,
+			Postcode:         site.Postcode,
 			NextFollowUpDate: followUpStr,
 			LastReportAt:     site.LastReportAt,
 			ReportCount:      site.ReportCount,
@@ -764,14 +768,8 @@ func (s *siteServiceImpl) Update(ctx context.Context, code string, req *dto.Upda
 	if req.ContractorName != nil {
 		site.ContractorName = *req.ContractorName
 	}
-	if req.DecisionMaker != nil {
-		site.DecisionMaker = *req.DecisionMaker
-	}
 	if req.Phone != nil {
 		site.Phone = normalizePhone(*req.Phone)
-	}
-	if req.Address != nil {
-		site.Address = *req.Address
 	}
 	if req.Amphoe != nil {
 		site.Amphoe = *req.Amphoe
@@ -814,6 +812,7 @@ func (s *siteServiceImpl) Update(ctx context.Context, code string, req *dto.Upda
 				Phone:       normalizePhone(c.Phone),
 				ContactType: c.ContactType,
 				Authority:   c.Authority,
+				Role:        c.Role,
 				IsPrimary:   i == 0,
 			}
 			_ = s.contactRepo.Create(ctx, contact)

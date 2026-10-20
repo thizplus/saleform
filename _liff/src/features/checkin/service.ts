@@ -16,6 +16,7 @@ export interface CheckInData {
   selfieUrl: string
   dailyKm: number | null
   createdAt: string
+  chatMessages?: Record<string, unknown>[]
 }
 
 export const checkInService = {

@@ -11,10 +11,11 @@ type SortKey = 'nickname' | 'visits' | 'newSites' | 'followUps' | 'won' | 'lost'
 
 interface Props {
   rows: RepAnalytics[]
+  checkInMap?: Map<string, { totalKm: number; checkInDays: number; avgKmPerDay: number }>
 }
 
 /** ตารางเปรียบเทียบเซลล์ — sortable, คลิกไปหน้า detail */
-export function RepTable({ rows }: Props) {
+export function RepTable({ rows, checkInMap }: Props) {
   const navigate = useNavigate()
   const [sortKey, setSortKey] = React.useState<SortKey>('visits')
   const [sortAsc, setSortAsc] = React.useState(false)
@@ -65,6 +66,8 @@ export function RepTable({ rows }: Props) {
               ผลลัพธ์ <OutcomeLegend className="mt-1 hidden font-normal xl:flex" />
             </TableHead>
             <SortHead k="winRate" className="text-right">ปิดได้%</SortHead>
+            <TableHead className="text-right">ระยะทาง</TableHead>
+            <TableHead className="text-right">เช็คอิน</TableHead>
             <SortHead k="overdue" className="pr-4 text-right">เลยกำหนด</SortHead>
           </TableRow>
         </TableHeader>
@@ -93,6 +96,12 @@ export function RepTable({ rows }: Props) {
                 <OutcomeBar won={r.won} open={r.following} lost={r.lost} cancelled={r.cancelled} />
               </TableCell>
               <TableCell className="num text-right font-bold">{pct(r.winRate)}</TableCell>
+              <TableCell className="num text-right">
+                {checkInMap?.get(r.repId)?.totalKm ? `${n(checkInMap.get(r.repId)!.totalKm)} กม.` : <span className="text-muted-foreground">-</span>}
+              </TableCell>
+              <TableCell className="num text-right">
+                {checkInMap?.get(r.repId)?.checkInDays ? `${checkInMap.get(r.repId)!.checkInDays} วัน` : <span className="text-muted-foreground">-</span>}
+              </TableCell>
               <TableCell className="pr-4 text-right">
                 {r.overdue > 0
                   ? <span className="num font-bold text-warning-ink">{r.overdue}</span>

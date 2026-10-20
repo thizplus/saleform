@@ -69,7 +69,7 @@ func (h *AdminExportHandler) ExportSites(c *fiber.Ctx) error {
 		f.SetCellValue(sheet, cell(5, row), site.OwnerName)
 		f.SetCellValue(sheet, cell(6, row), site.CustomerType)
 		f.SetCellValue(sheet, cell(7, row), site.Amphoe)
-		f.SetCellValue(sheet, cell(8, row), site.DecisionMaker)
+		f.SetCellValue(sheet, cell(8, row), "")
 		f.SetCellValue(sheet, cell(9, row), site.Stage)
 		label := statusLabels[site.Status]
 		if label == "" {

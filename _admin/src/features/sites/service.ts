@@ -6,12 +6,13 @@ export interface SiteBrief {
   customerName: string
   customerType: string
   contractorName: string
-  decisionMaker: string
   phone: string
   status: string
   stage: string
   amphoe: string
   tambon: string
+  province: string
+  postcode: string
   nextFollowUpDate: string | null
   lastReportAt: string | null
   ownerName: string
@@ -58,12 +59,14 @@ export interface SiteDetail {
   customerName: string
   customerType: string
   contractorName: string
-  decisionMaker: string
   phone: string
   lat: number | null
   lng: number | null
   address: string
+  tambon: string
   amphoe: string
+  province: string
+  postcode: string
   stage: string
   status: string
   lostReason: string

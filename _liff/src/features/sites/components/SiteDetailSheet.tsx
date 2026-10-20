@@ -62,7 +62,6 @@ export function SiteDetailSheet({ code, onClose }: SiteDetailSheetProps) {
                 {site.customerType && <InfoRow label="ประเภท" value={site.customerType} />}
                 <InfoRow label="โทร" value={site.phone} isPhone />
                 {site.contractorName && <InfoRow label="ผู้รับเหมา" value={site.contractorName} />}
-                {site.decisionMaker && <InfoRow label="ผู้ตัดสินใจ" value={site.decisionMaker} />}
                 <InfoRow label="เจ้าของงาน" value={site.ownerName} />
               </div>
 
@@ -186,7 +185,6 @@ export function SiteDetailSheet({ code, onClose }: SiteDetailSheetProps) {
           siteCode={site.siteCode}
           siteName={site.customerName}
           currentStage={site.stage}
-          currentDecisionMaker={site.decisionMaker}
           onClose={() => setShowFollowUp(false)}
           onSuccess={() => {
             setShowFollowUp(false)

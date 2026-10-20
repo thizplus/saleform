@@ -15,7 +15,6 @@ interface CreateFollowUpParams {
   lostReason: string
   competitor: string
   stage: string
-  decisionMaker: string
   photoIds: string[]
   groupId?: string
   newPhone?: string

@@ -5,6 +5,7 @@ export interface GeoAddress {
   tambon: string
   amphoe: string
   province: string
+  postcode: string
 }
 
 interface GPSButtonProps {
@@ -27,7 +28,8 @@ async function reverseGeocode(lat: number, lng: number): Promise<GeoAddress | nu
     const tambon = (a.town || a.village || a.suburb || '').replace(/^ตำบล/, '')
     const amphoe = (a.county || a.city_district || '').replace(/^อำเภอ/, '')
     const province = (a.province || a.state || '').replace(/^จังหวัด/, '')
-    return { tambon, amphoe, province }
+    const postcode = a.postcode || ''
+    return { tambon, amphoe, province, postcode }
   } catch {
     return null
   }
@@ -117,6 +119,7 @@ export function GPSButton({ lat, onLocation, onAddress, address }: GPSButtonProp
               address.tambon && `ต.${address.tambon}`,
               address.amphoe && `อ.${address.amphoe}`,
               address.province && `จ.${address.province}`,
+              address.postcode,
             ].filter(Boolean).join(' ')}
           </span>
         </div>

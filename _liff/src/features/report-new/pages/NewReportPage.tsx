@@ -28,12 +28,12 @@ interface FormData {
   tambon: string
   amphoe: string
   province: string
+  postcode: string
   photos: { file: File; preview: string }[]
   phone: string
   customerName: string
   contractorName: string
   contactType: string
-  decisionMaker: string
   contacts: ContactInput[]
   stage: string
   detail: string
@@ -43,10 +43,10 @@ interface FormData {
 
 const defaultForm: FormData = {
   lat: null, lng: null, accuracy: null,
-  tambon: '', amphoe: '', province: '',
+  tambon: '', amphoe: '', province: '', postcode: '',
   photos: [],
   phone: '', customerName: '', contractorName: '',
-  contactType: '', decisionMaker: '',
+  contactType: '',
   contacts: [{ name: '', phone: '', contactType: '', authority: '' }],
   stage: '', detail: '',
   nextFollowUpDate: addDays(7),
@@ -209,14 +209,14 @@ export function NewReportPage() {
         customerName: form.customerName,
         customerType: form.contactType,
         contractorName: form.contractorName,
-        decisionMaker: form.decisionMaker,
         stage: form.stage,
         detail: form.detail,
         lat: form.lat,
         lng: form.lng,
-        address: [form.tambon && `ต.${form.tambon}`, form.amphoe && `อ.${form.amphoe}`].filter(Boolean).join(' '),
         tambon: form.tambon,
         amphoe: form.amphoe,
+        province: form.province,
+        postcode: form.postcode,
         expectedOrderDate: form.expectedOrder,
         nextFollowUpDate: form.nextFollowUpDate,
         photoIds,
@@ -258,7 +258,6 @@ export function NewReportPage() {
   }
 
   const stages = options?.stages || ['เริ่มก่อสร้าง', 'กำลังสร้าง', 'ใกล้เสร็จ', 'รอตัดสินใจ', 'เสนอราคาแล้ว', 'อื่นๆ']
-  const decisionMakers = options?.decisionMakers || ['เจ้าของบ้าน', 'ช่าง', 'อื่นๆ']
   const contactTypes = ['เจ้าของ', 'ช่าง', 'ผู้รับเหมา']
 
   return (
@@ -292,8 +291,9 @@ export function NewReportPage() {
               update('tambon', geo.tambon)
               update('amphoe', geo.amphoe)
               update('province', geo.province)
+              update('postcode', geo.postcode)
             }}
-            address={form.tambon || form.amphoe ? { tambon: form.tambon, amphoe: form.amphoe, province: form.province } : null}
+            address={form.tambon || form.amphoe ? { tambon: form.tambon, amphoe: form.amphoe, province: form.province, postcode: form.postcode } : null}
           />
 
           {/* Inline GPS duplicate warning */}
@@ -378,10 +378,6 @@ export function NewReportPage() {
             />
           </div>
 
-          <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">ผู้ตัดสินใจ</Label>
-            <ChipRow options={decisionMakers} value={form.decisionMaker} onChange={(v) => update('decisionMaker', v)} />
-          </div>
         </section>
 
         {/* ===== นัดหมาย ===== */}

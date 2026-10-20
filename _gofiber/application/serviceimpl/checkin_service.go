@@ -75,6 +75,17 @@ func (s *checkInServiceImpl) CheckIn(ctx context.Context, repID uuid.UUID, req *
 
 	logger.InfoContext(ctx, "Daily check-in created", "rep_id", repID, "mileage", req.Mileage)
 
+	// สร้าง chat messages สำหรับส่งเข้ากลุ่ม LINE
+	rep, _ := s.repRepo.GetByID(ctx, repID)
+	repName := ""
+	if rep != nil {
+		repName = rep.DisplayName
+		if rep.Nickname != "" {
+			repName = rep.Nickname
+		}
+	}
+	chatMessages := BuildCheckInMessages(repName, checkIn.LicensePlate, checkIn.Mileage, checkIn.DailyKM, checkIn.SelfieURL)
+
 	return &dto.CheckInResponse{
 		ID:           checkIn.ID.String(),
 		CheckInDate:  todayDate.Format("2006-01-02"),
@@ -83,6 +94,7 @@ func (s *checkInServiceImpl) CheckIn(ctx context.Context, repID uuid.UUID, req *
 		SelfieURL:    checkIn.SelfieURL,
 		DailyKM:      checkIn.DailyKM,
 		CreatedAt:    checkIn.CreatedAt,
+		ChatMessages: chatMessages,
 	}, nil
 }
 

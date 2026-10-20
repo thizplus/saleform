@@ -21,6 +21,7 @@ type Site struct {
 	Amphoe          string    `gorm:"index"` // อำเภอ
 	Tambon          string    // ตำบล
 	Province        string
+	Postcode        string
 	Stage           string    `gorm:"not null;default:'new'"` // new, quoting, negotiating, won, lost, cancelled
 	Status          string    `gorm:"not null;default:'following';index"` // following, won, lost, cancelled
 	LostReason      string

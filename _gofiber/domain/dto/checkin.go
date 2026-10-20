@@ -9,13 +9,14 @@ type CheckInRequest struct {
 }
 
 type CheckInResponse struct {
-	ID           string    `json:"id"`
-	CheckInDate  string    `json:"checkInDate"`
-	LicensePlate string    `json:"licensePlate"`
-	Mileage      int       `json:"mileage"`
-	SelfieURL    string    `json:"selfieUrl"`
-	DailyKM      *int      `json:"dailyKm"`
-	CreatedAt    time.Time `json:"createdAt"`
+	ID           string           `json:"id"`
+	CheckInDate  string           `json:"checkInDate"`
+	LicensePlate string           `json:"licensePlate"`
+	Mileage      int              `json:"mileage"`
+	SelfieURL    string           `json:"selfieUrl"`
+	DailyKM      *int             `json:"dailyKm"`
+	CreatedAt    time.Time        `json:"createdAt"`
+	ChatMessages []map[string]any `json:"chatMessages,omitempty"`
 }
 
 type CheckInStatusResponse struct {

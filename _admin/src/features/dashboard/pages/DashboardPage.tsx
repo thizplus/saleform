@@ -15,6 +15,7 @@ import { ActivityFeed } from '../components/ActivityFeed'
 import { TopAreas } from '../components/TopAreas'
 import { LostSummary } from '../components/LostSummary'
 import { useSummary, useByRep, useTrend, useByArea, useLostReasons, useRecentActivity, useReps } from '@/features/analytics'
+import { useTeamSummary } from '@/features/checkins/hooks'
 import { useFilters } from '@/lib/filters'
 import { delta, n, pct, thRange } from '@/lib/fmt'
 
@@ -31,10 +32,16 @@ export function DashboardPage() {
   const { data: areas } = useByArea()
   const { data: lostData } = useLostReasons()
   const { data: feed } = useRecentActivity()
+  const { data: teamCheckIn } = useTeamSummary('month')
 
   const repItems = React.useMemo(() => (reps ?? []).filter(r => r.status === 'active').map(r => ({ value: r.id, label: r.nickname })), [reps])
   const amphoeItems = React.useMemo(() => [...new Set((areas ?? []).map(a => a.amphoe))], [areas])
   const sortedReps = React.useMemo(() => [...(repRows ?? [])].sort((a, b) => b.visits - a.visits), [repRows])
+
+  const teamKm = React.useMemo(() => {
+    if (!teamCheckIn?.reps) return { totalKm: 0, totalDays: 0 }
+    return teamCheckIn.reps.reduce((acc, r) => ({ totalKm: acc.totalKm + r.totalKm, totalDays: acc.totalDays + r.checkInDays }), { totalKm: 0, totalDays: 0 })
+  }, [teamCheckIn])
 
   const cur = summary
   const prev = summary?.previous
@@ -72,6 +79,9 @@ export function DashboardPage() {
         <KpiCard label="ติดตามอยู่" tone="warn" value={n(cur.following)} unit="งาน" onClick={() => navigate('/follow-ups')}
           info="หน้างานที่ยังเปิดอยู่ (ไม่ขึ้นกับช่วงเวลา)"
           hint={<span>เลยกำหนด <b className="num text-warning-ink">{cur.overdue}</b></span>} />
+        <KpiCard label="ระยะทางรวม" value={n(teamKm.totalKm)} unit="กม." onClick={() => navigate('/check-ins')}
+          info="ระยะทางวิ่งงานทั้งทีม (เดือนนี้)"
+          hint={<span>เช็คอิน <b className="num">{teamKm.totalDays}</b> วัน</span>} />
       </section>
 
       {/* Activity chart + Outcome */}
@@ -98,7 +108,13 @@ export function DashboardPage() {
         <Panel title="ผลงานเซลล์" description="เรียงตามจำนวนวิ่งงาน · คลิกเพื่อดูรายละเอียด"
           action={<Button variant="ghost" size="sm" render={<Link to="/performance" />}>ดูรายงานเต็ม <ArrowRight /></Button>}
           contentClassName="px-0">
-          <RepLeaderboard rows={sortedReps} />
+          <RepLeaderboard rows={sortedReps} checkInMap={React.useMemo(() => {
+            const map = new Map<string, { totalKm: number; checkInDays: number }>()
+            if (teamCheckIn?.reps) {
+              for (const r of teamCheckIn.reps) map.set(r.repId, { totalKm: r.totalKm, checkInDays: r.checkInDays })
+            }
+            return map
+          }, [teamCheckIn])} />
         </Panel>
       )}
 
