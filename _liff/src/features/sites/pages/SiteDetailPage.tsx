@@ -6,6 +6,7 @@ import {
   Navigation,
   MapPin,
   User,
+  Users,
   Calendar,
   Clock,
   Image as ImageIcon,
@@ -15,7 +16,7 @@ import { StatusBadge } from '@/components/shared'
 import { PhotoLightbox } from '@/components/shared/PhotoLightbox'
 import { formatThaiDate, formatPhone, formatRelativeDay } from '@/lib/format-th'
 import { useSiteDetail } from '../hooks'
-import type { ReportBrief, PhotoBrief } from '../types'
+import type { ReportBrief, PhotoBrief, ContactBrief } from '../types'
 
 /** L7 — รายละเอียดหน้างาน (full page) */
 export function SiteDetailPage() {
@@ -186,6 +187,32 @@ export function SiteDetailPage() {
             />
           </div>
         </div>
+
+        {/* ผู้ติดต่อ */}
+        {site.contacts?.length > 0 && (
+          <div className="px-4 pt-4">
+            <h3 className="text-sm font-bold mb-2 flex items-center gap-1.5">
+              <Users className="size-4" />
+              ผู้ติดต่อ ({site.contacts.length})
+            </h3>
+            <div className="space-y-2">
+              {site.contacts.map((c: ContactBrief) => (
+                <div key={c.id} className="border rounded-xl px-3 py-2.5 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">{c.name || 'ไม่ระบุชื่อ'}</span>
+                    {c.phone && (
+                      <a href={`tel:${c.phone}`} className="text-xs text-primary num">{formatPhone(c.phone)}</a>
+                    )}
+                  </div>
+                  <div className="flex gap-3 text-xs text-muted-foreground">
+                    {c.contactType && <span>{c.contactType}</span>}
+                    {c.authority && <span>· {c.authority}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Timeline */}
         {site.reports?.length > 0 && (

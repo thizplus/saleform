@@ -16,6 +16,7 @@ const FIELDS: { key: keyof DropdownOptions; label: string; description: string }
   { key: 'lostReasons', label: 'สาเหตุจบที่อื่น', description: 'เหตุผลที่ไม่ได้งาน' },
   { key: 'competitors', label: 'คู่แข่ง', description: 'ชื่อร้าน/แบรนด์คู่แข่ง' },
   { key: 'amphoes', label: 'เขตพื้นที่', description: 'พื้นที่รับผิดชอบของเซลล์' },
+  { key: 'vehiclePlates', label: 'ทะเบียนรถ', description: 'ทะเบียนรถบริษัทสำหรับเช็คอิน' },
 ]
 
 export function OptionsPage() {

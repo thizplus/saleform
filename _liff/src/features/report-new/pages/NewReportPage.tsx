@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, MapPin, Check, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, Check, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { getLiffContext, sendChatMessages } from '@/lib/liff-helpers'
 import { addDays } from '@/lib/thai-date'
 import { PhotoPicker } from '../components/PhotoPicker'
-import { GPSButton } from '../components/GPSButton'
+import { GPSButton, type GeoAddress } from '../components/GPSButton'
 import { FollowUpDateChips } from '../components/FollowUpDateChips'
 import { DuplicateDialog } from '../components/DuplicateDialog'
 import { UploadProgressSheet, type UploadStep } from '../components/UploadProgressSheet'
@@ -27,6 +27,7 @@ interface FormData {
   accuracy: number | null
   tambon: string
   amphoe: string
+  province: string
   photos: { file: File; preview: string }[]
   phone: string
   customerName: string
@@ -42,7 +43,7 @@ interface FormData {
 
 const defaultForm: FormData = {
   lat: null, lng: null, accuracy: null,
-  tambon: '', amphoe: '',
+  tambon: '', amphoe: '', province: '',
   photos: [],
   phone: '', customerName: '', contractorName: '',
   contactType: '', decisionMaker: '',
@@ -287,16 +288,13 @@ export function NewReportPage() {
               update('lng', ln)
               update('accuracy', acc ?? null)
             }}
+            onAddress={(geo: GeoAddress) => {
+              update('tambon', geo.tambon)
+              update('amphoe', geo.amphoe)
+              update('province', geo.province)
+            }}
+            address={form.tambon || form.amphoe ? { tambon: form.tambon, amphoe: form.amphoe, province: form.province } : null}
           />
-          {form.lat && (
-            <div className="flex items-start gap-2 text-xs text-muted-foreground">
-              <MapPin className="size-3.5 mt-0.5 shrink-0" />
-              <span>
-                {form.lat.toFixed(5)}, {form.lng?.toFixed(5)}
-                {form.accuracy && ` (±${Math.round(form.accuracy)}ม.)`}
-              </span>
-            </div>
-          )}
 
           {/* Inline GPS duplicate warning */}
           {gpsDups.length > 0 && !gpsDupsDismissed && (
@@ -324,10 +322,6 @@ export function NewReportPage() {
           <div className="space-y-1">
             <Label htmlFor="customerName" className="text-xs text-muted-foreground">ชื่องาน / ชื่อโปรเจค</Label>
             <Input id="customerName" value={form.customerName} onChange={(e) => update('customerName', e.target.value)} placeholder="เช่น บ้านคุณสมชาย, โปรเจคหมู่บ้าน..." className="h-10 text-base" />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="amphoe" className="text-xs text-muted-foreground">อำเภอ</Label>
-            <Input id="amphoe" value={form.amphoe} onChange={(e) => update('amphoe', e.target.value)} placeholder="อำเภอ" className="h-10 text-base" />
           </div>
         </section>
 

@@ -4,7 +4,9 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { reportNewService } from '@/features/report-new/service'
+import { useOptions } from '@/features/report-new/hooks'
 import { useCheckInStatus, useCheckIn } from './hooks'
 
 interface CheckInPageProps {
@@ -13,6 +15,7 @@ interface CheckInPageProps {
 
 export function CheckInPage({ onDone }: CheckInPageProps) {
   const { data: status, isLoading } = useCheckInStatus()
+  const { data: options } = useOptions()
   const checkInMutation = useCheckIn()
 
   const [plate, setPlate] = useState('')
@@ -21,10 +24,6 @@ export function CheckInPage({ onDone }: CheckInPageProps) {
   const [submitting, setSubmitting] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  // Pre-fill เมื่อโหลด status เสร็จ
-  if (status && !plate && status.lastPlate) {
-    setPlate(status.lastPlate)
-  }
 
   // ถ้าเช็คอินแล้ว → ข้ามไปเลย
   if (!isLoading && status?.checkedIn) {
@@ -91,16 +90,19 @@ export function CheckInPage({ onDone }: CheckInPageProps) {
         <div className="space-y-4">
           {/* ทะเบียนรถ */}
           <div className="space-y-1.5">
-            <Label htmlFor="plate" className="flex items-center gap-1.5">
+            <Label className="flex items-center gap-1.5">
               <Car className="size-4" /> ทะเบียนรถ
             </Label>
-            <Input
-              id="plate"
-              value={plate}
-              onChange={(e) => setPlate(e.target.value)}
-              placeholder="เช่น กข 1234"
-              className="h-12 text-base"
-            />
+            <Select value={plate} onValueChange={setPlate}>
+              <SelectTrigger className="h-12 text-base">
+                <SelectValue placeholder="เลือกทะเบียนรถ" />
+              </SelectTrigger>
+              <SelectContent>
+                {(options?.vehiclePlates || []).map((p) => (
+                  <SelectItem key={p} value={p} className="text-base">{p}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* เลขไมล์ */}

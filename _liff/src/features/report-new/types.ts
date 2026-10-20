@@ -33,6 +33,7 @@ export interface OptionsData {
   stages: string[]
   lostReasons: string[]
   competitors: string[]
+  vehiclePlates: string[]
 }
 
 export interface DuplicateMatch {
