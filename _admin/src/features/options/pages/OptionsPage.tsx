@@ -11,7 +11,7 @@ import { useReps } from '@/features/analytics'
 
 const FIELDS: { key: keyof DropdownOptions; label: string; description: string }[] = [
   { key: 'stages', label: 'สถานะงาน', description: 'สถานะงานก่อสร้าง' },
-  { key: 'jobTypes', label: 'ตัวเลือกงาน', description: 'ประเภทงานที่เซลล์ทำ เช่น สำรวจ, เสนอราคา' },
+  { key: 'jobTypes', label: 'ตัวเลือกงานอื่นๆ', description: 'ประเภทงานที่เซลล์ทำ เช่น สำรวจ, เสนอราคา' },
   { key: 'customerTypes', label: 'ประเภทลูกค้า', description: 'ประเภทของลูกค้า/หน้างาน' },
   { key: 'lostReasons', label: 'สาเหตุจบที่อื่น', description: 'เหตุผลที่ไม่ได้งาน' },
   { key: 'competitors', label: 'คู่แข่ง', description: 'ชื่อร้าน/แบรนด์คู่แข่ง' },

@@ -32,7 +32,7 @@ func BuildNewSiteMessages(site *models.Site, report *models.SiteReport, repName 
 		if report.JobType == "อื่นๆ" && report.JobTypeOther != "" {
 			jobText = report.JobTypeOther
 		}
-		lines = append(lines, fmt.Sprintf("🔧 ตัวเลือกงาน: %s", jobText))
+		lines = append(lines, fmt.Sprintf("🔧 ตัวเลือกงานอื่นๆ: %s", jobText))
 	}
 
 	// ผู้ติดต่อ

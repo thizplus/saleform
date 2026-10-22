@@ -376,7 +376,7 @@ export function NewReportPage() {
           </div>
 
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">ตัวเลือกงาน</Label>
+            <Label className="text-xs text-muted-foreground">ตัวเลือกงานอื่นๆ</Label>
             <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-4 px-4">
               {jobTypes.map((j) => (
                 <Chip key={j} label={j} selected={form.jobType === j} onClick={() => {

@@ -353,7 +353,7 @@ function TimelineItem({ report, isLast, allPhotos, onPhotoClick }: {
         </div>
         {report.jobType && (
           <p className="text-xs mt-1 text-muted-foreground">
-            <span className="font-medium">ตัวเลือกงาน:</span> {report.jobType === 'อื่นๆ' && report.jobTypeOther ? report.jobTypeOther : report.jobType}
+            <span className="font-medium">ตัวเลือกงานอื่นๆ:</span> {report.jobType === 'อื่นๆ' && report.jobTypeOther ? report.jobTypeOther : report.jobType}
           </p>
         )}
         {report.note && (
