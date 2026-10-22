@@ -156,6 +156,14 @@ export function HomePage() {
 
       {/* Floating action buttons */}
       <div className="fixed bottom-0 inset-x-0 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] space-y-2">
+        <Button
+          onClick={() => navigate('/new')}
+          size="xl"
+          className="w-full gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+        >
+          <Plus className="size-5" />
+          รายงานงานใหม่
+        </Button>
         {showEveningSummary && (
           <Button
             onClick={() => navigate('/evening-summary')}
@@ -167,14 +175,6 @@ export function HomePage() {
             สรุปงานประจำวัน
           </Button>
         )}
-        <Button
-          onClick={() => navigate('/new')}
-          size="xl"
-          className="w-full gap-2"
-        >
-          <Plus className="size-5" />
-          รายงานงานใหม่
-        </Button>
       </div>
     </div>
   )
