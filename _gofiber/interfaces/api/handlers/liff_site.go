@@ -62,6 +62,11 @@ func (h *LIFFSiteHandler) CreateSite(c *fiber.Ctx) error {
 		return utils.BadRequestResponse(c, "Invalid request body")
 	}
 
+	// Debug: log contacts
+	for i, c := range req.Contacts {
+		logger.InfoContext(ctx, "Contact received", "index", i, "name", c.Name, "role", c.Role, "contactType", c.ContactType, "authority", c.Authority)
+	}
+
 	// Custom validation: ต้องมีอย่างน้อย 1 ตัวระบุ (phone, customerName, contractorName, หรือ GPS)
 	hasIdentifier := req.Phone != "" || req.CustomerName != "" || req.ContractorName != "" || (req.Latitude != nil && req.Longitude != nil)
 	if !hasIdentifier {

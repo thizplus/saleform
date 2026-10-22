@@ -24,6 +24,10 @@ func (r *checkInRepository) Create(ctx context.Context, checkIn *models.DailyChe
 	return postgres.GetDB(ctx, r.db).Create(checkIn).Error
 }
 
+func (r *checkInRepository) Update(ctx context.Context, checkIn *models.DailyCheckIn) error {
+	return postgres.GetDB(ctx, r.db).Save(checkIn).Error
+}
+
 func (r *checkInRepository) GetByRepAndDate(ctx context.Context, repID uuid.UUID, date time.Time) (*models.DailyCheckIn, error) {
 	var checkIn models.DailyCheckIn
 	err := postgres.GetDB(ctx, r.db).

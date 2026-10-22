@@ -133,8 +133,6 @@ export function SiteDetailPage() {
             <h3 className="text-sm font-bold mb-3">ข้อมูลงาน</h3>
             <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
               <InfoRow icon={Phone} label="โทร" value={site.phone ? formatPhone(site.phone) : '-'} href={site.phone ? `tel:${site.phone}` : undefined} />
-              <InfoRow icon={User} label="ประเภทลูกค้า" value={site.customerType || '-'} />
-              <InfoRow icon={User} label="ช่าง" value={site.contractorName || '-'} />
               <InfoRow icon={MapPin} label="ตำบล" value={site.tambon || '-'} />
               <InfoRow icon={MapPin} label="อำเภอ" value={site.amphoe || '-'} />
               <InfoRow icon={MapPin} label="จังหวัด" value={site.province || '-'} />
@@ -169,7 +167,7 @@ export function SiteDetailPage() {
                 <h3 className="text-sm font-bold">ผู้ติดต่อ ({site.contacts.length})</h3>
               </div>
               <div className="space-y-2">
-                {site.contacts.map((c: { id: string; name: string; phone: string; contactType: string; authority: string; isPrimary: boolean }) => (
+                {site.contacts.map((c: { id: string; name: string; phone: string; contactType: string; authority: string; role: string; isPrimary: boolean }) => (
                   <div key={c.id} className="rounded-lg border px-3 py-2.5 space-y-1.5">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5">
@@ -180,7 +178,13 @@ export function SiteDetailPage() {
                         <a href={`tel:${c.phone}`} className="text-xs text-primary hover:underline num">{formatPhone(c.phone)}</a>
                       )}
                     </div>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                    <div className="grid grid-cols-3 gap-x-4 gap-y-1 text-xs">
+                      {c.role && (
+                        <div>
+                          <span className="text-muted-foreground">บทบาท: </span>
+                          <span className="font-medium">{c.role}</span>
+                        </div>
+                      )}
                       <div>
                         <span className="text-muted-foreground">ประเภท: </span>
                         <span className="font-medium">{c.contactType || 'ไม่ระบุ'}</span>
@@ -347,8 +351,20 @@ function TimelineItem({ report, isLast, allPhotos, onPhotoClick }: {
             <span className="text-xs text-muted-foreground">{report.stage}</span>
           )}
         </div>
+        {report.jobType && (
+          <p className="text-xs mt-1 text-muted-foreground">
+            <span className="font-medium">ตัวเลือกงาน:</span> {report.jobType === 'อื่นๆ' && report.jobTypeOther ? report.jobTypeOther : report.jobType}
+          </p>
+        )}
         {report.note && (
-          <p className="text-sm mt-1.5 whitespace-pre-wrap text-muted-foreground leading-relaxed">{report.note}</p>
+          <p className="text-sm mt-1.5 whitespace-pre-wrap text-muted-foreground leading-relaxed">
+            <span className="font-medium">สินค้าที่สนใจ:</span> {report.note}
+          </p>
+        )}
+        {report.jobDetail && (
+          <p className="text-sm mt-1 whitespace-pre-wrap text-muted-foreground leading-relaxed">
+            <span className="font-medium">รายละเอียดหน้างาน:</span> {report.jobDetail}
+          </p>
         )}
         {report.photos?.length > 0 && (
           <div className="grid grid-cols-3 gap-1.5 mt-2">
@@ -372,7 +388,7 @@ function TimelineItem({ report, isLast, allPhotos, onPhotoClick }: {
 }
 
 function EditDialog({ site, open, onOpenChange, onSave, isPending }: {
-  site: { customerName: string; customerType: string; contractorName: string; phone: string; amphoe: string; stage: string; status: string; lostReason: string; competitor: string }
+  site: { customerName: string; phone: string; amphoe: string; stage: string; status: string; lostReason: string; competitor: string }
   open: boolean
   onOpenChange: (open: boolean) => void
   onSave: (data: Record<string, unknown>) => void
@@ -380,8 +396,6 @@ function EditDialog({ site, open, onOpenChange, onSave, isPending }: {
 }) {
   const [form, setForm] = useState(() => ({
     customerName: site.customerName,
-    customerType: site.customerType,
-    contractorName: site.contractorName,
     phone: site.phone,
     amphoe: site.amphoe,
     stage: site.stage,
@@ -406,14 +420,6 @@ function EditDialog({ site, open, onOpenChange, onSave, isPending }: {
             <div className="space-y-1.5">
               <Label>ชื่อลูกค้า</Label>
               <Input value={form.customerName} onChange={(e) => set('customerName', e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label>ประเภท</Label>
-              <Input value={form.customerType} onChange={(e) => set('customerType', e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label>ช่าง</Label>
-              <Input value={form.contractorName} onChange={(e) => set('contractorName', e.target.value)} />
             </div>
             <div className="space-y-1.5">
               <Label>โทร</Label>

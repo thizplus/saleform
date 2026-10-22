@@ -4,6 +4,7 @@ import { SiteDetailPage } from '@/features/sites/pages/SiteDetailPage'
 import { MyStatsPage } from '@/features/sites/pages/MyStatsPage'
 import { NewReportPage, SuccessPage } from '@/features/report-new'
 import { UpdateSitePage } from '@/features/site/UpdateSitePage'
+import { EveningSummaryPage } from '@/features/checkin'
 
 export function AppRoutes() {
   return (
@@ -17,6 +18,8 @@ export function AppRoutes() {
       <Route path="/sites/:code/update" element={<UpdateSitePage />} />
       {/* ผลงานของฉัน */}
       <Route path="/my-stats" element={<MyStatsPage />} />
+      {/* สรุปงานประจำวัน */}
+      <Route path="/evening-summary" element={<EveningSummaryPage />} />
     </Routes>
   )
 }

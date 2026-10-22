@@ -8,6 +8,7 @@ export interface DropdownOptions {
   competitors: string[]
   amphoes: string[]
   vehiclePlates: string[]
+  jobTypes: string[]
 }
 
 export const optionsService = {

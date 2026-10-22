@@ -23,6 +23,7 @@ var defaultOptions = dto.OptionsResponse{
 	Competitors:    []string{},
 	Amphoes:        []string{},
 	VehiclePlates:  []string{},
+	JobTypes:       []string{"สำรวจหน้างาน", "เสนอราคา", "วัดหน้างาน", "ส่งของ", "เก็บเงิน", "อื่นๆ"},
 }
 
 func (s *optionsServiceImpl) GetOptions(ctx context.Context) (*dto.OptionsResponse, error) {
@@ -48,6 +49,9 @@ func (s *optionsServiceImpl) GetOptions(ctx context.Context) (*dto.OptionsRespon
 			}
 			if len(dbOpts.VehiclePlates) > 0 {
 				resp.VehiclePlates = dbOpts.VehiclePlates
+			}
+			if len(dbOpts.JobTypes) > 0 {
+				resp.JobTypes = dbOpts.JobTypes
 			}
 		}
 	}

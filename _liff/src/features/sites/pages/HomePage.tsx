@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Phone, PenLine, RefreshCw, BarChart3, Search } from 'lucide-react'
+import { Plus, Phone, PenLine, RefreshCw, BarChart3, Search, ClipboardList } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { StatusBadge } from '@/components/shared'
 import { useAuthStore } from '@/stores/auth'
 import { formatThaiDate, formatPhone } from '@/lib/format-th'
+import { useCheckInStatus } from '@/features/checkin'
 import { useSiteList } from '../hooks'
 import type { SiteListParams, SiteBrief } from '../types'
 
@@ -22,6 +23,8 @@ export function HomePage() {
   const [params, setParams] = useState<SiteListParams>({ tab: 'due_today', page: 1, limit: 50 })
 
   const { data, isLoading, refetch } = useSiteList(params, true)
+  const { data: checkInStatus } = useCheckInStatus()
+  const showEveningSummary = checkInStatus?.checkedIn && !checkInStatus?.eveningSummaryDone
 
   function handleTabChange(tab: TabValue) {
     setActiveTab(tab)
@@ -151,8 +154,19 @@ export function HomePage() {
         )}
       </div>
 
-      {/* Floating action button */}
-      <div className="fixed bottom-0 inset-x-0 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+      {/* Floating action buttons */}
+      <div className="fixed bottom-0 inset-x-0 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] space-y-2">
+        {showEveningSummary && (
+          <Button
+            onClick={() => navigate('/evening-summary')}
+            variant="outline"
+            size="xl"
+            className="w-full gap-2 border-primary text-primary"
+          >
+            <ClipboardList className="size-5" />
+            สรุปงานประจำวัน
+          </Button>
+        )}
         <Button
           onClick={() => navigate('/new')}
           size="xl"

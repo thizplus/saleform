@@ -6,6 +6,7 @@ export interface CheckInStatus {
   today?: CheckInData
   lastPlate: string
   lastMileage: number
+  eveningSummaryDone: boolean
 }
 
 export interface CheckInData {
@@ -29,4 +30,28 @@ export const checkInService = {
     const res = await apiClient.post<{ data: CheckInData }>(LIFF_ROUTES.CHECK_IN, data)
     return res.data.data
   },
+
+  async eveningSummary(data: EveningSummaryForm): Promise<EveningSummaryResponse> {
+    const res = await apiClient.post<{ data: EveningSummaryResponse }>(LIFF_ROUTES.EVENING_SUMMARY, data)
+    return res.data.data
+  },
+}
+
+export interface EveningSummaryForm {
+  mileage: number
+  callCount: number
+  billCount: number
+  oldCustomerAmount: number
+  newCustomerAmount: number
+}
+
+export interface EveningSummaryResponse {
+  id: string
+  mileage: number
+  callCount: number
+  billCount: number
+  oldCustomerAmount: number
+  newCustomerAmount: number
+  dailyKm: number | null
+  chatMessages?: Record<string, unknown>[]
 }

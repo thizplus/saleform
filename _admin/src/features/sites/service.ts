@@ -47,6 +47,9 @@ export interface ReportBrief {
   id: string
   reportType: string
   note: string
+  jobType: string
+  jobTypeOther: string
+  jobDetail: string
   stage: string
   status: string
   repName: string

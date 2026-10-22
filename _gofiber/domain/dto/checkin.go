@@ -20,10 +20,31 @@ type CheckInResponse struct {
 }
 
 type CheckInStatusResponse struct {
-	CheckedIn    bool            `json:"checkedIn"`
-	Today        *CheckInResponse `json:"today,omitempty"`
-	LastPlate    string          `json:"lastPlate"`    // ทะเบียนล่าสุด (pre-fill)
-	LastMileage  int             `json:"lastMileage"`  // ไมล์ล่าสุด
+	CheckedIn          bool             `json:"checkedIn"`
+	Today              *CheckInResponse `json:"today,omitempty"`
+	LastPlate          string           `json:"lastPlate"`          // ทะเบียนล่าสุด (pre-fill)
+	LastMileage        int              `json:"lastMileage"`        // ไมล์ล่าสุด
+	EveningSummaryDone bool             `json:"eveningSummaryDone"` // สรุปงานประจำวันแล้วหรือยัง
+}
+
+// Evening Summary (สรุปงานประจำวัน)
+type EveningSummaryRequest struct {
+	Mileage           int `json:"mileage" validate:"required,min=0"`
+	CallCount         int `json:"callCount" validate:"min=0"`
+	BillCount         int `json:"billCount" validate:"min=0"`
+	OldCustomerAmount int `json:"oldCustomerAmount" validate:"min=0"` // บาท
+	NewCustomerAmount int `json:"newCustomerAmount" validate:"min=0"` // บาท
+}
+
+type EveningSummaryResponse struct {
+	ID                string           `json:"id"`
+	Mileage           int              `json:"mileage"`
+	CallCount         int              `json:"callCount"`
+	BillCount         int              `json:"billCount"`
+	OldCustomerAmount int              `json:"oldCustomerAmount"`
+	NewCustomerAmount int              `json:"newCustomerAmount"`
+	DailyKM           *int             `json:"dailyKm"`
+	ChatMessages      []map[string]any `json:"chatMessages,omitempty"`
 }
 
 // Summary
@@ -52,14 +73,21 @@ type TeamCheckInSummary struct {
 
 // Admin
 type AdminCheckInRow struct {
-	ID           string    `json:"id"`
-	RepID        string    `json:"repId"`
-	RepName      string    `json:"repName"`
-	PictureURL   string    `json:"pictureUrl"`
-	CheckInDate  string    `json:"checkInDate"`
-	LicensePlate string    `json:"licensePlate"`
-	Mileage      int       `json:"mileage"`
-	SelfieURL    string    `json:"selfieUrl"`
-	DailyKM      *int      `json:"dailyKm"`
-	CreatedAt    time.Time `json:"createdAt"`
+	ID                string    `json:"id"`
+	RepID             string    `json:"repId"`
+	RepName           string    `json:"repName"`
+	PictureURL        string    `json:"pictureUrl"`
+	CheckInDate       string    `json:"checkInDate"`
+	LicensePlate      string    `json:"licensePlate"`
+	Mileage           int       `json:"mileage"`
+	SelfieURL         string    `json:"selfieUrl"`
+	DailyKM           *int      `json:"dailyKm"`
+	CreatedAt         time.Time `json:"createdAt"`
+	// สรุปงานประจำวัน
+	EveningMileage    *int      `json:"eveningMileage"`
+	CallCount         *int      `json:"callCount"`
+	BillCount         *int      `json:"billCount"`
+	OldCustomerAmount *int      `json:"oldCustomerAmount"`
+	NewCustomerAmount *int      `json:"newCustomerAmount"`
+	EveningSummaryAt  *time.Time `json:"eveningSummaryAt"`
 }

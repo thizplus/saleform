@@ -11,14 +11,17 @@ export interface CreateSiteForm {
   customerName: string
   customerType: string
   contractorName: string
-  decisionMaker: string
   stage: string
   detail: string
+  jobType: string
+  jobTypeOther: string
+  jobDetail: string
   lat: number | null
   lng: number | null
-  address: string
   tambon?: string
   amphoe?: string
+  province?: string
+  postcode?: string
   expectedOrderDate: string
   nextFollowUpDate: string
   photoIds: string[]
@@ -34,6 +37,7 @@ export interface OptionsData {
   lostReasons: string[]
   competitors: string[]
   vehiclePlates: string[]
+  jobTypes: string[]
 }
 
 export interface DuplicateMatch {

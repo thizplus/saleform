@@ -11,6 +11,7 @@ import (
 
 type CheckInRepository interface {
 	Create(ctx context.Context, checkIn *models.DailyCheckIn) error
+	Update(ctx context.Context, checkIn *models.DailyCheckIn) error
 	GetByRepAndDate(ctx context.Context, repID uuid.UUID, date time.Time) (*models.DailyCheckIn, error)
 	GetLatestByRep(ctx context.Context, repID uuid.UUID) (*models.DailyCheckIn, error)
 	ListByDate(ctx context.Context, date time.Time) ([]models.DailyCheckIn, error)

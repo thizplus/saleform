@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { checkInService } from './service'
+import { checkInService, type EveningSummaryForm } from './service'
 
 export const checkInKeys = {
   all: ['check-in'] as const,
@@ -19,6 +19,16 @@ export function useCheckIn() {
   return useMutation({
     mutationFn: (data: { licensePlate: string; mileage: number; selfieKey: string }) =>
       checkInService.checkIn(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: checkInKeys.status() })
+    },
+  })
+}
+
+export function useEveningSummary() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: EveningSummaryForm) => checkInService.eveningSummary(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: checkInKeys.status() })
     },

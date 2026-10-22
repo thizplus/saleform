@@ -106,8 +106,13 @@ function LogTab({ date, setDate }: { date: string; setDate: (d: string) => void 
               <TableRow>
                 <TableHead>เซลล์</TableHead>
                 <TableHead>ทะเบียน</TableHead>
-                <TableHead className="text-right">ไมล์</TableHead>
+                <TableHead className="text-right">ไมล์เช้า</TableHead>
+                <TableHead className="text-right">ไมล์เย็น</TableHead>
                 <TableHead className="text-right">ระยะทาง</TableHead>
+                <TableHead className="text-right">โทร</TableHead>
+                <TableHead className="text-right">บิล</TableHead>
+                <TableHead className="text-right">ยอดเก่า</TableHead>
+                <TableHead className="text-right">ยอดใหม่</TableHead>
                 <TableHead>เวลา</TableHead>
               </TableRow>
             </TableHeader>
@@ -122,8 +127,23 @@ function LogTab({ date, setDate }: { date: string; setDate: (d: string) => void 
                   </TableCell>
                   <TableCell className="text-sm">{row.licensePlate}</TableCell>
                   <TableCell className="text-right num text-sm">{n(row.mileage)}</TableCell>
+                  <TableCell className="text-right num text-sm">
+                    {row.eveningMileage != null ? n(row.eveningMileage) : '–'}
+                  </TableCell>
                   <TableCell className="text-right num text-sm font-bold">
                     {row.dailyKm != null ? `${n(row.dailyKm)} km` : '–'}
+                  </TableCell>
+                  <TableCell className="text-right num text-sm">
+                    {row.callCount != null ? row.callCount : '–'}
+                  </TableCell>
+                  <TableCell className="text-right num text-sm">
+                    {row.billCount != null ? row.billCount : '–'}
+                  </TableCell>
+                  <TableCell className="text-right num text-sm">
+                    {row.oldCustomerAmount != null ? n(row.oldCustomerAmount) : '–'}
+                  </TableCell>
+                  <TableCell className="text-right num text-sm">
+                    {row.newCustomerAmount != null ? n(row.newCustomerAmount) : '–'}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {fmtTime(new Date(row.createdAt))}

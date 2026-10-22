@@ -9,7 +9,10 @@ type CreateSiteRequest struct {
 	CustomerType     string   `json:"customerType"`
 	ContractorName   string   `json:"contractorName"`
 	Stage            string   `json:"stage"`
-	Detail           string   `json:"detail"`
+	Detail           string   `json:"detail"`           // สินค้าที่สนใจ
+	JobType          string   `json:"jobType"`           // ตัวเลือกงาน
+	JobTypeOther     string   `json:"jobTypeOther"`      // อื่นๆ (free text)
+	JobDetail        string   `json:"jobDetail"`         // รายละเอียดหน้างาน
 	Latitude         *float64 `json:"lat"`
 	Longitude        *float64 `json:"lng"`
 	Tambon           string   `json:"tambon"`
@@ -125,14 +128,17 @@ type SiteDetailResponse struct {
 }
 
 type ReportBrief struct {
-	ID          string    `json:"id"`
-	ReportType  string    `json:"reportType"`
-	Note        string    `json:"note"`
-	Stage       string    `json:"stage"`
-	Status      string    `json:"status"`
-	RepName     string    `json:"repName"`
-	ReportDate  time.Time `json:"reportDate"`
-	Photos      []PhotoBrief `json:"photos"`
+	ID           string    `json:"id"`
+	ReportType   string    `json:"reportType"`
+	Note         string    `json:"note"`          // สินค้าที่สนใจ
+	JobType      string    `json:"jobType"`       // ตัวเลือกงาน
+	JobTypeOther string    `json:"jobTypeOther"`  // อื่นๆ
+	JobDetail    string    `json:"jobDetail"`     // รายละเอียดหน้างาน
+	Stage        string    `json:"stage"`
+	Status       string    `json:"status"`
+	RepName      string    `json:"repName"`
+	ReportDate   time.Time `json:"reportDate"`
+	Photos       []PhotoBrief `json:"photos"`
 }
 
 type PhotoBrief struct {

@@ -36,7 +36,10 @@ interface FormData {
   contactType: string
   contacts: ContactInput[]
   stage: string
+  jobType: string
+  jobTypeOther: string
   detail: string
+  jobDetail: string
   nextFollowUpDate: string
   expectedOrder: string
 }
@@ -47,8 +50,9 @@ const defaultForm: FormData = {
   photos: [],
   phone: '', customerName: '', contractorName: '',
   contactType: '',
-  contacts: [{ name: '', phone: '', contactType: '', authority: '' }],
-  stage: '', detail: '',
+  contacts: [{ name: '', phone: '', contactType: '', authority: '', role: '' }],
+  stage: '', jobType: '', jobTypeOther: '',
+  detail: '', jobDetail: '',
   nextFollowUpDate: addDays(7),
   expectedOrder: '',
 }
@@ -65,6 +69,13 @@ export function NewReportPage() {
       const saved = localStorage.getItem(DRAFT_KEY)
       if (saved) {
         const parsed = JSON.parse(saved)
+        // ให้ contacts มี role field เสมอ (draft เก่าอาจไม่มี)
+        if (parsed.contacts) {
+          parsed.contacts = parsed.contacts.map((c: Record<string, string>) => ({
+            name: c.name || '', phone: c.phone || '', contactType: c.contactType || '',
+            authority: c.authority || '', role: c.role || '',
+          }))
+        }
         return { ...defaultForm, ...parsed, photos: [] }
       }
     } catch { /* ignore */ }
@@ -210,7 +221,10 @@ export function NewReportPage() {
         customerType: form.contactType,
         contractorName: form.contractorName,
         stage: form.stage,
+        jobType: form.jobType,
+        jobTypeOther: form.jobTypeOther,
         detail: form.detail,
+        jobDetail: form.jobDetail,
         lat: form.lat,
         lng: form.lng,
         tambon: form.tambon,
@@ -258,13 +272,14 @@ export function NewReportPage() {
   }
 
   const stages = options?.stages || ['เริ่มก่อสร้าง', 'กำลังสร้าง', 'ใกล้เสร็จ', 'รอตัดสินใจ', 'เสนอราคาแล้ว', 'อื่นๆ']
+  const jobTypes = options?.jobTypes || ['สำรวจหน้างาน', 'เสนอราคา', 'วัดหน้างาน', 'ส่งของ', 'เก็บเงิน', 'อื่นๆ']
   const contactTypes = ['เจ้าของ', 'ช่าง', 'ผู้รับเหมา']
 
   return (
     <div className="min-h-dvh bg-background flex flex-col">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-background border-b px-4 h-12 flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="p-1" aria-label="กลับ">
+        <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/')} className="p-1" aria-label="กลับ">
           <ArrowLeft className="size-5" />
         </button>
         <h1 className="text-base font-bold flex-1">รายงานงานใหม่</h1>
@@ -352,7 +367,7 @@ export function NewReportPage() {
           <Label className="text-sm font-bold">รายละเอียด</Label>
 
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">ขั้นตอน</Label>
+            <Label className="text-xs text-muted-foreground">สถานะงาน</Label>
             <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-4 px-4">
               {stages.map((s) => (
                 <Chip key={s} label={s} selected={form.stage === s} onClick={() => update('stage', form.stage === s ? '' : s)} />
@@ -361,7 +376,27 @@ export function NewReportPage() {
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="detail" className="text-xs text-muted-foreground">หมายเหตุ</Label>
+            <Label className="text-xs text-muted-foreground">ตัวเลือกงาน</Label>
+            <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-4 px-4">
+              {jobTypes.map((j) => (
+                <Chip key={j} label={j} selected={form.jobType === j} onClick={() => {
+                  update('jobType', form.jobType === j ? '' : j)
+                  if (j !== 'อื่นๆ') update('jobTypeOther', '')
+                }} />
+              ))}
+            </div>
+            {form.jobType === 'อื่นๆ' && (
+              <Input
+                value={form.jobTypeOther}
+                onChange={(e) => update('jobTypeOther', e.target.value)}
+                placeholder="ระบุงานอื่นๆ..."
+                className="h-10 text-base mt-1.5"
+              />
+            )}
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="detail" className="text-xs text-muted-foreground">สินค้าที่สนใจ</Label>
             <div className="flex flex-wrap gap-1.5">
               {QUICK_PRODUCTS.map((p) => (
                 <button key={p} type="button" onClick={() => update('detail', form.detail ? `${form.detail.trimEnd()} ${p}` : `สนใจ${p}`)}
@@ -372,7 +407,19 @@ export function NewReportPage() {
               id="detail"
               value={form.detail}
               onChange={(e) => update('detail', e.target.value)}
-              placeholder="สิ่งที่พบ / คุยกับลูกค้า..."
+              placeholder="สินค้าที่ลูกค้าสนใจ..."
+              rows={3}
+              className="text-base"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="jobDetail" className="text-xs text-muted-foreground">รายละเอียดหน้างาน</Label>
+            <Textarea
+              id="jobDetail"
+              value={form.jobDetail}
+              onChange={(e) => update('jobDetail', e.target.value)}
+              placeholder="รายละเอียดสิ่งที่พบ / คุยกับลูกค้า..."
               rows={3}
               className="text-base"
             />

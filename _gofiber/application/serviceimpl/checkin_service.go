@@ -51,10 +51,10 @@ func (s *checkInServiceImpl) CheckIn(ctx context.Context, repID uuid.UUID, req *
 		dailyKM = &km
 	}
 
-	// สร้าง selfie URL
+	// สร้าง selfie URL — ดึง storage key จาก media file
 	selfieURL := ""
 	if req.SelfieKey != "" && s.r2PublicURL != "" {
-		selfieURL = s.r2PublicURL + "/" + req.SelfieKey
+		selfieURL = s.r2PublicURL + "/photos/" + req.SelfieKey + ".jpg"
 	}
 
 	checkIn := &models.DailyCheckIn{
@@ -118,6 +118,7 @@ func (s *checkInServiceImpl) GetStatus(ctx context.Context, repID uuid.UUID) (*d
 			DailyKM:      todayCheckIn.DailyKM,
 			CreatedAt:    todayCheckIn.CreatedAt,
 		}
+		resp.EveningSummaryDone = todayCheckIn.EveningSummaryAt != nil
 	}
 
 	// ข้อมูลล่าสุด (pre-fill)
@@ -128,6 +129,73 @@ func (s *checkInServiceImpl) GetStatus(ctx context.Context, repID uuid.UUID) (*d
 	}
 
 	return resp, nil
+}
+
+func (s *checkInServiceImpl) EveningSummary(ctx context.Context, repID uuid.UUID, req *dto.EveningSummaryRequest) (*dto.EveningSummaryResponse, error) {
+	loc, _ := time.LoadLocation("Asia/Bangkok")
+	today := time.Now().In(loc)
+	todayDate := time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, loc)
+
+	// ต้องเช็คอินเช้าก่อน
+	checkIn, _ := s.checkInRepo.GetByRepAndDate(ctx, repID, todayDate)
+	if checkIn == nil {
+		return nil, errors.New("ยังไม่ได้เช็คอินวันนี้")
+	}
+
+	// ตรวจว่าสรุปงานแล้วหรือยัง
+	if checkIn.EveningSummaryAt != nil {
+		return nil, errors.New("สรุปงานประจำวันนี้แล้ว")
+	}
+
+	// คำนวณระยะทาง (ไมล์เย็น - ไมล์เช้า)
+	var dailyKM *int
+	if req.Mileage > checkIn.Mileage {
+		km := req.Mileage - checkIn.Mileage
+		dailyKM = &km
+	}
+
+	// อัปเดต check-in record
+	now := time.Now().In(loc)
+	checkIn.EveningMileage = &req.Mileage
+	checkIn.CallCount = &req.CallCount
+	checkIn.BillCount = &req.BillCount
+	checkIn.OldCustomerAmount = &req.OldCustomerAmount
+	checkIn.NewCustomerAmount = &req.NewCustomerAmount
+	checkIn.EveningSummaryAt = &now
+
+	// อัปเดต DailyKM จากไมล์เย็น (แม่นยำกว่าไมล์เช้าเทียบวันก่อน)
+	if dailyKM != nil {
+		checkIn.DailyKM = dailyKM
+	}
+
+	if err := s.checkInRepo.Update(ctx, checkIn); err != nil {
+		logger.ErrorContext(ctx, "Failed to update evening summary", "error", err)
+		return nil, errors.New("ไม่สามารถบันทึกสรุปงานได้")
+	}
+
+	logger.InfoContext(ctx, "Evening summary saved", "rep_id", repID, "evening_mileage", req.Mileage)
+
+	// สร้าง chat messages
+	rep, _ := s.repRepo.GetByID(ctx, repID)
+	repName := ""
+	if rep != nil {
+		repName = rep.DisplayName
+		if rep.Nickname != "" {
+			repName = rep.Nickname
+		}
+	}
+	chatMessages := BuildEveningSummaryMessages(repName, checkIn.LicensePlate, checkIn.Mileage, req.Mileage, dailyKM, req.CallCount, req.BillCount, req.OldCustomerAmount, req.NewCustomerAmount)
+
+	return &dto.EveningSummaryResponse{
+		ID:                checkIn.ID.String(),
+		Mileage:           req.Mileage,
+		CallCount:         req.CallCount,
+		BillCount:         req.BillCount,
+		OldCustomerAmount: req.OldCustomerAmount,
+		NewCustomerAmount: req.NewCustomerAmount,
+		DailyKM:           dailyKM,
+		ChatMessages:      chatMessages,
+	}, nil
 }
 
 func (s *checkInServiceImpl) ListByDate(ctx context.Context, date time.Time) ([]dto.AdminCheckInRow, error) {
@@ -149,16 +217,22 @@ func (s *checkInServiceImpl) ListByDate(ctx context.Context, date time.Time) ([]
 			pictureURL = rep.PictureURL
 		}
 		rows = append(rows, dto.AdminCheckInRow{
-			ID:           ci.ID.String(),
-			RepID:        ci.RepID.String(),
-			RepName:      repName,
-			PictureURL:   pictureURL,
-			CheckInDate:  ci.CheckInDate.Format("2006-01-02"),
-			LicensePlate: ci.LicensePlate,
-			Mileage:      ci.Mileage,
-			SelfieURL:    ci.SelfieURL,
-			DailyKM:      ci.DailyKM,
-			CreatedAt:    ci.CreatedAt,
+			ID:                ci.ID.String(),
+			RepID:             ci.RepID.String(),
+			RepName:           repName,
+			PictureURL:        pictureURL,
+			CheckInDate:       ci.CheckInDate.Format("2006-01-02"),
+			LicensePlate:      ci.LicensePlate,
+			Mileage:           ci.Mileage,
+			SelfieURL:         ci.SelfieURL,
+			DailyKM:           ci.DailyKM,
+			CreatedAt:         ci.CreatedAt,
+			EveningMileage:    ci.EveningMileage,
+			CallCount:         ci.CallCount,
+			BillCount:         ci.BillCount,
+			OldCustomerAmount: ci.OldCustomerAmount,
+			NewCustomerAmount: ci.NewCustomerAmount,
+			EveningSummaryAt:  ci.EveningSummaryAt,
 		})
 	}
 

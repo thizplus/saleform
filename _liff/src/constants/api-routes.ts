@@ -16,4 +16,5 @@ export const LIFF_ROUTES = {
   UPLOADS: `${API_BASE}/liff/uploads`,
   CHECK_IN: `${API_BASE}/liff/check-in`,
   CHECK_IN_STATUS: `${API_BASE}/liff/check-in/status`,
+  EVENING_SUMMARY: `${API_BASE}/liff/check-in/evening-summary`,
 } as const

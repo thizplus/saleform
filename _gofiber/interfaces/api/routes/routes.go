@@ -57,6 +57,7 @@ func Setup(app *fiber.App, cfg *config.Config, h Handlers) {
 	}
 	liff.Get("/check-in/status", h.LIFFCheckIn.GetStatus)
 	liff.Post("/check-in", h.LIFFCheckIn.CheckIn)
+	liff.Post("/check-in/evening-summary", h.LIFFCheckIn.EveningSummary)
 
 	// Admin auth
 	v1.Post("/admin/auth", h.AdminAuth.Login)

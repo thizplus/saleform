@@ -12,6 +12,13 @@ export interface CheckInRow {
   selfieUrl: string
   dailyKm: number | null
   createdAt: string
+  // สรุปงานประจำวัน (เช็คอินเย็น)
+  eveningMileage: number | null
+  callCount: number | null
+  billCount: number | null
+  oldCustomerAmount: number | null
+  newCustomerAmount: number | null
+  eveningSummaryAt: string | null
 }
 
 export interface RepSummary {

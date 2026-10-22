@@ -219,6 +219,9 @@ func (s *siteServiceImpl) Create(ctx context.Context, repID uuid.UUID, req *dto.
 		RepID:            repID,
 		ReportType:       "new",
 		Note:             req.Detail,
+		JobType:          req.JobType,
+		JobTypeOther:     req.JobTypeOther,
+		JobDetail:        req.JobDetail,
 		Stage:            site.Stage,
 		Status:           "following",
 		NextFollowUpDate: followUpDate,
@@ -246,6 +249,7 @@ func (s *siteServiceImpl) Create(ctx context.Context, repID uuid.UUID, req *dto.
 					Phone:       normalizePhone(c.Phone),
 					ContactType: c.ContactType,
 					Authority:   c.Authority,
+					Role:        c.Role,
 					IsPrimary:   i == 0,
 				}
 				if err := s.contactRepo.Create(txCtx, contact); err != nil {
@@ -293,12 +297,13 @@ func (s *siteServiceImpl) Create(ctx context.Context, repID uuid.UUID, req *dto.
 	rep, _ := s.salesRepRepo.GetByID(ctx, repID)
 	repName := ""
 	if rep != nil {
-		repName = rep.DisplayName
+		repName = repDisplayName(rep)
 	}
 
 	// รวม photo URLs
 	photoURLs := s.getPhotoURLs(ctx, reportID)
-	lineMessages := BuildNewSiteMessages(site, report, repName, photoURLs, s.liffID)
+	siteContacts, _ := s.contactRepo.GetBySiteID(ctx, site.ID)
+	lineMessages := BuildNewSiteMessages(site, report, repName, siteContacts, photoURLs, s.liffID)
 
 	// ส่งผ่าน liff.sendMessages() (ฟรี) — return chatMessages ให้ frontend ส่งเอง
 	// ไม่ใช้ Push API เพื่อประหยัดโควต้า
@@ -324,13 +329,16 @@ func (s *siteServiceImpl) Create(ctx context.Context, repID uuid.UUID, req *dto.
 			CreatedAt:      site.CreatedAt,
 		},
 		Report: dto.ReportBrief{
-			ID:         report.ID.String(),
-			ReportType: report.ReportType,
-			Note:       report.Note,
-			Stage:      report.Stage,
-			Status:     report.Status,
-			RepName:    repName,
-			ReportDate: report.ReportDate,
+			ID:           report.ID.String(),
+			ReportType:   report.ReportType,
+			Note:         report.Note,
+			JobType:      report.JobType,
+			JobTypeOther: report.JobTypeOther,
+			JobDetail:    report.JobDetail,
+			Stage:        report.Stage,
+			Status:       report.Status,
+			RepName:      repName,
+			ReportDate:   report.ReportDate,
 		},
 		MessageSent:  false,
 		ChatMessages: lineMessages,
@@ -416,7 +424,7 @@ func (s *siteServiceImpl) GetByCode(ctx context.Context, code string, viewerRepI
 	owner, _ := s.salesRepRepo.GetByID(ctx, site.OwnerRepID)
 	ownerName := ""
 	if owner != nil {
-		ownerName = owner.DisplayName
+		ownerName = repDisplayName(owner)
 	}
 
 	canEdit := viewerRepID != nil && *viewerRepID == site.OwnerRepID
@@ -426,7 +434,7 @@ func (s *siteServiceImpl) GetByCode(ctx context.Context, code string, viewerRepI
 	for _, r := range reports {
 		repName := ""
 		if rep, err := s.salesRepRepo.GetByID(ctx, r.RepID); err == nil {
-			repName = rep.DisplayName
+			repName = repDisplayName(rep)
 		}
 		photos := make([]dto.PhotoBrief, 0, len(r.Photos))
 		for _, p := range r.Photos {
@@ -437,14 +445,17 @@ func (s *siteServiceImpl) GetByCode(ctx context.Context, code string, viewerRepI
 			})
 		}
 		reportBriefs = append(reportBriefs, dto.ReportBrief{
-			ID:         r.ID.String(),
-			ReportType: r.ReportType,
-			Note:       r.Note,
-			Stage:      r.Stage,
-			Status:     r.Status,
-			RepName:    repName,
-			ReportDate: r.ReportDate,
-			Photos:     photos,
+			ID:           r.ID.String(),
+			ReportType:   r.ReportType,
+			Note:         r.Note,
+			JobType:      r.JobType,
+			JobTypeOther: r.JobTypeOther,
+			JobDetail:    r.JobDetail,
+			Stage:        r.Stage,
+			Status:       r.Status,
+			RepName:      repName,
+			ReportDate:   r.ReportDate,
+			Photos:       photos,
 		})
 	}
 
@@ -677,6 +688,7 @@ func (s *siteServiceImpl) AddFollowUp(ctx context.Context, repID uuid.UUID, code
 					Phone:       normalizePhone(c.Phone),
 					ContactType: c.ContactType,
 					Authority:   c.Authority,
+					Role:        c.Role,
 					IsPrimary:   i == 0,
 				}
 				_ = s.contactRepo.Create(txCtx, contact)
@@ -704,12 +716,13 @@ func (s *siteServiceImpl) AddFollowUp(ctx context.Context, repID uuid.UUID, code
 	rep, _ := s.salesRepRepo.GetByID(ctx, repID)
 	repName := ""
 	if rep != nil {
-		repName = rep.DisplayName
+		repName = repDisplayName(rep)
 	}
 
 	// Build messages (ข้อความ + รูป)
 	photoURLs := s.getPhotoURLs(ctx, reportID)
-	lineMessages := BuildFollowUpMessages(site, report, repName, photoURLs, s.liffID)
+	followUpContacts, _ := s.contactRepo.GetBySiteID(ctx, site.ID)
+	lineMessages := BuildFollowUpMessages(site, report, repName, followUpContacts, photoURLs, s.liffID)
 
 	// ส่งผ่าน liff.sendMessages() (ฟรี) — return chatMessages ให้ frontend ส่งเอง
 
@@ -740,13 +753,16 @@ func (s *siteServiceImpl) AddFollowUp(ctx context.Context, repID uuid.UUID, code
 			CreatedAt:        site.CreatedAt,
 		},
 		Report: dto.ReportBrief{
-			ID:         report.ID.String(),
-			ReportType: report.ReportType,
-			Note:       report.Note,
-			Stage:      report.Stage,
-			Status:     report.Status,
-			RepName:    repName,
-			ReportDate: report.ReportDate,
+			ID:           report.ID.String(),
+			ReportType:   report.ReportType,
+			Note:         report.Note,
+			JobType:      report.JobType,
+			JobTypeOther: report.JobTypeOther,
+			JobDetail:    report.JobDetail,
+			Stage:        report.Stage,
+			Status:       report.Status,
+			RepName:      repName,
+			ReportDate:   report.ReportDate,
 		},
 		MessageSent:  false,
 		ChatMessages: lineMessages,
@@ -857,6 +873,14 @@ func normalizePhone(phone string) string {
 		}
 	}
 	return string(digits)
+}
+
+// repDisplayName returns Nickname if set, otherwise DisplayName
+func repDisplayName(rep *models.SalesRep) string {
+	if rep.Nickname != "" {
+		return rep.Nickname
+	}
+	return rep.DisplayName
 }
 
 func firstNonEmpty(vals ...string) string {

@@ -41,6 +41,30 @@ func (h *LIFFCheckInHandler) CheckIn(c *fiber.Ctx) error {
 	return utils.CreatedResponse(c, resp)
 }
 
+func (h *LIFFCheckInHandler) EveningSummary(c *fiber.Ctx) error {
+	ctx := c.UserContext()
+	repID := getRepID(c)
+	if repID == nil {
+		return utils.UnauthorizedResponse(c, "Invalid user")
+	}
+
+	var req dto.EveningSummaryRequest
+	if err := c.BodyParser(&req); err != nil {
+		return utils.BadRequestResponse(c, "Invalid request body")
+	}
+	if err := utils.ValidateStruct(&req); err != nil {
+		return utils.ValidationErrorResponse(c, utils.GetValidationErrors(err))
+	}
+
+	resp, err := h.checkInService.EveningSummary(ctx, *repID, &req)
+	if err != nil {
+		logger.WarnContext(ctx, "Evening summary failed", "error", err)
+		return utils.BadRequestResponse(c, err.Error())
+	}
+
+	return utils.SuccessResponse(c, resp)
+}
+
 func (h *LIFFCheckInHandler) GetStatus(c *fiber.Ctx) error {
 	ctx := c.UserContext()
 	repID := getRepID(c)

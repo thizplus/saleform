@@ -10,7 +10,7 @@ import (
 
 // BuildNewSiteMessages สร้างข้อความ+Flex รูป+ตำแหน่งสำหรับงานใหม่
 // ส่งผ่าน liff.sendMessages() (ฟรี ไม่เสียโควต้า)
-func BuildNewSiteMessages(site *models.Site, report *models.SiteReport, repName string, photoURLs []string, liffID string) []map[string]any {
+func BuildNewSiteMessages(site *models.Site, report *models.SiteReport, repName string, contacts []models.Contact, photoURLs []string, liffID string) []map[string]any {
 	var messages []map[string]any
 
 	// 1. ข้อความหลัก
@@ -20,20 +20,57 @@ func BuildNewSiteMessages(site *models.Site, report *models.SiteReport, repName 
 	lines = append(lines, "─────────────")
 
 	if site.CustomerName != "" {
-		lines = append(lines, fmt.Sprintf("🏠 ลูกค้า: %s", site.CustomerName))
-	}
-	if site.Phone != "" {
-		lines = append(lines, fmt.Sprintf("📞 โทร: %s", formatPhone(site.Phone)))
-	}
-	if site.ContractorName != "" {
-		lines = append(lines, fmt.Sprintf("🔧 ช่าง: %s", site.ContractorName))
+		lines = append(lines, fmt.Sprintf("🏠 ชื่องาน: %s", site.CustomerName))
 	}
 	if site.Stage != "" && site.Stage != "new" {
-		lines = append(lines, fmt.Sprintf("📐 ขั้นตอน: %s", site.Stage))
+		lines = append(lines, fmt.Sprintf("📐 สถานะงาน: %s", site.Stage))
 	}
+
+	// ตัวเลือกงาน
+	if report.JobType != "" {
+		jobText := report.JobType
+		if report.JobType == "อื่นๆ" && report.JobTypeOther != "" {
+			jobText = report.JobTypeOther
+		}
+		lines = append(lines, fmt.Sprintf("🔧 ตัวเลือกงาน: %s", jobText))
+	}
+
+	// ผู้ติดต่อ
+	if len(contacts) > 0 {
+		lines = append(lines, "")
+		for _, c := range contacts {
+			contactLine := "👥 "
+			if c.Name != "" {
+				contactLine += c.Name
+			}
+			if c.Role != "" {
+				contactLine += fmt.Sprintf(" (%s)", c.Role)
+			}
+			if c.Phone != "" {
+				contactLine += fmt.Sprintf(" %s", formatPhone(c.Phone))
+			}
+			lines = append(lines, contactLine)
+			// แสดงประเภท + สิทธิ์
+			var tags []string
+			if c.ContactType != "" {
+				tags = append(tags, c.ContactType)
+			}
+			if c.Authority != "" {
+				tags = append(tags, c.Authority)
+			}
+			if len(tags) > 0 {
+				lines = append(lines, fmt.Sprintf("   %s", strings.Join(tags, " · ")))
+			}
+		}
+	}
+
 	if report.Note != "" {
 		lines = append(lines, "")
-		lines = append(lines, report.Note)
+		lines = append(lines, fmt.Sprintf("🛒 สินค้าที่สนใจ: %s", report.Note))
+	}
+
+	if report.JobDetail != "" {
+		lines = append(lines, fmt.Sprintf("📝 รายละเอียดหน้างาน: %s", report.JobDetail))
 	}
 
 	if site.NextFollowUpDate != nil {
@@ -79,7 +116,7 @@ func BuildNewSiteMessages(site *models.Site, report *models.SiteReport, repName 
 }
 
 // BuildFollowUpMessages สร้างข้อความ+Flex รูปสำหรับอัปเดตงาน
-func BuildFollowUpMessages(site *models.Site, report *models.SiteReport, repName string, photoURLs []string, liffID string) []map[string]any {
+func BuildFollowUpMessages(site *models.Site, report *models.SiteReport, repName string, contacts []models.Contact, photoURLs []string, liffID string) []map[string]any {
 	var messages []map[string]any
 
 	statusEmoji := "🔄"
@@ -102,7 +139,7 @@ func BuildFollowUpMessages(site *models.Site, report *models.SiteReport, repName
 	lines = append(lines, "─────────────")
 
 	if site.CustomerName != "" {
-		lines = append(lines, fmt.Sprintf("🏠 ลูกค้า: %s", site.CustomerName))
+		lines = append(lines, fmt.Sprintf("🏠 ชื่องาน: %s", site.CustomerName))
 	}
 
 	if report.Note != "" {
@@ -120,7 +157,7 @@ func BuildFollowUpMessages(site *models.Site, report *models.SiteReport, repName
 	}
 
 	if report.Stage != "" {
-		lines = append(lines, fmt.Sprintf("📐 ขั้นตอน: %s", report.Stage))
+		lines = append(lines, fmt.Sprintf("📐 สถานะงาน: %s", report.Stage))
 	}
 
 	if site.NextFollowUpDate != nil && report.Status == "following" {
@@ -247,6 +284,42 @@ func composeAddress(tambon, amphoe, province string) string {
 		parts = append(parts, "จ."+province)
 	}
 	return strings.Join(parts, " ")
+}
+
+// BuildEveningSummaryMessages สร้างข้อความสรุปงานประจำวันส่งเข้ากลุ่ม LINE
+func BuildEveningSummaryMessages(repName, licensePlate string, morningMileage, eveningMileage int, dailyKM *int, callCount, billCount, oldAmount, newAmount int) []map[string]any {
+	var messages []map[string]any
+
+	var lines []string
+	lines = append(lines, "📊 สรุปงานประจำวัน")
+	lines = append(lines, fmt.Sprintf("👤 %s", repName))
+	lines = append(lines, "─────────────")
+	lines = append(lines, fmt.Sprintf("🚗 ทะเบียน: %s", licensePlate))
+	lines = append(lines, fmt.Sprintf("🔢 ไมล์เช้า: %s", formatNumber(morningMileage)))
+	lines = append(lines, fmt.Sprintf("🔢 ไมล์เย็น: %s", formatNumber(eveningMileage)))
+	if dailyKM != nil {
+		lines = append(lines, fmt.Sprintf("📏 ระยะทางวันนี้: %s กม.", formatNumber(*dailyKM)))
+	}
+	lines = append(lines, "─────────────")
+	lines = append(lines, fmt.Sprintf("📞 โทรติดตาม: %d ราย", callCount))
+	lines = append(lines, fmt.Sprintf("🧾 เปิดบิล: %d บิล", billCount))
+	if oldAmount > 0 {
+		lines = append(lines, fmt.Sprintf("💰 ยอด ลค.เก่า: %s บาท", formatNumber(oldAmount)))
+	}
+	if newAmount > 0 {
+		lines = append(lines, fmt.Sprintf("💰 ยอด ลค.ใหม่: %s บาท", formatNumber(newAmount)))
+	}
+	totalAmount := oldAmount + newAmount
+	if totalAmount > 0 {
+		lines = append(lines, fmt.Sprintf("💵 ยอดรวม: %s บาท", formatNumber(totalAmount)))
+	}
+
+	messages = append(messages, map[string]any{
+		"type": "text",
+		"text": strings.Join(lines, "\n"),
+	})
+
+	return messages
 }
 
 // formatThaiDateShort formats as DD/MM/YYYY+543 (Buddhist year)

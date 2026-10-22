@@ -7,4 +7,5 @@ type OptionsResponse struct {
 	Competitors    []string `json:"competitors"`
 	Amphoes        []string `json:"amphoes"`
 	VehiclePlates  []string `json:"vehiclePlates"`
+	JobTypes       []string `json:"jobTypes"`
 }
