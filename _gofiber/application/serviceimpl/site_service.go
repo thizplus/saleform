@@ -213,6 +213,18 @@ func (s *siteServiceImpl) Create(ctx context.Context, repID uuid.UUID, req *dto.
 		idempotencyKeyPtr = &req.IdempotencyKey
 	}
 
+	// ปิดงาน: อัปเดต site status + closedAt
+	reportStatus := "following"
+	if req.CloseStatus == "success" {
+		site.Status = "won"
+		site.ClosedAt = &now
+		reportStatus = "won"
+	} else if req.CloseStatus == "failed" {
+		site.Status = "lost"
+		site.ClosedAt = &now
+		reportStatus = "lost"
+	}
+
 	report := &models.SiteReport{
 		BaseModel:        models.BaseModel{ID: reportID},
 		SiteID:           siteID,
@@ -222,8 +234,12 @@ func (s *siteServiceImpl) Create(ctx context.Context, repID uuid.UUID, req *dto.
 		JobType:          req.JobType,
 		JobTypeOther:     req.JobTypeOther,
 		JobDetail:        req.JobDetail,
+		CloseStatus:      req.CloseStatus,
+		CloseAmount:      req.CloseAmount,
+		CloseReason:      req.CloseReason,
+		CloseReasonOther: req.CloseReasonOther,
 		Stage:            site.Stage,
-		Status:           "following",
+		Status:           reportStatus,
 		NextFollowUpDate: followUpDate,
 		ReportDate:       now,
 		Source:           "liff",

@@ -37,14 +37,13 @@ type EveningSummaryRequest struct {
 }
 
 type EveningSummaryResponse struct {
-	ID                string           `json:"id"`
-	Mileage           int              `json:"mileage"`
-	CallCount         int              `json:"callCount"`
-	BillCount         int              `json:"billCount"`
-	OldCustomerAmount int              `json:"oldCustomerAmount"`
-	NewCustomerAmount int              `json:"newCustomerAmount"`
-	DailyKM           *int             `json:"dailyKm"`
-	ChatMessages      []map[string]any `json:"chatMessages,omitempty"`
+	ID                string `json:"id"`
+	Mileage           int    `json:"mileage"`
+	CallCount         int    `json:"callCount"`
+	BillCount         int    `json:"billCount"`
+	OldCustomerAmount int    `json:"oldCustomerAmount"`
+	NewCustomerAmount int    `json:"newCustomerAmount"`
+	DailyKM           *int   `json:"dailyKm"`
 }
 
 // Summary

@@ -7,10 +7,12 @@ import (
 	"os/signal"
 	"syscall"
 
+	"line-sales-api/interfaces/api/handlers"
 	"line-sales-api/interfaces/api/routes"
 	"line-sales-api/pkg/config"
 	"line-sales-api/pkg/di"
 	"line-sales-api/pkg/logger"
+	"line-sales-api/pkg/scheduler"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -25,6 +27,17 @@ func main() {
 
 	// Build DI container
 	container := di.NewContainer(cfg)
+
+	// Scheduler (daily summary cron)
+	sched := scheduler.New(container.AppConfigRepo, container.DailySummaryService)
+
+	// Daily summary handler (ต้องสร้างหลัง scheduler เพื่อให้ reload ได้)
+	container.AdminDailySummaryHandler = handlers.NewAdminDailySummaryHandler(
+		container.AppConfigRepo, container.DailySummaryService, sched.Reload,
+	)
+
+	sched.Start()
+	defer sched.Stop()
 
 	// Create Fiber app
 	app := fiber.New(fiber.Config{
@@ -47,9 +60,10 @@ func main() {
 		AdminAnalytics: container.AdminAnalyticsHandler,
 		AdminUser:      container.AdminUserHandler,
 		AdminExport:    container.AdminExportHandler,
-		AdminCheckIn:   container.AdminCheckInHandler,
-		LIFFCheckIn:    container.LIFFCheckInHandler,
-		StatusChecker:  container.StatusChecker,
+		AdminCheckIn:      container.AdminCheckInHandler,
+		AdminDailySummary: container.AdminDailySummaryHandler,
+		LIFFCheckIn:       container.LIFFCheckInHandler,
+		StatusChecker:     container.StatusChecker,
 	})
 
 	// Graceful shutdown

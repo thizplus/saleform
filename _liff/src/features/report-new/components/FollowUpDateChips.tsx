@@ -9,7 +9,10 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 interface FollowUpDateChipsProps {
   value: string
   onChange: (date: string) => void
+  disabled?: boolean // ล็อคไว้เมื่อปิดงาน
 }
+
+const NO_FOLLOW_UP = 'none'
 
 const chips = [
   { label: 'พรุ่งนี้', days: 1 },
@@ -19,11 +22,12 @@ const chips = [
   { label: '30 วัน', days: 30 },
 ]
 
-export function FollowUpDateChips({ value, onChange }: FollowUpDateChipsProps) {
+export function FollowUpDateChips({ value, onChange, disabled }: FollowUpDateChipsProps) {
   const [calendarOpen, setCalendarOpen] = useState(false)
 
+  const isNoFollowUp = value === NO_FOLLOW_UP
   const chipDates = chips.map((c) => addDays(c.days))
-  const isCustom = value && !chipDates.includes(value)
+  const isCustom = value && !isNoFollowUp && !chipDates.includes(value)
 
   function handleCalendarSelect(date: Date | undefined) {
     if (date) {
@@ -35,54 +39,76 @@ export function FollowUpDateChips({ value, onChange }: FollowUpDateChipsProps) {
   return (
     <div className="space-y-2">
       <div className="flex gap-1.5 flex-wrap">
-        {chips.map((chip) => {
-          const date = addDays(chip.days)
-          const isSelected = value === date
-          return (
-            <button
-              key={chip.days}
-              type="button"
-              onClick={() => onChange(date)}
-              className={`h-8 px-3 rounded-full text-sm font-bold border transition-colors ${
-                isSelected
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-background text-foreground border-input hover:bg-muted'
-              }`}
-            >
-              {chip.label}
-            </button>
-          )
-        })}
+        {/* ไม่ติดตาม */}
+        <button
+          type="button"
+          onClick={() => !disabled && onChange(isNoFollowUp ? '' : NO_FOLLOW_UP)}
+          className={`h-8 px-3 rounded-full text-sm font-bold border transition-colors ${
+            isNoFollowUp
+              ? 'bg-destructive text-destructive-foreground border-destructive'
+              : 'bg-background text-foreground border-input hover:bg-muted'
+          } ${disabled ? 'opacity-60 pointer-events-none' : ''}`}
+        >
+          ไม่ติดตาม
+        </button>
 
-        {/* ปุ่มเลือกวัน — เปิด Calendar Popover */}
-        <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-          <PopoverTrigger
-            className={`h-8 px-3 rounded-full text-sm font-bold border flex items-center gap-1.5 transition-colors ${
-              isCustom
-                ? 'bg-primary text-primary-foreground border-primary'
-                : 'bg-background text-foreground border-input hover:bg-muted'
-            }`}
-          >
-            <CalendarIcon className="size-3.5" />
-            {isCustom ? formatThaiDate(value) : 'เลือกวัน'}
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              locale={th}
-              selected={value ? new Date(value) : undefined}
-              onSelect={handleCalendarSelect}
-              disabled={{ before: new Date() }}
-            />
-          </PopoverContent>
-        </Popover>
+        {!isNoFollowUp && (
+          <>
+            {chips.map((chip) => {
+              const date = addDays(chip.days)
+              const isSelected = value === date
+              return (
+                <button
+                  key={chip.days}
+                  type="button"
+                  onClick={() => onChange(date)}
+                  className={`h-8 px-3 rounded-full text-sm font-bold border transition-colors ${
+                    isSelected
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-background text-foreground border-input hover:bg-muted'
+                  }`}
+                >
+                  {chip.label}
+                </button>
+              )
+            })}
+
+            {/* ปุ่มเลือกวัน — เปิด Calendar Popover */}
+            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+              <PopoverTrigger
+                className={`h-8 px-3 rounded-full text-sm font-bold border flex items-center gap-1.5 transition-colors ${
+                  isCustom
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-background text-foreground border-input hover:bg-muted'
+                }`}
+              >
+                <CalendarIcon className="size-3.5" />
+                {isCustom ? formatThaiDate(value) : 'เลือกวัน'}
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  locale={th}
+                  selected={value ? new Date(value) : undefined}
+                  onSelect={handleCalendarSelect}
+                  disabled={{ before: new Date() }}
+                />
+              </PopoverContent>
+            </Popover>
+          </>
+        )}
       </div>
 
-      {value && (
+      {value && !isNoFollowUp && (
         <p className="text-xs text-muted-foreground">
           นัดติดตาม: <span className="num">{formatThaiDate(value)}</span>
         </p>
       )}
+      {isNoFollowUp && (
+        <p className="text-xs text-muted-foreground">ไม่ต้องติดตามงานนี้</p>
+      )}
     </div>
   )
 }
+
+export { NO_FOLLOW_UP }

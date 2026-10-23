@@ -21,6 +21,10 @@ type SiteReport struct {
 	JobType            string    // ตัวเลือกงาน (จาก admin options)
 	JobTypeOther       string    // ข้อความเพิ่มเมื่อเลือก "อื่นๆ"
 	JobDetail          string    `gorm:"type:text"` // รายละเอียดหน้างาน
+	CloseStatus        string    // "", "success", "failed"
+	CloseAmount        int64     // ยอดเปิดบิล (บาท) เมื่อ success
+	CloseReason        string    // เหตุผลไม่สำเร็จ เมื่อ failed
+	CloseReasonOther   string    // free text เมื่อเลือก "อื่นๆ"
 	NextFollowUpDate *time.Time
 	ReportDate      time.Time `gorm:"not null;index"`
 	// Source

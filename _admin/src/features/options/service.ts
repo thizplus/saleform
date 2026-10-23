@@ -9,6 +9,7 @@ export interface DropdownOptions {
   amphoes: string[]
   vehiclePlates: string[]
   jobTypes: string[]
+  closeReasons: string[]
 }
 
 export const optionsService = {

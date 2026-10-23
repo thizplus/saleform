@@ -8,4 +8,5 @@ type OptionsResponse struct {
 	Amphoes        []string `json:"amphoes"`
 	VehiclePlates  []string `json:"vehiclePlates"`
 	JobTypes       []string `json:"jobTypes"`
+	CloseReasons   []string `json:"closeReasons"`
 }

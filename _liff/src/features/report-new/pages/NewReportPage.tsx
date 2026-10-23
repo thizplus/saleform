@@ -10,7 +10,7 @@ import { getLiffContext, sendChatMessages } from '@/lib/liff-helpers'
 import { addDays } from '@/lib/thai-date'
 import { PhotoPicker } from '../components/PhotoPicker'
 import { GPSButton, type GeoAddress } from '../components/GPSButton'
-import { FollowUpDateChips } from '../components/FollowUpDateChips'
+import { FollowUpDateChips, NO_FOLLOW_UP } from '../components/FollowUpDateChips'
 import { DuplicateDialog } from '../components/DuplicateDialog'
 import { UploadProgressSheet, type UploadStep } from '../components/UploadProgressSheet'
 import { useOptions, useCreateSite, useCheckDuplicate } from '../hooks'
@@ -42,6 +42,10 @@ interface FormData {
   jobDetail: string
   nextFollowUpDate: string
   expectedOrder: string
+  closeStatus: string       // "", "success", "failed"
+  closeAmount: string
+  closeReason: string
+  closeReasonOther: string
 }
 
 const defaultForm: FormData = {
@@ -55,6 +59,7 @@ const defaultForm: FormData = {
   detail: '', jobDetail: '',
   nextFollowUpDate: addDays(7),
   expectedOrder: '',
+  closeStatus: '', closeAmount: '', closeReason: '', closeReasonOther: '',
 }
 
 /** L5 — รายงานงานใหม่ */
@@ -153,11 +158,17 @@ export function NewReportPage() {
   const primaryPhone = form.contacts[0]?.phone?.replace(/\D/g, '') || ''
   const hasAnyContact = form.contacts.some((c) => c.name.trim() || c.phone.trim())
   const contactOk = noContact || hasAnyContact || !!form.customerName.trim() || !!form.contractorName.trim()
+  const isClosing = form.closeStatus !== ''
+  const isCloseSuccess = form.closeStatus === 'success'
+  const isCloseFailed = form.closeStatus === 'failed'
+
   const missing: string[] = []
   if (!form.lat) missing.push('ตำแหน่ง')
   if (form.photos.length === 0) missing.push('รูป')
   if (!contactOk) missing.push('ผู้ติดต่อ')
   if (!form.nextFollowUpDate) missing.push('วันนัดตาม')
+  if (isCloseSuccess && !form.closeAmount) missing.push('ยอดเปิดบิล')
+  if (isCloseFailed && !form.closeReason) missing.push('เหตุผลปิดงาน')
   const canSubmit = missing.length === 0
 
   async function handleSubmit(forceNew = false) {
@@ -220,19 +231,23 @@ export function NewReportPage() {
         customerName: form.customerName,
         customerType: form.contactType,
         contractorName: form.contractorName,
-        stage: form.stage,
-        jobType: form.jobType,
-        jobTypeOther: form.jobTypeOther,
-        detail: form.detail,
+        stage: isClosing ? '' : form.stage,
+        jobType: isCloseFailed ? '' : form.jobType,
+        jobTypeOther: isCloseFailed ? '' : form.jobTypeOther,
+        detail: isCloseFailed ? '' : form.detail,
         jobDetail: form.jobDetail,
+        closeStatus: form.closeStatus,
+        closeAmount: isCloseSuccess ? parseInt(form.closeAmount || '0', 10) : 0,
+        closeReason: isCloseFailed ? form.closeReason : '',
+        closeReasonOther: isCloseFailed && form.closeReason === 'อื่นๆ' ? form.closeReasonOther : '',
         lat: form.lat,
         lng: form.lng,
         tambon: form.tambon,
         amphoe: form.amphoe,
         province: form.province,
         postcode: form.postcode,
-        expectedOrderDate: form.expectedOrder,
-        nextFollowUpDate: form.nextFollowUpDate,
+        expectedOrderDate: isCloseSuccess ? 'สั่งเลย' : isCloseFailed ? '' : form.expectedOrder,
+        nextFollowUpDate: isClosing ? '' : (form.nextFollowUpDate === NO_FOLLOW_UP ? '' : form.nextFollowUpDate),
         photoIds,
         contacts: validContacts,
         forceNew,
@@ -273,6 +288,7 @@ export function NewReportPage() {
 
   const stages = options?.stages || ['เริ่มก่อสร้าง', 'กำลังสร้าง', 'ใกล้เสร็จ', 'รอตัดสินใจ', 'เสนอราคาแล้ว', 'อื่นๆ']
   const jobTypes = options?.jobTypes || ['สำรวจหน้างาน', 'เสนอราคา', 'วัดหน้างาน', 'ส่งของ', 'เก็บเงิน', 'อื่นๆ']
+  const closeReasons = options?.closeReasons || ['มาช้าไปสั่งแผ่นไปแล้ว', 'ราคาสู้คู่แข่งไม่ได้', 'ไม่พบผู้มีอำนาจตัดสินใจ', 'ใช้เจ้าเดิม/เจ้าประจำ', 'คิวผลิต/ขนส่งไม่ทัน', 'ใช้แผ่นเก่า/กระเบื้อง/อื่นๆ', 'อื่นๆ']
   const contactTypes = ['เจ้าของ', 'ช่าง', 'ผู้รับเหมา']
 
   return (
@@ -362,56 +378,128 @@ export function NewReportPage() {
           )}
         </section>
 
+        {/* ===== ปิดงาน ===== */}
+        <section className="space-y-3">
+          <Label className="text-sm font-bold">ปิดงาน</Label>
+          <div className="flex gap-1.5">
+            <Chip label="ยังไม่ปิด" selected={!isClosing} onClick={() => {
+              update('closeStatus', '')
+              update('closeAmount', '')
+              update('closeReason', '')
+              update('closeReasonOther', '')
+              update('nextFollowUpDate', addDays(7))
+            }} />
+            <Chip label="สำเร็จ" selected={isCloseSuccess} onClick={() => {
+              update('closeStatus', form.closeStatus === 'success' ? '' : 'success')
+              update('closeReason', '')
+              update('closeReasonOther', '')
+              if (form.closeStatus !== 'success') update('nextFollowUpDate', NO_FOLLOW_UP)
+            }} />
+            <Chip label="ไม่สำเร็จ" selected={isCloseFailed} onClick={() => {
+              update('closeStatus', form.closeStatus === 'failed' ? '' : 'failed')
+              update('closeAmount', '')
+              if (form.closeStatus !== 'failed') update('nextFollowUpDate', NO_FOLLOW_UP)
+            }} />
+          </div>
+
+          {/* ปิดงานสำเร็จ — ยอดเปิดบิล */}
+          {isCloseSuccess && (
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">ยอดเปิดบิล (บาท) *</Label>
+              <Input
+                type="text"
+                inputMode="numeric"
+                value={form.closeAmount}
+                onChange={(e) => update('closeAmount', e.target.value.replace(/\D/g, ''))}
+                placeholder="เช่น 50000"
+                className="h-10 text-base num"
+              />
+            </div>
+          )}
+
+          {/* ปิดงานไม่สำเร็จ — เหตุผล */}
+          {isCloseFailed && (
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">เหตุผลที่ไม่สำเร็จ *</Label>
+              <div className="flex gap-1.5 flex-wrap">
+                {closeReasons.map((r) => (
+                  <Chip key={r} label={r} selected={form.closeReason === r} onClick={() => {
+                    update('closeReason', form.closeReason === r ? '' : r)
+                    if (r !== 'อื่นๆ') update('closeReasonOther', '')
+                  }} />
+                ))}
+              </div>
+              {form.closeReason === 'อื่นๆ' && (
+                <Input
+                  value={form.closeReasonOther}
+                  onChange={(e) => update('closeReasonOther', e.target.value)}
+                  placeholder="ระบุเหตุผล..."
+                  className="h-10 text-base"
+                />
+              )}
+            </div>
+          )}
+        </section>
+
         {/* ===== รายละเอียด ===== */}
         <section className="space-y-3">
           <Label className="text-sm font-bold">รายละเอียด</Label>
 
-          <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">สถานะงาน</Label>
-            <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-4 px-4">
-              {stages.map((s) => (
-                <Chip key={s} label={s} selected={form.stage === s} onClick={() => update('stage', form.stage === s ? '' : s)} />
-              ))}
+          {/* สถานะงาน — ซ่อนเมื่อปิดงาน */}
+          {!isClosing && (
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">สถานะงาน</Label>
+              <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-4 px-4">
+                {stages.map((s) => (
+                  <Chip key={s} label={s} selected={form.stage === s} onClick={() => update('stage', form.stage === s ? '' : s)} />
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
-          <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">ตัวเลือกงานอื่นๆ</Label>
-            <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-4 px-4">
-              {jobTypes.map((j) => (
-                <Chip key={j} label={j} selected={form.jobType === j} onClick={() => {
-                  update('jobType', form.jobType === j ? '' : j)
-                  if (j !== 'อื่นๆ') update('jobTypeOther', '')
-                }} />
-              ))}
+          {/* ตัวเลือกงาน — ซ่อนเมื่อปิดงานไม่สำเร็จ */}
+          {!isCloseFailed && (
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">ตัวเลือกงานอื่นๆ</Label>
+              <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-4 px-4">
+                {jobTypes.map((j) => (
+                  <Chip key={j} label={j} selected={form.jobType === j} onClick={() => {
+                    update('jobType', form.jobType === j ? '' : j)
+                    if (j !== 'อื่นๆ') update('jobTypeOther', '')
+                  }} />
+                ))}
+              </div>
+              {form.jobType === 'อื่นๆ' && (
+                <Input
+                  value={form.jobTypeOther}
+                  onChange={(e) => update('jobTypeOther', e.target.value)}
+                  placeholder="ระบุงานอื่นๆ..."
+                  className="h-10 text-base mt-1.5"
+                />
+              )}
             </div>
-            {form.jobType === 'อื่นๆ' && (
-              <Input
-                value={form.jobTypeOther}
-                onChange={(e) => update('jobTypeOther', e.target.value)}
-                placeholder="ระบุงานอื่นๆ..."
-                className="h-10 text-base mt-1.5"
+          )}
+
+          {/* สินค้าที่สนใจ — ซ่อนเมื่อปิดงานไม่สำเร็จ */}
+          {!isCloseFailed && (
+            <div className="space-y-1">
+              <Label htmlFor="detail" className="text-xs text-muted-foreground">สินค้าที่สนใจ</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {QUICK_PRODUCTS.map((p) => (
+                  <button key={p} type="button" onClick={() => update('detail', form.detail ? `${form.detail.trimEnd()} ${p}` : `สนใจ${p}`)}
+                    className="h-7 px-2.5 rounded-full bg-muted text-xs active:bg-muted-foreground/20">+ {p}</button>
+                ))}
+              </div>
+              <Textarea
+                id="detail"
+                value={form.detail}
+                onChange={(e) => update('detail', e.target.value)}
+                placeholder="สินค้าที่ลูกค้าสนใจ..."
+                rows={3}
+                className="text-base"
               />
-            )}
-          </div>
-
-          <div className="space-y-1">
-            <Label htmlFor="detail" className="text-xs text-muted-foreground">สินค้าที่สนใจ</Label>
-            <div className="flex flex-wrap gap-1.5">
-              {QUICK_PRODUCTS.map((p) => (
-                <button key={p} type="button" onClick={() => update('detail', form.detail ? `${form.detail.trimEnd()} ${p}` : `สนใจ${p}`)}
-                  className="h-7 px-2.5 rounded-full bg-muted text-xs active:bg-muted-foreground/20">+ {p}</button>
-              ))}
             </div>
-            <Textarea
-              id="detail"
-              value={form.detail}
-              onChange={(e) => update('detail', e.target.value)}
-              placeholder="สินค้าที่ลูกค้าสนใจ..."
-              rows={3}
-              className="text-base"
-            />
-          </div>
+          )}
 
           <div className="space-y-1">
             <Label htmlFor="jobDetail" className="text-xs text-muted-foreground">รายละเอียดหน้างาน</Label>
@@ -429,20 +517,28 @@ export function NewReportPage() {
 
         {/* ===== นัดหมาย ===== */}
         <section className="space-y-3">
-          <Label className="text-sm font-bold">นัดติดตาม *</Label>
+          <Label className="text-sm font-bold">นัดติดตาม {!isClosing && '*'}</Label>
           <FollowUpDateChips
-            value={form.nextFollowUpDate}
+            value={isClosing ? NO_FOLLOW_UP : form.nextFollowUpDate}
             onChange={(d) => update('nextFollowUpDate', d)}
+            disabled={isClosing}
           />
 
-          <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">คาดว่าจะสั่งของ</Label>
-            <ChipRow
-              options={['ไม่ทราบ', 'ภายใน 2 สัปดาห์', 'ภายในเดือน']}
-              value={form.expectedOrder}
-              onChange={(v) => update('expectedOrder', v)}
-            />
-          </div>
+          {/* คาดว่าจะสั่งของ — ซ่อนเมื่อปิดงานไม่สำเร็จ */}
+          {!isCloseFailed && (
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">คาดว่าจะสั่งของ</Label>
+              {isCloseSuccess ? (
+                <p className="text-sm font-bold text-primary">สั่งเลย</p>
+              ) : (
+                <ChipRow
+                  options={['ไม่ทราบ', 'ภายใน 2 สัปดาห์', 'ภายในเดือน', 'สั่งเลย']}
+                  value={form.expectedOrder}
+                  onChange={(v) => update('expectedOrder', v)}
+                />
+              )}
+            </div>
+          )}
         </section>
       </div>
 

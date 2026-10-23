@@ -5,7 +5,6 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { sendChatMessages } from '@/lib/liff-helpers'
 import { useCheckInStatus, useEveningSummary } from './hooks'
 
 export function EveningSummaryPage() {
@@ -27,18 +26,13 @@ export function EveningSummaryPage() {
     setSubmitting(true)
 
     try {
-      const result = await summaryMutation.mutateAsync({
+      await summaryMutation.mutateAsync({
         mileage: parseInt(mileage, 10),
         callCount: parseInt(callCount || '0', 10),
         billCount: parseInt(billCount || '0', 10),
         oldCustomerAmount: parseInt(oldAmount || '0', 10),
         newCustomerAmount: parseInt(newAmount || '0', 10),
       })
-
-      // ส่งสรุปเข้ากลุ่ม LINE
-      if (result.chatMessages?.length) {
-        await sendChatMessages(result.chatMessages as unknown[])
-      }
 
       toast.success('บันทึกสรุปงานประจำวันสำเร็จ!')
       navigate('/')
@@ -145,7 +139,7 @@ export function EveningSummaryPage() {
       {/* Submit */}
       <div className="fixed bottom-0 inset-x-0 bg-background/95 backdrop-blur border-t px-4 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
         <Button onClick={handleSubmit} disabled={!canSubmit} size="xl" className="w-full">
-          {submitting ? 'กำลังบันทึก...' : 'บันทึกและส่งเข้ากลุ่ม'}
+          {submitting ? 'กำลังบันทึก...' : 'บันทึกสรุปงาน'}
         </Button>
       </div>
     </div>

@@ -13,6 +13,10 @@ type CreateSiteRequest struct {
 	JobType          string   `json:"jobType"`           // ตัวเลือกงาน
 	JobTypeOther     string   `json:"jobTypeOther"`      // อื่นๆ (free text)
 	JobDetail        string   `json:"jobDetail"`         // รายละเอียดหน้างาน
+	CloseStatus      string   `json:"closeStatus"`       // "", "success", "failed"
+	CloseAmount      int64    `json:"closeAmount"`       // ยอดเปิดบิล (บาท) เมื่อ success
+	CloseReason      string   `json:"closeReason"`       // เหตุผลไม่สำเร็จ เมื่อ failed
+	CloseReasonOther string   `json:"closeReasonOther"`  // free text เมื่อเลือก "อื่นๆ"
 	Latitude         *float64 `json:"lat"`
 	Longitude        *float64 `json:"lng"`
 	Tambon           string   `json:"tambon"`
@@ -133,9 +137,13 @@ type ReportBrief struct {
 	Note         string    `json:"note"`          // สินค้าที่สนใจ
 	JobType      string    `json:"jobType"`       // ตัวเลือกงาน
 	JobTypeOther string    `json:"jobTypeOther"`  // อื่นๆ
-	JobDetail    string    `json:"jobDetail"`     // รายละเอียดหน้างาน
-	Stage        string    `json:"stage"`
-	Status       string    `json:"status"`
+	JobDetail        string    `json:"jobDetail"`         // รายละเอียดหน้างาน
+	CloseStatus      string    `json:"closeStatus,omitempty"`
+	CloseAmount      int64     `json:"closeAmount,omitempty"`
+	CloseReason      string    `json:"closeReason,omitempty"`
+	CloseReasonOther string    `json:"closeReasonOther,omitempty"`
+	Stage            string    `json:"stage"`
+	Status           string    `json:"status"`
 	RepName      string    `json:"repName"`
 	ReportDate   time.Time `json:"reportDate"`
 	Photos       []PhotoBrief `json:"photos"`

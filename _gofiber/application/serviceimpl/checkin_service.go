@@ -175,17 +175,6 @@ func (s *checkInServiceImpl) EveningSummary(ctx context.Context, repID uuid.UUID
 
 	logger.InfoContext(ctx, "Evening summary saved", "rep_id", repID, "evening_mileage", req.Mileage)
 
-	// สร้าง chat messages
-	rep, _ := s.repRepo.GetByID(ctx, repID)
-	repName := ""
-	if rep != nil {
-		repName = rep.DisplayName
-		if rep.Nickname != "" {
-			repName = rep.Nickname
-		}
-	}
-	chatMessages := BuildEveningSummaryMessages(repName, checkIn.LicensePlate, checkIn.Mileage, req.Mileage, dailyKM, req.CallCount, req.BillCount, req.OldCustomerAmount, req.NewCustomerAmount)
-
 	return &dto.EveningSummaryResponse{
 		ID:                checkIn.ID.String(),
 		Mileage:           req.Mileage,
@@ -194,7 +183,6 @@ func (s *checkInServiceImpl) EveningSummary(ctx context.Context, repID uuid.UUID
 		OldCustomerAmount: req.OldCustomerAmount,
 		NewCustomerAmount: req.NewCustomerAmount,
 		DailyKM:           dailyKM,
-		ChatMessages:      chatMessages,
 	}, nil
 }
 

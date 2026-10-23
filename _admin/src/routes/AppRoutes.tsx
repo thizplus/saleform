@@ -12,6 +12,7 @@ import { RepsPage } from '@/features/reps'
 import { OptionsPage } from '@/features/options'
 import { UsersPage } from '@/features/users'
 import { CheckInsPage } from '@/features/checkins'
+import { DailySummarySettingsPage } from '@/features/settings'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
@@ -42,6 +43,7 @@ export function AppRoutes() {
         <Route path="/options" element={<OptionsPage />} />
         <Route path="/users" element={<UsersPage />} />
         <Route path="/check-ins" element={<CheckInsPage />} />
+        <Route path="/daily-summary" element={<DailySummarySettingsPage />} />
       </Route>
     </Routes>
   )

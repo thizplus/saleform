@@ -23,8 +23,9 @@ type Handlers struct {
 	AdminAnalytics *handlers.AdminAnalyticsHandler
 	AdminUser      *handlers.AdminUserHandler
 	AdminExport    *handlers.AdminExportHandler
-	AdminCheckIn   *handlers.AdminCheckInHandler
-	LIFFCheckIn    *handlers.LIFFCheckInHandler
+	AdminCheckIn        *handlers.AdminCheckInHandler
+	AdminDailySummary   *handlers.AdminDailySummaryHandler
+	LIFFCheckIn         *handlers.LIFFCheckInHandler
 	// Status checker for auth middleware
 	StatusChecker *middleware.StatusChecker
 }
@@ -96,4 +97,11 @@ func Setup(app *fiber.App, cfg *config.Config, h Handlers) {
 	admin.Get("/check-ins", h.AdminCheckIn.ListByDate)
 	admin.Get("/check-ins/summary", h.AdminCheckIn.TeamSummary)
 	admin.Get("/check-ins/summary/:repId", h.AdminCheckIn.RepSummary)
+
+	// Daily summary config
+	if h.AdminDailySummary != nil {
+		admin.Get("/daily-summary", h.AdminDailySummary.GetConfig)
+		admin.Put("/daily-summary", h.AdminDailySummary.UpdateConfig)
+		admin.Post("/daily-summary/test", h.AdminDailySummary.TestSend)
+	}
 }

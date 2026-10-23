@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import {
-  BarChart3, Building2, CalendarCheck, CalendarClock, LayoutDashboard, MapPinned, Moon, SearchX, Settings, Sun, UserCog, Users,
+  BarChart3, Building2, CalendarCheck, CalendarClock, LayoutDashboard, MapPinned, MessageSquare, Moon, SearchX, Settings, Sun, UserCog, Users,
   LogOut, ChevronsUpDown,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
@@ -40,6 +40,7 @@ const NAV = [
     items: [
       { to: '/check-ins', icon: CalendarCheck, label: 'เช็คอิน' },
       { to: '/reps', icon: Users, label: 'เซลล์', badgeKey: 'pendingReps' as const },
+      { to: '/daily-summary', icon: MessageSquare, label: 'สรุปประจำวัน' },
       { to: '/options', icon: Settings, label: 'ตั้งค่าตัวเลือก' },
       { to: '/users', icon: UserCog, label: 'ผู้ใช้ระบบ' },
     ],

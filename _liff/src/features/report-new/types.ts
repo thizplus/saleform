@@ -16,6 +16,10 @@ export interface CreateSiteForm {
   jobType: string
   jobTypeOther: string
   jobDetail: string
+  closeStatus: string       // "", "success", "failed"
+  closeAmount: number       // ยอดเปิดบิล (บาท)
+  closeReason: string       // เหตุผลไม่สำเร็จ
+  closeReasonOther: string  // free text เมื่อเลือก "อื่นๆ"
   lat: number | null
   lng: number | null
   tambon?: string
@@ -38,6 +42,7 @@ export interface OptionsData {
   competitors: string[]
   vehiclePlates: string[]
   jobTypes: string[]
+  closeReasons: string[]
 }
 
 export interface DuplicateMatch {

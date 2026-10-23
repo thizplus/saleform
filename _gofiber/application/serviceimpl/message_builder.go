@@ -73,9 +73,24 @@ func BuildNewSiteMessages(site *models.Site, report *models.SiteReport, repName 
 		lines = append(lines, fmt.Sprintf("📝 รายละเอียดหน้างาน: %s", report.JobDetail))
 	}
 
+	// ปิดงาน
+	if report.CloseStatus == "success" {
+		lines = append(lines, "")
+		lines = append(lines, fmt.Sprintf("✅ ปิดงาน: สำเร็จ — ยอดเปิดบิล %s บาท", formatNumber(int(report.CloseAmount))))
+	} else if report.CloseStatus == "failed" {
+		reason := report.CloseReason
+		if reason == "อื่นๆ" && report.CloseReasonOther != "" {
+			reason = report.CloseReasonOther
+		}
+		lines = append(lines, "")
+		lines = append(lines, fmt.Sprintf("❌ ปิดงาน: ไม่สำเร็จ — %s", reason))
+	}
+
 	if site.NextFollowUpDate != nil {
 		lines = append(lines, "")
 		lines = append(lines, fmt.Sprintf("📅 นัดติดตาม: %s", formatThaiDateShort(site.NextFollowUpDate)))
+	} else if report.CloseStatus != "" {
+		lines = append(lines, "📅 ไม่ติดตาม")
 	}
 
 	addr := composeAddress(site.Tambon, site.Amphoe, site.Province)

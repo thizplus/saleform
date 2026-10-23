@@ -27,4 +27,7 @@ export const ADMIN_ROUTES = {
   CHECK_INS: `${API_BASE}/admin/check-ins`,
   CHECK_INS_SUMMARY: `${API_BASE}/admin/check-ins/summary`,
   CHECK_INS_REP: (repId: string) => `${API_BASE}/admin/check-ins/summary/${repId}`,
+  // Daily summary
+  DAILY_SUMMARY: `${API_BASE}/admin/daily-summary`,
+  DAILY_SUMMARY_TEST: `${API_BASE}/admin/daily-summary/test`,
 } as const

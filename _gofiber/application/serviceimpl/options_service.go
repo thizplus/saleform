@@ -24,6 +24,7 @@ var defaultOptions = dto.OptionsResponse{
 	Amphoes:        []string{},
 	VehiclePlates:  []string{},
 	JobTypes:       []string{"สำรวจหน้างาน", "เสนอราคา", "วัดหน้างาน", "ส่งของ", "เก็บเงิน", "อื่นๆ"},
+	CloseReasons:   []string{"มาช้าไปสั่งแผ่นไปแล้ว", "ราคาสู้คู่แข่งไม่ได้", "ไม่พบผู้มีอำนาจตัดสินใจ", "ใช้เจ้าเดิม/เจ้าประจำ", "คิวผลิต/ขนส่งไม่ทัน", "ใช้แผ่นเก่า/กระเบื้อง/อื่นๆ", "อื่นๆ"},
 }
 
 func (s *optionsServiceImpl) GetOptions(ctx context.Context) (*dto.OptionsResponse, error) {
@@ -52,6 +53,9 @@ func (s *optionsServiceImpl) GetOptions(ctx context.Context) (*dto.OptionsRespon
 			}
 			if len(dbOpts.JobTypes) > 0 {
 				resp.JobTypes = dbOpts.JobTypes
+			}
+			if len(dbOpts.CloseReasons) > 0 {
+				resp.CloseReasons = dbOpts.CloseReasons
 			}
 		}
 	}

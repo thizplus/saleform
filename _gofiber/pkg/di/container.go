@@ -49,9 +49,14 @@ type Container struct {
 	AdminAnalyticsHandler *handlers.AdminAnalyticsHandler
 	AdminUserHandler      *handlers.AdminUserHandler
 	AdminExportHandler    *handlers.AdminExportHandler
-	AdminCheckInHandler   *handlers.AdminCheckInHandler
-	LIFFCheckInHandler    *handlers.LIFFCheckInHandler
-	StatusChecker         *middleware.StatusChecker
+	AdminCheckInHandler        *handlers.AdminCheckInHandler
+	AdminDailySummaryHandler   *handlers.AdminDailySummaryHandler
+	LIFFCheckInHandler         *handlers.LIFFCheckInHandler
+	StatusChecker              *middleware.StatusChecker
+
+	// Services exposed for scheduler
+	DailySummaryService *serviceimpl.DailySummaryService
+	AppConfigRepo       repositories.AppConfigRepository
 }
 
 func NewContainer(cfg *config.Config) *Container {
@@ -112,6 +117,10 @@ func NewContainer(cfg *config.Config) *Container {
 	checkInService := serviceimpl.NewCheckInService(repos.checkIn, repos.salesRep, cfg.R2.PublicURL)
 	c.LIFFCheckInHandler = handlers.NewLIFFCheckInHandler(checkInService)
 	c.AdminCheckInHandler = handlers.NewAdminCheckInHandler(checkInService)
+
+	// Daily summary
+	c.DailySummaryService = serviceimpl.NewDailySummaryService(c.DB, repos.appConfig, lineMessenger)
+	c.AppConfigRepo = repos.appConfig
 	c.StatusChecker = &middleware.StatusChecker{
 		SalesRepRepo: repos.salesRep,
 		AdminRepo:    repos.adminUser,
